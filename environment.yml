@@ -1,6 +1,7 @@
 name: color-scheming
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - graph-tool
   - gsd
@@ -10,4 +11,5 @@ dependencies:
   - scipy
   - sphinx
   - sphinx-rtd-theme
+  - pip
 prefix: /home/jonck/miniconda3/envs/color-scheming
