@@ -8,17 +8,6 @@ import math
 from matplotlib import collections, transforms, patches
 
 
-def quat_to_angle(quat:np.ndarray) -> np.ndarray:
-    """
-    :param quat: a list of quaterions encoding particle orientation
-    :type quat: ndarray
-    :return: the quadrant-corrected 2d angular orientations of the particles
-    :rtype: ndarray
-    """    
-    angles = 2.0*np.arctan2(quat[:,-1],quat[:,0])
-    return angles
-
-
 class SuperEllipse():
     """A class to contain helpful methods for characterizing the superellipses used in this module. Superellipses follow the equation:
     
