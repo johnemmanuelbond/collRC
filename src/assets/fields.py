@@ -1,0 +1,354 @@
+# -*- coding: utf-8 -*-
+"""
+Contains a few methods to represent external electric fields in matplotlib. Includes a class to represent electrode geometries.
+"""
+
+import numpy as np
+import gsd.hoomd
+import matplotlib.colors as mcol
+from matplotlib.cm import Spectral as U_map
+import matplotlib.pyplot as plt
+
+# Normalize potential values for consistent color mapping
+U_norm = mcol.Normalize(vmin=-100, vmax=100)
+
+
+class Electrodes:
+    """
+    A class to contain helpful methods for representing electrode geometries. The class represents electrodes as a superposition of nearly harmonic traps. The energy associated with the :math:`i` th one of these traps can be written like:
+
+    .. math::
+
+        U_{{tr,i}} = \\frac{{1}}{{2}}k_{{tr,i}}\\tan^2\\big(r/d_g\\big)\\approx\\frac{{1}}{{2}}k_{{tr,i}}\\big(r/d_g\\big)^2
+
+    .. math::
+
+        U_{{rot,i}} = \\frac{{1}}{{2}}k_{{rot,i}}\\sin^2\\big(m\\Delta\\theta\\big)
+
+    Where :math:`k_{{tr,i}}` and :math:`k_{{rot,i}}` correspond to the :math:`i` th translational and rotational energy scales (in kT units), :math:`d_g` is the distance between the electrodes (in simulation units), and :math:`m` is a symmetry factor corresponding to the particles within the electrode (a rectangle has :math:`m=1`, a square has :math:`m=2`, and a disc has :math:`m=\\infty`). The unitless distance :math:`r` and the angle :math:`\\Delta\\theta` are defined relative to an angle :math:`\\theta_i` which defines the axis along which the harmonic trap drives particle translation, and along which the trap aligns particle orientations:
+
+    .. math::
+        
+        r \\equiv \\vec{{r_p}}\\cdot\\hat{{d}}/d_g= \\frac{{1}}{{d_g}}\\big(x_p\\cos\\theta_i + y_p\\sin\\theta_i\\big)
+
+    .. math::
+
+        \\Delta\\theta \\equiv \\theta_p - \\theta_i
+    
+    Where :math:`x_p`, :math:`y_p`, :math:`\\theta_p` are the position and orientation of a particle within the electrodes.
+
+    A generic field configuraiton can be represented as a superposition of these harmonic traps:
+
+    .. math::
+
+        U_{{tr}} = \\sum_i U_{{tr,i}} \\qquad U_{{rot}} = \\sum_i U_{{rot,i}}
+
+    :param n: number of fields to superimpose, defaults to 2
+    :type n: int, optional
+    :param dg: gap between all sets of electrodes (in simulation units), defaults to 30
+    :type dg: float, optional
+    """        
+    def __init__(self, n:int=2, dg:float=30):
+        """
+        Constructor
+        """
+        self.k_trans = np.zeros(n)
+        self.k_rot = np.zeros(n)
+        self._dg = dg
+        self.direct = np.linspace(0,np.pi,n,endpoint=False)
+
+    @property
+    def num_fields(self)->int:
+        """
+        :return: number of fields to superimpose
+        :rtype: int
+        """        
+        return len(self.direct)
+
+    @property
+    def electrode_gap(self)->float:
+        """
+        :return: gap between all sets of electrodes
+        :rtype: float
+        """        
+        return self._dg
+    
+    @electrode_gap.setter
+    def electrode_gap(self, dg:float):
+        """
+        :param dg: gap between all sets of electrodes
+        :type dg: float
+        """        
+        self._dg = dg
+
+    def U_trans(self,xs:np.ndarray,ys:np.ndarray,
+                k_trans:list|np.ndarray = None,
+                direct:list|np.ndarray=None)->np.ndarray:
+        """Computes the potential energy of a set of x- and y-positions according to the electrode's current configuration.
+
+        :param xs: a set of x-positions (in simulation length units) to calculate energies at
+        :type xs: np.ndarray
+        :param ys: a set of y-positions (in simulation length units) to calculate energies at
+        :type ys: np.ndarray
+        :param k_trans: sets the translational field strengths in kT units constraining particles along each multipole axis, defaults to None
+        :type k_trans: list | np.ndarray, optional
+        :param direct: sets the direction (in radians) of each multipole axis, defaults to None
+        :type direct: list | np.ndarray, optional
+        :return: a set of potential energies at each x- and y-position 
+        :rtype: np.ndarray
+        """        
+        if not (k_trans is None): self.k_trans = k_trans
+        if not (direct is None): self.direct = direct
+
+        n = len(self.direct)
+        
+        shape = (*(xs.T.shape),n)
+        cs = np.full(shape,np.cos(self.direct)).T
+        ss = np.full(shape,np.sin(self.direct)).T
+        ks = np.full(shape,self.k_trans).T
+
+        shape = (n,*(xs.shape))
+        all_xs = np.full(shape,xs)/self._dg
+        all_ys = np.full(shape,ys)/self._dg
+        rs = all_xs*cs + all_ys*ss
+
+        return np.sum(0.5 * ks * rs**2,axis=0)
+    
+    def U_rot(self,angles:np.ndarray,
+              k_rot:list|np.ndarray = None,
+              direct:list|np.ndarray=None,m:int=1)->np.ndarray:
+        """Computes potential energy of a set of particle orientations according to the electrode's current configuration.
+
+        :param angles: a set of orientations (in radians) to compute potential energies at
+        :type angles: np.ndarray
+        :param k_rot: sets the rotational field strengths in kT units aligning particles along each multipole axis, defaults to None
+        :type k_rot: list | np.ndarray, optional
+        :param direct: sets the direction (in radians) of each multipole axis, defaults to None, defaults to None
+        :type direct: list | np.ndarray, optional
+        :param m: symmetry factor of the particles, defaults to 1
+        :type m: int, optional
+        :return: a set of potential energies at each orientation
+        :rtype: np.ndarray
+        """        
+        if not (k_rot is None): self.k_rot = k_rot
+        if not (direct is None): self.direct = direct
+
+        n = len(self.direct)
+
+        shape = (*(angles.T.shape),n)
+        ks = np.full(shape,self.k_rot).T
+        t0s = np.full(shape,self.direct).T
+        
+        shape = (n,*(angles.shape))
+        all_angles = np.full(shape,angles)
+        ss = np.sin(m*(all_angles - t0s))
+
+
+def read_electrodes_from_gsd(frame:gsd.hoomd.Frame, elec=None) -> Electrodes:
+    """Reads electrode parameters from a GSD frame log and returns an Electrodes instance.
+
+    :param frame: A GSD frame containing electrode parameters in its log.
+    :type frame: gsd.hoomd.Frame
+    :param elec: An optional Electrodes instance to populate. If None, a new instance is created., defaults to None
+    :type elec: Electrodes, optional
+    :return: An Electrodes instance initialized with parameters from the frame log.
+    :rtype: Electrodes
+    """
+
+    log = frame.log
+    try:
+        dg = log['dg']
+        k_trans = log['k_trans']
+        k_rot = log['k_rot']
+        direct = log['direct']
+    except KeyError as e:
+        raise KeyError("The provided GSD frame does not contain electrode parameters in its log.") from e
+
+    if elec is None:
+        elec = Electrodes(n=len(direct), dg=dg[0])
+    else:
+        assert elec.num_fields == len(direct), "Provided Electrodes instance has a different number of fields than the GSD frame log."
+    
+    elec.direct = direct
+    elec.k_trans = k_trans
+    elec.k_rot = k_rot
+
+    return elec
+
+
+_default_qpole = Electrodes(n=2,dg=30)
+_default_qpole.k_trans[:] = 150.0
+
+def contour_PEL(ax=None, electrode: Electrodes = _default_qpole, levels = None, **contour_kwargs):
+    """Places a contour plot of the translational potential energy landscape contained in an :class:`Electrodes` instance on the provided ``Axis``.
+
+    :param ax: Axis to draw the contours on. If None, a new figure and axis will be created.
+    :type ax: matplotlib.axes.Axes, optional
+    :param electrode: An :class:`Electrodes` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
+    :type electrode: Electrodes, optional
+    :param levels: Contour levels to draw. If None, levels are automatically determined from the potential.
+    :type levels: array-like, optional
+    :param contour_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.contour` (colors, linewidths, etc)
+    :type contour_kwargs: dict
+
+    :return: The ContourSet object created by :meth:`Axes.contour`.
+    :rtype: matplotlib.contour.ContourSet
+    """
+    dg = electrode.electrode_gap
+
+    # Create a grid for evaluating the potential
+    xx = np.linspace(-dg/2, dg/2, 1000)
+    yy = np.linspace(-dg/2, dg/2, 1000)
+    XY = np.meshgrid(0.5*(xx[1:]+xx[:-1]), 0.5*(yy[1:]+yy[:-1]))
+    U = electrode.U_trans(*XY)
+
+    # Determine appropriate contour levels based on potential range
+    if levels is None:
+        has_pos = np.any(U > 0)
+        has_neg = np.any(U < 0)
+
+        if has_neg and has_pos:
+            levels = np.linspace(-50, 50, 11)
+        elif has_neg:
+            levels = np.linspace(-100, 0, 11)
+        else:
+            levels = np.linspace(0, 100, 11)
+
+    # create axis if none provided
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    if 'linewidths' not in contour_kwargs:
+        contour_kwargs['linewidths'] = 0.6
+    if 'zorder' not in contour_kwargs:
+        contour_kwargs['zorder'] = 0
+    if 'colors' not in contour_kwargs:
+        contour_kwargs['colors'] = 'grey'
+
+    cs = ax.contour(0.5*(xx[1:]+xx[:-1]), 0.5*(yy[1:]+yy[:-1]), U,
+                    levels= levels, **contour_kwargs)
+
+    return cs
+
+
+def spectral_PEL(ax=None, electrode: Electrodes = _default_qpole, levels = None, **pcolormesh_kwargs):
+    """"Places a colorm-mapped plot of the translational potential energy landscape contained in an :class:`Electrodes` instance on the provided ``Axis``.  Regions outside the electrode gap or outside the normalization range are mapped to none. coloring defaults to the Spectral colormap on a 200kT scale, but these are configurable via ``pcolormesh_kwargs``.
+
+    :param ax: Axis to draw the contours on. If None, a new figure and axis will be created.
+    :type ax: matplotlib.axes.Axes, optional
+    :param electrode: An :class:`Electrodes` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
+    :type electrode: Electrodes, optional
+    :param levels: Contour levels to draw. If None, levels are automatically determined from the potential.
+    :type levels: array-like, optional
+    :param pcolormesh_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.pcolormesh` (cmap, norm, etc)
+    :type pcolormesh_kwargs: dict
+
+    :return: The QuadMesh returned by :meth:`Axes.pcolormesh`.
+    :rtype: matplotlib.collections.QuadMesh
+    """
+    dg = electrode.electrode_gap
+
+    # Create evaluation grid
+    xx = np.linspace(-dg/2, dg/2, 1000)
+    yy = np.linspace(-dg/2, dg/2, 1000)
+    XY = np.meshgrid(0.5*(xx[1:]+xx[:-1]), 0.5*(yy[1:]+yy[:-1]))
+    U = electrode.U_trans(*XY)
+
+    # Calculate distance from center for masking
+    if electrode.num_fields > 1:
+        RR = np.sqrt(XY[0]**2 + XY[1]**2)
+    else:
+        # For single field, use projection along field direction
+        RR = XY[0]*np.cos(electrode.direct[0]) + XY[1]*np.sin(electrode.direct[0])
+
+    # Mask regions outside electrode gap and extreme potentials
+    to_nan = np.logical_or(RR > 0.95*dg/2, np.logical_or(U > U_norm.vmax, U < U_norm.vmin))
+    U[to_nan] = np.nan
+    
+    # create axis if none provided
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    if 'zorder' not in pcolormesh_kwargs:
+        pcolormesh_kwargs['zorder'] = 0
+    if 'cmap' not in pcolormesh_kwargs:
+        pcolormesh_kwargs['cmap'] = U_map
+    if 'norm' not in pcolormesh_kwargs:
+        pcolormesh_kwargs['norm'] = U_norm
+
+    qm = ax.pcolormesh(xx, yy, U, **pcolormesh_kwargs)
+
+    return qm
+
+
+def PEL_arrows(ax=None, electrode: Electrodes = _default_qpole, pts=None, **quiver_kwargs):
+    """Draw the force at a point is computed from the translational harmonic traps in :class:`Electrodes` as ``F = -\\nabla U`` and draws a quiver on the provided ``Axis``.
+
+    :param ax: Axis to draw the contours on. If None, a new figure and axis will be created.
+    :type ax: matplotlib.axes.Axes, optional
+    :param electrode: An :class:`Electrodes` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
+    :type electrode: Electrodes, optional
+    :param pts: An [N x 2] array of points (in simulation length units) at which to evaluate and draw force vectors. If None, a default set of points is generated automatically.
+    :type pts: ndarray, optional
+    :param quiver_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.quiver` (color, scale, etc)
+    :type quiver_kwargs: dict
+
+    :return: The Quiver object returned by :meth:`Axes.quiver`.
+    :rtype: matplotlib.quiver.Quiver
+    """
+    direct = electrode.direct
+    k_trans = electrode.k_trans
+    dg = electrode.electrode_gap
+
+    if pts is None:
+        # Generate evaluation points automatically
+        thetas = np.sort([*electrode.direct, *(electrode.direct + np.pi)])        
+        if electrode.num_fields > 1:
+            # For multiple fields, create fan-like pattern
+            dtheta = np.diff([*thetas, thetas[0] + np.pi*2])
+            fangs = np.array([*thetas, *(thetas + dtheta/2)])
+            xs = dg/4 * np.cos(fangs)
+            ys = dg/4 * np.sin(fangs)
+        else:
+            # For single field, use rectangular grid
+            xs = dg/4 * np.array([-1, -1, 1, 1])
+            ys = dg/4 * np.array([-1, 1, -1, 1])
+    else:
+        # Use provided points
+        xs = pts[:, 0]
+        ys = pts[:, 1]
+
+    # Calculate force components at each point
+    rs = np.outer(xs, np.cos(direct)) + np.outer(ys, np.sin(direct))
+    fx = np.sum(np.full(rs.shape, -k_trans*np.cos(direct))*rs, axis=-1)
+    fy = np.sum(np.full(rs.shape, -k_trans*np.sin(direct))*rs, axis=-1)
+
+    # create axis if none provided
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    # set up cartesian angle scaling
+    quiver_kwargs['angles'] = 'xy'
+    quiver_kwargs['units'] = 'xy'
+    quiver_kwargs['scale_units'] = 'xy'
+    quiver_kwargs['pivot'] = 'mid'
+    # Scale arrows for visibility
+    quiver_kwargs['scale'] = np.mean((fx**2 + fy**2)**0.5) / (dg/10)
+
+    if 'color' not in quiver_kwargs:            quiver_kwargs['color'] = 'grey'
+    if 'facecolors' not in quiver_kwargs:       quiver_kwargs['facecolors'] = 'grey'
+    if 'edgecolors' not in quiver_kwargs:       quiver_kwargs['edgecolors'] = 'k'
+    if 'lw' not in quiver_kwargs:               quiver_kwargs['lw'] = 0.25
+    if 'width' not in quiver_kwargs:            quiver_kwargs['width'] = 0.005
+    if 'headwidth' not in quiver_kwargs:        quiver_kwargs['headwidth'] = 3
+    if 'headlength' not in quiver_kwargs:       quiver_kwargs['headlength'] = 2.5
+    if 'headaxislength' not in quiver_kwargs:   quiver_kwargs['headaxislength'] = 2.0
+
+    q = ax.quiver(xs, ys, fx, fy, **quiver_kwargs)
+
+    return q
+
+
+if __name__ == "__main__":
+    # for testing
+    pass
