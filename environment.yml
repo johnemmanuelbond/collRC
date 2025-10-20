@@ -8,4 +8,6 @@ dependencies:
   - moviepy
   - numpy
   - scipy
+  - sphinx
+  - sphinx-rtd-theme
 prefix: /home/jonck/miniconda3/envs/color-scheming
