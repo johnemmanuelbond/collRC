@@ -7,7 +7,7 @@ import numpy as np
 from scipy.sparse import lil_matrix
 from graph_tool.all import Graph
 from graph_tool import topology as gtop
-from .locality import gyration_tensor
+# from .locality import gyration_tensor
 
 
 def graph_clusters(c6, nei_rotate):

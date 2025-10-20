@@ -5,6 +5,6 @@ Documentation
    :maxdepth: 3
    :caption: Packages
    
+   calc
    assets
-   rxn_coords
    process

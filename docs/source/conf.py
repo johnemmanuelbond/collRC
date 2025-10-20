@@ -4,9 +4,10 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os,sys
-sys.path.append(os.path.abspath('..'))
-sys.path.append('../src')
-sys.path.append('./src')
+sys.path.insert(0,os.path.abspath('..'))
+sys.path.insert(1,'./src')
+sys.path.insert(2,'../src')
+sys.path.insert(3,'../../src')
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information

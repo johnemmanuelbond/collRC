@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Contains methods to calculate p-atic orientational order. 
+Contains methods to calculate p-atic orientational order. These methods generally cover nematic, tetract and hexatic order parameters.
+
+.. math::
+
+    S_2 \\equiv P_2 \\qquad T_4 \\equiv P_4 \\qquad H_6 \\equiv P_6
+    
 """
 
 import numpy as np

@@ -6,7 +6,7 @@ Contains methods to calculate bond orientational order. First in flat space, the
 import numpy as np
 
 
-def bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6) -> tuple[np.ndarray,float]:
+def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6) -> tuple[np.ndarray,float]:
     """Calculates the local and global bond orientational order parameter of each particle in a 2D configuration with respect to the y axis. The local n-fold bond orientaitonal order for a particle :math:`j` is:
 
     .. math::
@@ -222,7 +222,6 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
     pnum = len(psis)
     psi_i = np.array([psis]*pnum)
     psi_j = np.conjugate(nei_rotate*psi_i.T)
-    psi_prod = np.outer(psis,np.conjugate(psis))
 
     chi_ij = np.abs(np.real(psi_i*psi_j))/np.abs(psi_i*psi_j)
     chi_ij[np.abs(psi_i*psi_j)==0]=0

@@ -1,9 +1,12 @@
-processing module
-=================
+processing package
+==================
 
-Links together methods from :doc:`rxn_coords` and :doc:`assets` to process simulation data for visualization.
+Links together methods from :doc:`calc` and :doc:`assets` to process simulation data for visualization. Also contains color base classes and utilities for defining color schemes based on reaction coordinates.
 
-.. automodule:: process
+base module
+-----------
+
+.. automodule:: process.base
     :members:
     :undoc-members:
     :show-inheritance:

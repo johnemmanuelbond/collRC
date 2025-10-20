@@ -225,46 +225,46 @@ def tangent_connection(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.arra
     return np.exp(1j*thetas)
 
 
-def gyration_tensor(pts:np.ndarray, ref:np.ndarray|None = None) -> np.ndarray:
-    """returns the gyration tensor (for principal moments analysis) of an ensemble of particles according to the formula
+# def gyration_tensor(pts:np.ndarray, ref:np.ndarray|None = None) -> np.ndarray:
+#     """returns the gyration tensor (for principal moments analysis) of an ensemble of particles according to the formula
 
-    .. math::
+#     .. math::
 
-        S_{mn} = \\frac{1}{N}\\sum_{j}r^{(j)}_m r^{(j)}_n
+#         S_{mn} = \\frac{1}{N}\\sum_{j}r^{(j)}_m r^{(j)}_n
 
-    where the positions, :math:`r`, are defined in their center of mass reference frame
+#     where the positions, :math:`r`, are defined in their center of mass reference frame
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions,
-    :type pts: ndarray
-    :param ref: point in d-dimensional space from which to reference particle positions, defaults to the mean position of the points. Use this for constraining the center of mass to the surface of a manifold, for instance.
-    :type ref: ndarray , optional
-    :return: the [dxd] gyration tensor of the ensemble
-    :rtype: ndarray
-    """    
+#     :param pts: [Nxd] array of particle positions in 'd' dimensions,
+#     :type pts: ndarray
+#     :param ref: point in d-dimensional space from which to reference particle positions, defaults to the mean position of the points. Use this for constraining the center of mass to the surface of a manifold, for instance.
+#     :type ref: ndarray , optional
+#     :return: the [dxd] gyration tensor of the ensemble
+#     :rtype: ndarray
+#     """    
 
-    if ref is None:
-        ref = pts.mean(axis=0)
-    assert (pts.shape[-1],) == ref.shape, 'reference must have same dimesionality as the points'
-    centered = pts - ref
-    gyrate = centered.T @ centered
-    return gyrate/len(pts)
+#     if ref is None:
+#         ref = pts.mean(axis=0)
+#     assert (pts.shape[-1],) == ref.shape, 'reference must have same dimesionality as the points'
+#     centered = pts - ref
+#     gyrate = centered.T @ centered
+#     return gyrate/len(pts)
 
 
-def gyration_radius(pts:np.ndarray) -> float:
-    """returns the radius of gyration according to the formula
+# def gyration_radius(pts:np.ndarray) -> float:
+#     """returns the radius of gyration according to the formula
 
-    .. math::
+#     .. math::
 
-        R_g^2 \\equiv \\frac{1}{N}\\sum_k|\\mathbf{r}_k-\\bar{\\mathbf{r}}|^2 = \\frac{1}{N^2}\\sum_{j>i}|\\mathbf{r}_i - \\mathbf{r}_j|^2 
+#         R_g^2 \\equiv \\frac{1}{N}\\sum_k|\\mathbf{r}_k-\\bar{\\mathbf{r}}|^2 = \\frac{1}{N^2}\\sum_{j>i}|\\mathbf{r}_i - \\mathbf{r}_j|^2 
 
-    where the :math:`j>i` in the summation index indicates that repeated pairs are not summed over
+#     where the :math:`j>i` in the summation index indicates that repeated pairs are not summed over
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions
-    :type pts: ndarray
-    :return: the radius of gyration of the particles about their center of mass
-    :rtype: scalar
-    """    
-    N = len(pts)
-    dists = pdist(pts)
-    Rg2 = np.sum(dists**2) / (N**2) # pdist accounts for the factor of 2 in the denominator
-    return np.sqrt(Rg2)
+#     :param pts: [Nxd] array of particle positions in 'd' dimensions
+#     :type pts: ndarray
+#     :return: the radius of gyration of the particles about their center of mass
+#     :rtype: scalar
+#     """    
+#     N = len(pts)
+#     dists = pdist(pts)
+#     Rg2 = np.sum(dists**2) / (N**2) # pdist accounts for the factor of 2 in the denominator
+#     return np.sqrt(Rg2)
