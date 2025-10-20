@@ -1,1 +1,6 @@
-numpy scipy gsd graph-tool matplotlib moviepy
+numpy
+scipy
+gsd
+graph-tool
+matplotlib
+moviepy
