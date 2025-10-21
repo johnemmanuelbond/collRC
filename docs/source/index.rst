@@ -5,8 +5,8 @@
 
 
 
-color-scheming docs
-===================
+collRC docs
+===========
 
 .. include:: ../../README.rst
    :end-before: intro.rst

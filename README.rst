@@ -60,3 +60,8 @@ Uninstall with
 .. _matplotlib: https://matplotlib.org/stable/contents.html
 .. _ffmpeg: https://www.ffmpeg.org/documentation.html
 .. _moviepy: https://zulko.github.io/moviepy/
+
+Documentation
+=============
+
+The full documentation is available at https://collRC.readthedocs.io/en/latest/

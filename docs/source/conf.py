@@ -12,7 +12,7 @@ sys.path.insert(3,'../../src')
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'color-scheming'
+project = 'collRC'
 copyright = '2025, John E. Bond'
 author = 'John E. Bond'
 release = '0.0.1'
