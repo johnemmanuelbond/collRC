@@ -5,7 +5,7 @@ collRC
 
 A library for calculating *reaction coordinates* which describe local and global dynamics within self-assembling colloidal ensembles. Reaction coordinates are instantaneous measures that capture structural features of particle configurations, so that they may be characterized over time to measure and represent collective dynamic phenomema.
 
-Based out of the `bevan lab`, collRC provides functionality for calculating reaction coordinates and using them to render colored visualizations of the colloidal ensemble. collRC is particularly built to process and visualize the output of simulations run with `hoomd-blue`_ which are commonly saved to the `gsd`_ format.
+Based out of the `bevan lab`_, collRC provides functionality for calculating reaction coordinates and using them to render colored visualizations of the colloidal ensemble. collRC is particularly built to process and visualize the output of simulations run with `hoomd-blue`_ which are commonly saved to the `gsd`_ format.
 
 .. _bevan lab: https://bevan.jh.edu/
 .. _hoomd-blue: https://hoomd-blue.readthedocs.io/en/latest/
