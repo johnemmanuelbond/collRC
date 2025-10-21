@@ -49,7 +49,11 @@ class SuperEllipse():
         :return: the area of the superellipse
         :rtype: scalar
         """        
-        return 4*self.ax*self.ay*(math.gamma(float(1+1/self.n)))**2/(math.gamma(float(1+2/self.n)))
+        if self.n == 2.0:
+            A = math.pi*self.ax*self.ay
+        else:
+            A = 4*self.ax*self.ay*(math.gamma(float(1+1/self.n)))**2/(math.gamma(float(1+2/self.n)))
+        return A
     
     def surface(self,thetas:np.ndarray) -> np.ndarray:
         """returns points along the perimeter of the superellipse associated with polar angles

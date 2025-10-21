@@ -24,6 +24,7 @@ base_colors = dict(
     gold = np.array(mcol.to_rgb('gold')),
     purple = np.array(mcol.to_rgb('magenta')),
     orange = np.array(mcol.to_rgb('orange')),
+    cyan = np.array(mcol.to_rgb('cyan')),
 )
 
 
@@ -97,7 +98,7 @@ def _gsd_match(gsd1: gsd.hoomd.Frame, gsd2: gsd.hoomd.Frame) -> bool:
         return False
 
 
-class StateColor():
+class ColorBase():
     """
     Base class for particle coloring schemes.
     

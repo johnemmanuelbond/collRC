@@ -194,7 +194,7 @@ def local_vectors(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,
 def tangent_connection(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,-1,0])) -> np.ndarray:
     """computes the complex connection between local tangent planes at each pair of points. This factor takes the form
 
-    .. math:
+    .. math::
         R_{ij} = e^{i \\theta_{ij}} \\\\
         \\theta_{ij} = \\arctan\\left(\\frac{\\mathbf{e}_1(\\mathbf{x}_i) \\cdot \\mathbf{e}_2(\\mathbf{x}_j)}{\\mathbf{e}_1(\\mathbf{x}_i) \\cdot \\mathbf{e}_1(\\mathbf{x}_j)}\\right)
 
@@ -224,6 +224,65 @@ def tangent_connection(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.arra
 
     return np.exp(1j*thetas)
 
+from visuals import SuperEllipse
+_default_sphere = SuperEllipse(ax=0.5,ay=0.5,n=2.0)
+
+def central_eta(pts:np.ndarray, box:list, shape:SuperEllipse=_default_sphere, nbins:int=3, bin_width:float=4.0, jac:str='x'):
+    """Computes the average area fraction in the central region of a configuration of particles, accounting for the jacobian of the coordinate system:
+
+    .. math::
+        \\eta = \\langle\\frac{N\\cdot A_p}{A_{bin}}\\rangle_{{bins}}
+
+    :param pts: an [Nxd] array of particle positions in any dimensions (though only the first two are used)
+    :type pts: ndarray
+    :param box: a list defining the simulation box in the `gsd <https://gsd.readthedocs.io/en/stable/schema-hoomd.html#chunk-configuration-box>`_ convention
+    :type box: array-like
+    :param shape: a :py::class:`visuals.shapes.SuperEllipse` instance defining the shape of the particles, defaults to a circle of diameter 1.0
+    :type shape: SuperEllipse, optional
+    :param nbins: the number of histogram bins to average over in the center of the configuration, defaults to 3
+    :type nbins: int, optional
+    :param bin_width: the width of each histogram bin, defaults to 4
+    :type bin_width: float, optional
+    :param jac: the type of jacobian to account for when computing area fraction. Options are 'x' (linear in x), 'y' (linear in y), and 'r' (radial). Defaults to 'x'.
+    :type jac: str, optional
+    :return: the average area fraction in the central region of the configuration
+    :rtype: float
+    """
+
+    # determine appropriate coorinate to count, as well as the bin edges and areas based on jacobian type
+    match jac:
+        case 'x':
+            to_bin = pts[:,0]
+            x_max = np.abs(to_bin).max()
+            xbin = np.arange(0,x_max + bin_width,bin_width)
+            bin_edges = np.sort(np.unique(np.concatenate([-xbin,xbin])))
+            bin_areas = (bin_edges[1:] - bin_edges[:-1]) * box[1]
+
+        case 'y':
+            to_bin = pts[:,1]
+            y_max = np.abs(to_bin).max()
+            ybin = np.arange(0,y_max + bin_width,bin_width)
+            bin_edges = np.sort(np.unique(np.concatenate([-ybin,ybin])))
+            bin_areas = (bin_edges[1:] - bin_edges[:-1]) * box[0]
+
+        case 'r':
+            to_bin = np.sqrt((pts**2).sum(axis=-1))
+            r_max = to_bin.max()
+            bin_edges = np.arange(0,r_max + bin_width,bin_width)
+            bin_areas = np.pi*(bin_edges[1:]**2 - bin_edges[:-1]**2)
+        
+        case _:
+            raise NotImplementedError(f'jacobian type {jac} not implemented')
+
+    # Compute the histogram of the points
+    counts, edges = np.histogram(to_bin, bins=bin_edges, density=False)
+    mids = 0.5 * (edges[:-1] + edges[1:])
+    eta = counts / bin_areas * shape.area
+
+    # average over the 'nbins' most central histrogram bins
+    central_eta = np.mean(eta[np.argsort(np.abs(mids))[:nbins]])
+
+    return central_eta
 
 # def gyration_tensor(pts:np.ndarray, ref:np.ndarray|None = None) -> np.ndarray:
 #     """returns the gyration tensor (for principal moments analysis) of an ensemble of particles according to the formula

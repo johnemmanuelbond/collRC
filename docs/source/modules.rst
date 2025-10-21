@@ -6,5 +6,5 @@ Documentation
    :caption: Packages
    
    calc
-   assets
-   process
+   visuals
+   coloring

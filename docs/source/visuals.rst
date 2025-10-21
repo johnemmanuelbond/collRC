@@ -1,12 +1,12 @@
-assets package
-==============
+visuals package
+===============
 
 Contains geometric shapes and field plotting utilities for visualization.
 
 shapes module
 -------------
 
-.. automodule:: assets.shapes
+.. automodule:: visuals.shapes
     :members:
     :undoc-members:
     :show-inheritance:
@@ -14,7 +14,7 @@ shapes module
 fields module
 -------------
 
-.. automodule:: assets.fields
+.. automodule:: visuals.fields
     :members:
     :undoc-members:
     :show-inheritance:

@@ -196,7 +196,7 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
     :type crystallinity_threshold: float, optional
     :param norm: an optional factor to normalize the result, defaults to 6, but passing ``None`` will reference the connectivity value for a perfectly crystalline hexagon (i.e. equations 8 and 10 in the SI from `(Juarez, Lab on a Chip 2012) <https://doi.org/10.1039/C2LC40692F>`_)
     :type norm: float | None, optional
-    :param phase_rotate: an optional [N] array of complex phase factors to include a rotation between neighboring particles' bond-OPs, defaults to None
+    :param phase_rotate: an optional [N] array of complex phase factors to include a rotation between neighboring particles' bond-OPs (i.e. the output of :py:meth:`calc.locality.tangent_connection`) defaults to None
     :type phase_rotate: ndarray | None, optional
     :return: [N] array of real crystal connectivities
     :rtype: ndarray
