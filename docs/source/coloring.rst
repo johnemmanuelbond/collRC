@@ -6,7 +6,7 @@ Links together methods from :doc:`calc` and :doc:`visuals` to process simulation
 base module
 -----------
 
-.. automodule:: process.base
+.. automodule:: coloring.base
     :members:
     :undoc-members:
     :show-inheritance:
@@ -15,7 +15,7 @@ base module
 psicolor module
 ---------------
 
-.. automodule:: process.psicolor
+.. automodule:: coloring.psicolor
     :members:
     :undoc-members:
     :show-inheritance:
@@ -23,7 +23,7 @@ psicolor module
 paticcolor module
 -----------------
 
-.. automodule:: process.paticcolor
+.. automodule:: coloring.paticcolor
     :members:
     :undoc-members:
     :show-inheritance:
@@ -31,7 +31,7 @@ paticcolor module
 defectcolor module
 ------------------
 
-.. automodule:: process.defectcolor
+.. automodule:: coloring.defectcolor
     :members:
     :undoc-members:
     :show-inheritance:
