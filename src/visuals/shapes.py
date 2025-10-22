@@ -6,7 +6,7 @@ Contains a few helper methods representing colloidal shapes in matplotlib. Inclu
 import numpy as np
 import math
 from matplotlib import collections, transforms, patches
-from calc.locality import quat_to_angle
+from calc import quat_to_angle
 
 class SuperEllipse():
     """A class to contain helpful methods for characterizing the superellipses used in this module. Superellipses follow the equation:

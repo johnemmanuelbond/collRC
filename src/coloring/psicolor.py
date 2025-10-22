@@ -13,8 +13,8 @@ import gsd.hoomd
 from matplotlib.cm import hsv as hsv_map
 
 from visuals import SuperEllipse
-from .base import base_colors, color_gradient, color_blender
-from .base import ColorBase
+from coloring import base_colors, color_gradient, color_blender
+from coloring import ColorBase
 
 from calc.locality import DEFAULT_CUTOFF
 from calc import neighbors, stretched_neighbors, tangent_connection, quat_to_angle

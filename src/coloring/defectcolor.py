@@ -9,9 +9,8 @@ import gsd.hoomd
 
 from calc import crystal_connectivity
 from visuals import SuperEllipse
-from .base import base_colors, color_gradient, ColorBase
-from .paticcolor import ColorByS2
-from .psicolor import ColorByConn
+from coloring import base_colors, color_gradient, ColorBase
+from coloring import ColorByS2, ColorByConn
 
 
 # base color functions
@@ -42,7 +41,19 @@ class ColorS2Defects(ColorByS2):
     def calc_state(self):
         """Identify nematic defects"""
         super().calc_state()
-        self.defects = np.abs(self.nem_l)<0.5
+
+        # self.defects = np.abs(self.nem_l) < 0.5
+
+        misorient = np.real(self.ori*self.ori*np.conjugate(self.nem_l)) < np.abs(self.nem_l)/2
+
+        self.defects = misorient
+
+        # is_nem = np.abs(self.nem_l) > 0.5
+        # self.defects = np.logical_and(is_nem, misorient)
+
+        # self.defects = np.real(self.ori*self.ori*np.conjugate(self.nem_g))/np.abs(self.nem_g) < 0.5
+
+
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping the background colorbase with defects in cyan.
@@ -57,7 +68,7 @@ class ColorS2Defects(ColorByS2):
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
-        :return: LaTeX-formatted summary string. i.e. ":math:`N_{S2}=00\%`".
+        :return: LaTeX-formatted summary string. i.e. ":math:`N_{S2}=00%`".
         :rtype: str
         """
         if snap is not None: self.snap = snap
@@ -100,7 +111,7 @@ class ColorC6Defects(ColorByConn):
         :rtype: ndarray
         """
         if snap is not None: self.snap = snap
-        defect = (3*(1-self.con)).clip(0,1)[self.defects]
+        defect = (2*(1-self.con)).clip(0,1)[self.defects]
         colors = self._bg.local_colors(snap=self.snap)
         colors[self.defects] = self._c(defect)
         return colors

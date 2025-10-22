@@ -96,6 +96,16 @@ def hoomd_matrix_to_box(box:np.ndarray) -> np.ndarray:
         hbox[5]=0
     return hbox
 
+def hoomd_box_to_matrix(box:list) -> np.ndarray:
+    """returns the matrix form of a hoomd box for use in minimum image calculations
+
+    :param box: a length 6 list of box paramters [Lx,Ly,Lz,xy,xz,yz]
+    :type box: array_like
+    :return: a matrix containing the basis vectors for the equivalent hoomd box
+    :rtype: ndarray
+    """    
+    return np.array([[box[0],box[3]*box[1],box[4]*box[2]],[0,box[1],box[5]*box[2]],[0,0,box[2]]])
+
 
 def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8)->tuple[np.ndarray,np.ndarray]:
     """

@@ -49,8 +49,9 @@ def local_patic(angles:np.ndarray, nei_bool:np.ndarray, p:int =2) -> tuple[np.nd
 
     nei_angles = np.full(nei_bool.shape,angles)*nei_bool
     nb = nei_bool.sum(axis=-1)
-    pp = (np.exp(1j*p*nei_angles)*nei_bool).sum(axis=-1)/nb
-    pp[nb==0]=0+0j
+    pp = (np.exp(1j*p*nei_angles)*nei_bool).sum(axis=-1)
+    pp[nb!=0]/=nb[nb!=0]
+    pp[nb==0]*=0
 
     return np.abs(pp), np.angle(pp)/p
 

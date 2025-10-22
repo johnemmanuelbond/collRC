@@ -6,10 +6,8 @@ Contains many helper methods to compute geometric properties of particle configu
 import numpy as np
 from scipy.spatial.distance import pdist,squareform
 
-from visuals import SuperEllipse
-_default_sphere = SuperEllipse(ax=0.5,ay=0.5,n=2.0)
 
-def central_eta(pts:np.ndarray, box:list, shape:SuperEllipse=_default_sphere, nbins:int=3, bin_width:float=4.0, jac:str='x'):
+def central_eta(pts:np.ndarray, box:list, ptcl_area:float = np.pi/4, nbins:int=3, bin_width:float=4.0, jac:str='x'):
     """Computes the average area fraction in the central region of a configuration of particles, accounting for the jacobian of the coordinate system:
 
     .. math::
@@ -19,8 +17,8 @@ def central_eta(pts:np.ndarray, box:list, shape:SuperEllipse=_default_sphere, nb
     :type pts: ndarray
     :param box: a list defining the simulation box in the `gsd <https://gsd.readthedocs.io/en/stable/schema-hoomd.html#chunk-configuration-box>`_ convention
     :type box: array-like
-    :param shape: a :py::class:`visuals.shapes.SuperEllipse` instance defining the shape of the particles, defaults to a circle of diameter 1.0
-    :type shape: SuperEllipse, optional
+    :param ptcl_area: the area of a single particle, defaults to pi/4 (for a circle of diameter 1.0)
+    :type ptcl_area: float, optional
     :param nbins: the number of histogram bins to average over in the center of the configuration, defaults to 3
     :type nbins: int, optional
     :param bin_width: the width of each histogram bin, defaults to 4
@@ -59,7 +57,7 @@ def central_eta(pts:np.ndarray, box:list, shape:SuperEllipse=_default_sphere, nb
     # Compute the histogram of the points
     counts, edges = np.histogram(to_bin, bins=bin_edges, density=False)
     mids = 0.5 * (edges[:-1] + edges[1:])
-    eta = counts / bin_areas * shape.area
+    eta = counts / bin_areas * ptcl_area
 
     # average over the 'nbins' most central histrogram bins
     central_eta = np.mean(eta[np.argsort(np.abs(mids))[:nbins]])

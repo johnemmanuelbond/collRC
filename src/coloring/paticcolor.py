@@ -12,8 +12,8 @@ import gsd.hoomd
 from matplotlib.cm import hsv as hsv_map
 
 from visuals import SuperEllipse
-from .base import base_colors, color_gradient, ColorBase
-from calc import local_patic, global_patic, neighbors, quat_to_angle
+from calc import local_patic, global_patic, neighbors, stretched_neighbors, quat_to_angle
+from coloring import base_colors, color_gradient, ColorBase
 
 # base color functions
 _white_red = color_gradient(c1=base_colors['white'], c2=base_colors['red'])
@@ -53,6 +53,12 @@ class ColorByS2(ColorBase):
         # Local nematic order around each particle
         pts = self.snap.particles.position
         self.nei = neighbors(pts, neighbor_cutoff=6*self._shape.ax)
+        # snei = stretched_neighbors(pts, angles, rx=self._shape.ax, ry=self._shape.ay, neighbor_cutoff=2.6)
+        # nnei = snei@(snei.T)
+        # nnei[snei] = True
+        # nnei[np.eye(nnei.shape[0], dtype=bool)] = False
+        # self.nei = snei
+
         Zs, phis = local_patic(angles, self.nei, p=2)
         self.nem_l = Zs * np.exp(1j * 2 * phis)
 
@@ -204,4 +210,65 @@ class ColorByT4g(ColorByT4):
 if __name__ == "__main__":
     
     # test code
-    pass
+    white = base_colors['white']
+    
+    from calc import stretched_neighbors
+
+    class neicolor(ColorByS2):
+        def __init__(self, shape = _default_sphere, dark = True, ptcl = 10):
+            super().__init__(shape, dark)
+            self._c = lambda n: _rainbow(n)
+            self._i = ptcl
+
+        def calc_state(self):
+            super().calc_state()
+            pts = self.snap.particles.position
+            ang = quat_to_angle(self.snap.particles.orientation)
+            nei = stretched_neighbors(pts, ang, rx=self._shape.ax, ry=self._shape.ay, neighbor_cutoff=2.8)
+            self.nei = nei
+
+
+        def local_colors(self, snap: gsd.hoomd.Frame = None):
+            if snap is not None: self.snap = snap
+            col = np.array([white]*self.snap.particles.N)
+            col[self._i] = self._c(np.zeros(1))
+            for n in range(1, 6):
+                nn = self.nth_neighbors(self.nei, n=n)
+                col[nn[self._i]] = self._c(np.array([(n+1)/10]))
+            return col
+
+        @classmethod
+        def nth_neighbors(cls, nei, n=1):
+            
+            n_nei = nei
+            old_nei = np.logical_or(nei, np.eye(nei.shape[0], dtype=bool))
+            for _ in range(n-1):
+                new_nei = (nei@n_nei)
+
+                new_nei[old_nei] = False
+                old_nei[new_nei] = True                
+
+                n_nei = new_nei
+
+            return n_nei
+
+
+    # a = np.zeros((10,10))==1
+    # for i,j in [(1,2),(2,4),(3,7),(4,8),(5,9)]:
+    #     a[i,j] = True
+    #     a[j,i] = True
+    
+    # for n in range(1,4):
+    #     print(f"{n}-th neighbors:")
+    #     print(neicolor.nth_neighbors(a, n=n).astype(int))
+    #     print()
+
+
+    from render import render_npole
+
+    frame = gsd.hoomd.open("../render/test-rect.gsd", mode='r')[1200]
+    rect = SuperEllipse(ax=1.0, ay=0.5, n=20)
+    style = neicolor(shape=rect, dark=False, ptcl=250)
+
+    fig,ax = render_npole(frame, style, figsize=4, dpi=200)
+    fig.savefig('test-nei-coloring.jpg',bbox_inches='tight')

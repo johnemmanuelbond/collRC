@@ -12,7 +12,7 @@ import gsd.hoomd
 from matplotlib.cm import hsv as hsv_map
 
 from visuals import SuperEllipse
-from .base import base_colors, color_gradient, ColorBase
+from coloring import base_colors, color_gradient, ColorBase
 from calc import central_eta
 
 # base color functions
@@ -39,12 +39,13 @@ class ColorByEta0(ColorBase):
         self._shape = shape
         self._c = _white_green if dark else _grey_green
         self._jac = jac
+        self._ap = shape.area
 
     def calc_state(self):
         """Calculate both global and local nematic order parameters."""
         pts = self.snap.particles.position
         box = self.snap.configuration.box
-        self.eta0 = central_eta(pts, box, jac=self._jac, shape=self._shape)
+        self.eta0 = central_eta(pts, box, jac=self._jac, ptcl_area=self._ap)
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping local S2 magnitude (white/grey -> red).

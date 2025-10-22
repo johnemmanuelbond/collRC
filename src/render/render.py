@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 from moviepy.video.VideoClip import VideoClip
 
-from calc import quat_to_angle
 from visuals import read_field_from_gsd
 from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches
 from coloring import ColorBase
@@ -93,8 +92,9 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
             textbox = state_string
         else:
             textbox = f"{act_string}\n{state_string}"
-        ax.text(-1.0*Lx/2, 0.9*Ly/2, textbox,
-                backgroundcolor='white', fontsize='large', zorder=2, color='k')
+        ax.text(-Lx/2, Ly/2, textbox,
+                backgroundcolor='white', zorder=2, color='k',
+                horizontalalignment='left', verticalalignment='top')
 
     # Clean up plot appearance
     ax.axis('off')
@@ -228,31 +228,31 @@ if __name__ == "__main__":
     # animate(f_select, outpath='test-opole.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
 
 
-    # from coloring import ColorByConn, ColorC4Defects
-    # rect = SuperEllipse(ax=1.0,ay=0.5,n=20)
-    # # bg_style = ColorByConn(shape=rect, order=4, dark=True)
-    # # style = ColorC4Defects(shape=rect, dark=True, bgColor=bg_style)
+    from coloring import ColorByConn, ColorC4Defects
+    rect = SuperEllipse(ax=1.0,ay=0.5,n=20)
+    # bg_style = ColorByConn(shape=rect, order=4, dark=True)
+    # style = ColorC4Defects(shape=rect, dark=True, bgColor=bg_style)
 
-    # from coloring import ColorByEta0, ColorS2Defects
-    # bg_style = ColorByEta0(shape=rect, dark=True)
-    # style = ColorS2Defects(shape=rect, dark=True, bgColor=bg_style)
+    from coloring import ColorByEta0, ColorS2Defects
+    bg_style = ColorByEta0(shape=rect, dark=True)
+    style = ColorS2Defects(shape=rect, dark=True, bgColor=bg_style)
 
-    # figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=500)
-    # frames = gsd.hoomd.open('./test-rect.gsd',mode='r')
-    # f_select = frames[::10]
-    # animate(f_select, outpath='test-rect.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
+    figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=500)
+    frames = gsd.hoomd.open('./test-rect.gsd',mode='r')
+    f_select = frames[::10]
+    animate(f_select, outpath='test-rect.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
 
-    aeff = SuperEllipse(ax=0.52, ay=0.52, n=2.0)
-    sphere_grad = lambda r: r/np.linalg.norm(r, axis=-1, keepdims=True)
+    # aeff = SuperEllipse(ax=0.52, ay=0.52, n=2.0)
+    # sphere_grad = lambda r: r/np.linalg.norm(r, axis=-1, keepdims=True)
 
-    # from coloring import ColorByPsi
-    # style = ColorByPsi(dark=True, shape = aeff, surface_normal=sphere_grad)
+    # # from coloring import ColorByPsi
+    # # style = ColorByPsi(dark=True, shape = aeff, surface_normal=sphere_grad)
 
-    from coloring import ColorByConn, ColorC6Defects
-    bg_style = ColorByConn(dark=True, order=6, surface_normal=sphere_grad)
-    style = ColorC6Defects(dark=True, bgColor=bg_style, surface_normal=sphere_grad)
+    # from coloring import ColorByConn, ColorC6Defects
+    # bg_style = ColorByConn(dark=True, order=6, surface_normal=sphere_grad)
+    # style = ColorC6Defects(dark=True, bgColor=bg_style, surface_normal=sphere_grad)
 
-    figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=5, dpi=500)
-    frames = gsd.hoomd.open('./test-sphere.gsd',mode='r')
-    f_select = frames[0:600:3]
-    animate(f_select, outpath='test-sphere.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
+    # figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=5, dpi=500)
+    # frames = gsd.hoomd.open('./test-sphere.gsd',mode='r')
+    # f_select = frames[0:600:3]
+    # animate(f_select, outpath='test-sphere.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')

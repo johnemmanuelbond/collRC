@@ -16,15 +16,15 @@ import matplotlib.colors as mcol
 ############################################################################################################
 
 base_colors = dict(
-    white = np.array(mcol.to_rgb('white')),
-    grey = np.array(mcol.to_rgb('darkgrey')),
-    red = np.array(mcol.to_rgb('red')),
-    blue = np.array(mcol.to_rgb('blue')),
-    green = np.array(mcol.to_rgb('green')),
-    gold = np.array(mcol.to_rgb('gold')),
-    purple = np.array(mcol.to_rgb('magenta')),
-    orange = np.array(mcol.to_rgb('orange')),
-    cyan = np.array(mcol.to_rgb('cyan')),
+    white = np.array(mcol.to_rgba('white')),
+    grey = np.array(mcol.to_rgba('darkgrey')),
+    red = np.array(mcol.to_rgba('red')),
+    blue = np.array(mcol.to_rgba('blue')),
+    green = np.array(mcol.to_rgba('green')),
+    gold = np.array(mcol.to_rgba('gold')),
+    purple = np.array(mcol.to_rgba('magenta')),
+    orange = np.array(mcol.to_rgba('orange')),
+    cyan = np.array(mcol.to_rgba('cyan')),
 )
 
 
