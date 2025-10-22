@@ -110,8 +110,8 @@ def projected_patches(pts, orient, shape=_default_sphere, n_resolve=251, view_di
     :type view_dir: ndarray, optional
     :param view_dist: the distance from the viewer to the origin, defaults to 100.0
     :type view_dist: float, optional
-    :return: a PatchCollection of the specified shapes at the specified points and orientations, projected onto 2D
-    :rtype: PatchCollection
+    :return: a PatchCollection of the specified shapes at the specified points and orientations, projected onto 2D, as well as a boolean array indicating which particles are in front of the viewer
+    :rtype: Tuple[PatchCollection, ndarray]
     """
 
     e3 = view_dir/np.linalg.norm(view_dir)
@@ -138,7 +138,7 @@ def projected_patches(pts, orient, shape=_default_sphere, n_resolve=251, view_di
                                    zorder=int(r[2])+1) 
                    for r in proj_pts[to_render]]
 
-    return collections.PatchCollection(all_patches)
+    return collections.PatchCollection(all_patches), to_render
 
 
 

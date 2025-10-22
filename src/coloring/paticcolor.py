@@ -12,19 +12,14 @@ import gsd.hoomd
 from matplotlib.cm import hsv as hsv_map
 
 from visuals import SuperEllipse
-from .base import base_colors, color_gradient, ColorBase, _gsd_match
-from calc import local_patic, global_patic, neighbors, quat_to_angle, central_eta
+from .base import base_colors, color_gradient, ColorBase
+from calc import local_patic, global_patic, neighbors, quat_to_angle
 
 # base color functions
 _white_red = color_gradient(c1=base_colors['white'], c2=base_colors['red'])
 _grey_red = color_gradient(c1=base_colors['grey'], c2=base_colors['red'])
 _white_orange = color_gradient(c1=base_colors['white'], c2=base_colors['orange'])
 _grey_orange = color_gradient(c1=base_colors['grey'], c2=base_colors['orange'])
-
-# _white_green = color_gradient(c1=base_colors['white'], c2=base_colors['green'])
-# _grey_green = color_gradient(c1=base_colors['grey'], c2=base_colors['green'])
-# _white_cyan = color_gradient(c1=base_colors['white'], c2=base_colors['cyan'])
-# _grey_cyan = color_gradient(c1=base_colors['grey'], c2=base_colors['cyan'])
 
 _rainbow = lambda a: hsv_map(a).clip(0, 1)
 
@@ -57,29 +52,25 @@ class ColorByS2(ColorBase):
 
         # Local nematic order around each particle
         pts = self.snap.particles.position
-        self.nei = neighbors(pts, neighbor_cutoff=6*self.shape.ax)
+        self.nei = neighbors(pts, neighbor_cutoff=6*self._shape.ax)
         Zs, phis = local_patic(angles, self.nei, p=2)
         self.nem_l = Zs * np.exp(1j * 2 * phis)
 
-    def local_colors(self, snap: gsd.hoomd.Frame):
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping local S2 magnitude (white/grey -> red).
 
         :return: (N,3) RGB array
         :rtype: ndarray
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         return self._c(np.abs(self.nem_l))
 
-    def state_string(self, snap: gsd.hoomd.Frame):
+    def state_string(self, snap: gsd.hoomd.Frame = None):
         """
         :return: LaTeX-formatted summary string. i.e. ":math:`\\langle S_2\\rangle = 0.00`".
         :rtype: str
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         nem_l = np.abs(np.mean(self.nem_l))
         return f'$\\langle S_2\\rangle = {nem_l:.2f}$'
 
@@ -98,43 +89,37 @@ class ColorS2Phase(ColorByS2):
         # use rainbow mapping
         self._c = lambda ang: _rainbow(((ang + np.pi) / (2 * np.pi) + self._shift) % 1.0)
 
-    def local_colors(self, snap: gsd.hoomd.Frame):
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping local S2 phase angle.
         
         :return: (N,3) RGB array
         :rtype: ndarray
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         return self._c(np.angle(self.nem_l))
 
 
-class ColorGlobalS2(ColorByS2):
+class ColorByS2g(ColorByS2):
     """Color all particles uniformly by global nematic order (S2).
 
     :see: ColorByS2
     """
 
-    def local_colors(self, snap: gsd.hoomd.Frame):
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping global S2 magnitude (white/grey -> red).
 
         :return: (N,3) RGB array
         :rtype: ndarray
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         return self._c([np.abs(self.nem_g)]*len(self.nem_l))
 
-    def state_string(self, snap: gsd.hoomd.Frame):
+    def state_string(self, snap: gsd.hoomd.Frame = None):
         """
         :return: LaTeX-formatted summary string. i.e. ":math:`S_{2,g} = 0.00`".
         :rtype: str
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         return f'$S_{{2,g}} = {np.abs(self.nem_g):.2f}$'
 
 
@@ -164,58 +149,50 @@ class ColorByT4(ColorByS2):
 
         # Local nematic order around each particle
         pts = self.snap.particles.position
-        self.nei = neighbors(pts, neighbor_cutoff=6*self.shape.ax)
+        self.nei = neighbors(pts, neighbor_cutoff=6*self._shape.ax)
         Zs, phis = local_patic(angles, self.nei, p=2)
         self.tet_l = Zs * np.exp(1j * 4 * phis)
 
-    def local_colors(self, snap: gsd.hoomd.Frame):
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping local T4 magnitude (white/grey -> orange).
 
         :return: (N,3) RGB array
         :rtype: ndarray
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         return self._c(np.abs(self.tet_l))
 
-    def state_string(self, snap: gsd.hoomd.Frame):
+    def state_string(self, snap: gsd.hoomd.Frame = None):
         """
         :return: LaTeX-formatted summary string. i.e. ":math:`\\langle T_4\\rangle = 0.00`".
         :rtype: str
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         tet_l = np.abs(np.mean(self.tet_l))
         return f'$\\langle T_4\\rangle = {tet_l:.2f}$'
 
 
-class ColorGlobalT4(ColorByT4):
+class ColorByT4g(ColorByT4):
     """Color all particles uniformly by global tetratic order (T4).
 
     :see: ColorByT4
     """
 
-    def local_colors(self, snap: gsd.hoomd.Frame):
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping global T4 magnitude (white/grey -> orange).
 
         :return: (N,3) RGB array
         :rtype: ndarray
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         return self._c([np.abs(self.tet_g)]*len(self.tet_l))
 
-    def state_string(self, snap: gsd.hoomd.Frame):
+    def state_string(self, snap: gsd.hoomd.Frame = None):
         """
         :return: LaTeX-formatted summary string. i.e. ":math:`T_{4,g} = 0.00`".
         :rtype: str
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         return f'$T_{{4,g}} = {np.abs(self.tet_g):.2f}$'
 
 

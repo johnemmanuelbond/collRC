@@ -118,9 +118,26 @@ class ColorBase():
             self._c = base_colors['white']
         else:
             self._c = base_colors['grey']
-        self.snap = None
-    
-    def local_colors(self, snap: gsd.hoomd.Frame):
+        self._f = None
+
+    @property
+    def snap(self) -> gsd.hoomd.Frame:
+        """Get the current GSD frame used for coloring."""
+        return self._f
+
+    @snap.setter
+    def snap(self, snap: gsd.hoomd.Frame):
+        """Set the current GSD frame used for coloring."""
+        if not _gsd_match(self._f, snap):
+            self._f = snap
+            try: self.calc_state()
+            except AttributeError: pass
+
+    def calc_state(self):
+        """Calculate the state of the color mapping. Subclasses will overwrite by storing reaction coords."""
+        pass
+
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
         """
         Generate colors for each particle based on local properties. Will not recalculate if the frame matches the cached one.
         
@@ -129,11 +146,10 @@ class ColorBase():
         :return: Array of RGB colors for each particle
         :rtype: ndarray
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
+        if snap is not None: self.snap = snap
         return np.array([self._c] * self.snap.particles.N)
 
-    def state_string(self, snap: gsd.hoomd.Frame):
+    def state_string(self, snap: gsd.hoomd.Frame = None):
         """
         Generate descriptive string about the system state. Will not recalculate if the frame matches the cached one.
         
@@ -142,8 +158,7 @@ class ColorBase():
         :return: Descriptive string about the system state
         :rtype: str
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
+        if snap is not None: self.snap = snap
         return ""
 
 

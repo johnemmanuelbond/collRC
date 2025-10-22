@@ -9,7 +9,7 @@ import gsd.hoomd
 
 from calc import crystal_connectivity
 from visuals import SuperEllipse
-from .base import base_colors, color_gradient, ColorBase, _gsd_match
+from .base import base_colors, color_gradient, ColorBase
 from .paticcolor import ColorByS2
 from .psicolor import ColorByConn
 
@@ -42,34 +42,28 @@ class ColorS2Defects(ColorByS2):
     def calc_state(self):
         """Identify nematic defects"""
         super().calc_state()
-        self._bg.calc_state()
         self.defects = np.abs(self.nem_l)<0.5
 
-    def local_colors(self, snap: gsd.hoomd.Frame):
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping the background colorbase with defects in cyan.
 
         :return: (N,3) RGB array
         :rtype: ndarray
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
-
-        colors = self._bg.local_colors(snap)
+        if snap is not None: self.snap = snap
+        colors = self._bg.local_colors(snap=self.snap)
         colors[self.defects] = self._c
         return colors
-    
-    def state_string(self, snap: gsd.hoomd.Frame):
+
+    def state_string(self, snap: gsd.hoomd.Frame = None):
         """
-        :return: LaTeX-formatted summary string. i.e. ":math:`N_{S2}=00%`".
+        :return: LaTeX-formatted summary string. i.e. ":math:`N_{S2}=00\%`".
         :rtype: str
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         def_percent = 100*self.defects.mean()
-        old_str = self._bg.state_string(snap)
-        return f'{old_str}\n$N_{{S2}} = {def_percent:.2f}\%$'
+        old_str = self._bg.state_string(snap=self.snap)
+        return f'{old_str}\n$N_{{S2}} = {def_percent:.0f}\\%$'
 
 
 class ColorC6Defects(ColorByConn):
@@ -95,10 +89,9 @@ class ColorC6Defects(ColorByConn):
     def calc_state(self):
         """Identify C6 defects"""
         super().calc_state()
-        self._bg.calc_state()
         self.defects = self.con<0.95
 
-    def local_colors(self, snap: gsd.hoomd.Frame):
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return per-particle RGB colors highlighting defective particles in red.
 
         Mapping: for dark backgrounds this uses a white->red gradient; for light backgrounds a grey->red gradient. 
@@ -106,24 +99,19 @@ class ColorC6Defects(ColorByConn):
         :return: (N,3) array
         :rtype: ndarray
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
+        if snap is not None: self.snap = snap
         defect = (3*(1-self.con)).clip(0,1)[self.defects]
-
-        colors = self._bg.local_colors(snap)
+        colors = self._bg.local_colors(snap=self.snap)
         colors[self.defects] = self._c(defect)
         return colors
 
-    def state_string(self, snap: gsd.hoomd.Frame):
+    def state_string(self, snap: gsd.hoomd.Frame = None):
         """
         :return: LaTeX-formatted summary string. i.e. ":math:`\\langle1-C_n\\rangle=0.00`".
         :rtype: str
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
-        old_str = self._bg.state_string(snap)
+        if snap is not None: self.snap = snap
+        old_str = self._bg.state_string(snap=self.snap)
         con_g = self.con.mean()
         return f'{old_str}\n$\\langle 1-C_6\\rangle = {1-con_g:.2f}$'
     
@@ -153,7 +141,7 @@ class ColorC4Defects(ColorByConn):
     def calc_state(self):
         """Identify C4 defects"""
         super().calc_state()
-        self._bg.calc_state()
+        
         if self._is_proj:
             c4 = crystal_connectivity(self.psi, self.nei, phase_rotate=self.rel_rot**self._n, norm=4, crystallinity_threshold=0.5)
         else:
@@ -161,32 +149,26 @@ class ColorC4Defects(ColorByConn):
 
         self.defects = c4<0.95
 
-    def local_colors(self, snap: gsd.hoomd.Frame):
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return per-particle RGB colors highlighting defective particles in gold.
 
         :return: (N,3) array
         :rtype: ndarray
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
-
-        colors = self._bg.local_colors(snap)
+        if snap is not None: self.snap = snap
+        colors = self._bg.local_colors(snap=self.snap)
         colors[self.defects] = self._c
         return colors
 
-    def state_string(self, snap: gsd.hoomd.Frame):
+    def state_string(self, snap: gsd.hoomd.Frame = None):
         """
         :return: LaTeX-formatted summary string. i.e. ":math:`N_{C4}=00%`".
         :rtype: str
         """
-        if not _gsd_match(self.snap, snap):
-            self.snap = snap
-            self.calc_state()
-        
+        if snap is not None: self.snap = snap
         def_percent = 100*self.defects.mean()
-        old_str = self._bg.state_string(snap)
-        return f'{old_str}\n$N_{{C4}} = {def_percent:.2f}\%$'
+        old_str = self._bg.state_string(snap=self.snap)
+        return f'{old_str}\n$N_{{C4}} = {def_percent:.0f}\\%$'
 
 
 # ############################################################################################################

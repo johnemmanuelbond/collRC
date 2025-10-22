@@ -8,3 +8,4 @@ Documentation
    calc
    visuals
    coloring
+   render

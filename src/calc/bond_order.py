@@ -58,8 +58,8 @@ def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6) -> tuple
     #return the neighbor-averaged psi
     psi[sizes>0]*=1/sizes[sizes>0]
     psi[sizes==0]=0
-    
-    return psi, np.abs(np.mean(psi_ij))
+
+    return psi
 
 
 def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray, rx:float = 1.0, ry:float = 1.0, order:int = 6) -> tuple[np.ndarray,float]:
@@ -111,7 +111,7 @@ def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray,
     psi[sizes>0]*=1/sizes[sizes>0]
     psi[sizes==0]=0
     
-    return psi, np.abs(np.mean(psi_ij))
+    return psi
 
 from .locality import local_vectors
 
@@ -223,7 +223,10 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
     psi_i = np.array([psis]*pnum)
     psi_j = np.conjugate(nei_rotate*psi_i.T)
 
-    chi_ij = np.abs(np.real(psi_i*psi_j))/np.abs(psi_i*psi_j)
-    chi_ij[np.abs(psi_i*psi_j)==0]=0
+    chi_top = np.abs(np.real(psi_i*psi_j))
+    chi_bot = np.abs(psi_i*psi_j)
+    chi_top[chi_bot==0]=0
+    chi_bot[chi_bot==0]=1  # prevent div by zero
+    chi_ij = chi_top/chi_bot
 
     return np.sum(chi_ij>crystallinity_threshold,axis=-1)/norm

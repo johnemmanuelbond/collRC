@@ -1,7 +1,7 @@
 coloring package
 ================
 
-Links together methods from :doc:`calc` and :doc:`visuals` to process simulation data for visualization. Also contains color base classes and utilities for defining color schemes based on reaction coordinates.
+Builds methods from :doc:`calc` into a framework of classes and subclasses which process particle data (in the form of `gsd <https://gsd.readthedocs.io/en/latest/>`_ frames) into lists of colors based on reaction coordiantes.
 
 base module
 -----------
@@ -24,6 +24,14 @@ paticcolor module
 -----------------
 
 .. automodule:: coloring.paticcolor
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+morphcolor module
+-----------------
+
+.. automodule:: coloring.morphcolor
     :members:
     :undoc-members:
     :show-inheritance:
