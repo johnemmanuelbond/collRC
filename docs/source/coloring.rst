@@ -1,10 +1,10 @@
-coloring package
-================
+coloring module
+===============
 
-Builds methods from :doc:`calc` into a framework of classes and subclasses which process particle data (in the form of `gsd <https://gsd.readthedocs.io/en/latest/>`_ frames) into lists of colors based on reaction coordiantes.
+Builds methods from :doc:`calc <calc>` into a framework of classes and subclasses which process particle data (in the form of `gsd <https://gsd.readthedocs.io/en/latest/>`_ frames) into lists of colors based on reaction coordiantes.
 
-base module
------------
+base submodule
+--------------
 
 .. automodule:: coloring.base
     :members:
@@ -12,32 +12,32 @@ base module
     :show-inheritance:
 
 
-psicolor module
----------------
-
-.. automodule:: coloring.psicolor
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-paticcolor module
------------------
-
-.. automodule:: coloring.paticcolor
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-morphcolor module
------------------
+morphcolor submodule
+--------------------
 
 .. automodule:: coloring.morphcolor
     :members:
     :undoc-members:
     :show-inheritance:
 
-defectcolor module
+paticcolor submodule
+--------------------
+
+.. automodule:: coloring.paticcolor
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+psicolor submodule
 ------------------
+
+.. automodule:: coloring.psicolor
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+defectcolor submodule
+---------------------
 
 .. automodule:: coloring.defectcolor
     :members:

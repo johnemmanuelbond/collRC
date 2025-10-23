@@ -3,15 +3,15 @@ calc module
 
 collRC is all about calculating and representing reaction coordinates from simulated colloidal ensembles. This module contains all of the framework to build up the various calculations needed to compute robust reaction coordinates:
 
-The `:mod:locality` module processes particle positions to compute local environment metrics like nearest neighbors in flat, stretched, and projected 2D spaces.
+The :py:mod:`locality` module processes particle positions to compute local environment metrics like nearest neighbors in flat, stretched, and projected 2D spaces.
 
-The `:mod:morphology` module computes information like local density and gyration tensors of ensembles and ensemble subsets.
+The :py:mod:`morphology` module computes information like local density and gyration tensors of ensembles and ensemble subsets.
 
-The `:mod:orient_order` module computes complex-valued local and global p-atic orientational order.
+The :py:mod:`orient_order` module computes complex-valued local and global p-atic orientational order.
 
-The `:mod:bond_order` module computes complex-valued bond orientational order parameters in flat, stretched, and projected 2D spaces.
+The :py:mod:`bond_order` module computes complex-valued bond orientational order parameters in flat, stretched, and projected 2D spaces.
 
-The `:mod:clusters` module computes identifies spatially correlated groups of particles and computes statistics on their sizes and shapes.
+The :py:mod:`clusters` module computes identifies spatially correlated groups of particles and computes statistics on their sizes and shapes.
 
 locality submodule
 ------------------

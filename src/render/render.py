@@ -11,9 +11,9 @@ from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches
 from coloring import ColorBase
 
 def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
-                 dpi=600, figsize=3.5,
-                 PEL='contour', dark=True,
-                 show_text=True, **kwargs):
+                 PEL='contour', show_text=True,
+                 dpi=600, figsize=3.5, dark=True,
+                **kwargs):
     """
     Create a visualization of a single GSD frame with superellipse particles and optional field overlays.
 
@@ -21,14 +21,16 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
     :type snap: gsd.hoomd.Frame
     :param style: :py:class:`ColorBase` object for coloring scheme
     :type style: ColorBase
+    :param PEL: Type of potential energy landscape (PEL) overlay to render; options are 'contour' or 'spectral' (default: 'contour')
+    :type PEL: str, optional
+    :param show_text: Whether to display text annotations (default: True)
+    :type show_text: bool, optional
     :param dpi: Resolution for output image (default: 600)
     :type dpi: int, optional
     :param figsize: Base figure size in inches (default: 3.5)
     :type figsize: float, optional
     :param dark: Whether to use dark background theme (default: True)
     :type dark: bool, optional
-    :param show_text: Whether to display text annotations (default: True)
-    :type show_text: bool, optional
     :param kwargs: Additional options for customizating action strings and other overlays
     :return: Matplotlib figure and axis objects
     :rtype: Tuple[plt.Figure, plt.Axes]
@@ -104,8 +106,31 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
 
 
 def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
-                  view_dir = np.array([0,0,1]), view_dist=100,
-                  dpi=600, figsize=3.5, dark=True, show_text=True, **kwargs):
+                  view_dir = np.array([0,0,1]), view_dist=100, show_text=True,
+                  dpi=600, figsize=3.5, dark=True, **kwargs):
+    """
+    Create a visualization of a single GSD frame with particles on a spherical surface.
+
+    :param snap: GSD frame object containing particle data and simulation state
+    :type snap: gsd.hoomd.Frame
+    :param style: :py:class:`ColorBase` object for coloring scheme
+    :type style: ColorBase
+    :param view_dir: Direction vector for viewing the sphere (default: [0,0,1])
+    :type view_dir: ndarray, optional
+    :param view_dist: Distance from the sphere center to the viewpoint (default: 100)
+    :type view_dist: float, optional
+    :param show_text: Whether to display text annotations (default: True)
+    :type show_text: bool, optional
+    :param dpi: Resolution for output image (default: 600)
+    :type dpi: int, optional
+    :param figsize: Base figure size in inches (default: 3.5)
+    :type figsize: float, optional
+    :param dark: Whether to use dark background theme (default: True)
+    :type dark: bool, optional
+    :param kwargs: Additional options for customizating action strings and other overlays
+    :return: Matplotlib figure and axis objects
+    :rtype: Tuple[plt.Figure, plt.Axes]
+    """
     
     # Set matplotlib style based on background preference
     if dark: plt.style.use('dark_background')

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Contains many helper methods to compute geometric properties of particle configurations, including neighbor lists, handling periodic boundary conditions, and local tangent plane vectors on curved surfaces.
+Contains methods to calculate morphological properties of particle ensembles and subsets of ensembles, including local area fraction, gyration tensors, and functions of their eigenvalues like gyration radius, acylindricity, asphericity and anisotropy.
+
 """
 
 import numpy as np
