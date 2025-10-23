@@ -131,8 +131,8 @@ def main():
         except Exception as e:
             report[str(f.relative_to(ROOT))] = [{'type':'parse_error','msg':str(e),'lineno':0}]
             total_issues += 1
-    out_json = ROOT / 'docstring_report.json'
-    out_md = ROOT / 'docstring_report.md'
+    out_json = ROOT / 'tools/docstring_report.json'
+    out_md = ROOT / 'tools/docstring_report.md'
     with open(out_json,'w') as fh:
         json.dump(report, fh, indent=2)
     # write simple markdown summary

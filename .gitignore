@@ -210,4 +210,4 @@ __marimo__/
 src/**/*.gsd
 src/**/*.mp4
 
-src/tools/
+tools/
