@@ -1,10 +1,11 @@
-"""Color schemes for order-parameter visualizations.
+# -*- coding: utf-8 -*-
+
+"""
+Color schemes for order-parameter visualizations.
 
 Provides coloring classes that map local and global bond-order,
 connectivity and defect measures into RGB colors. Classes support
 dark/light themes and projected geometries.
-
-:module: process.psicolor
 """
 
 import numpy as np

@@ -1,18 +1,18 @@
-visuals package
-===============
+visuals module
+==============
 
 Contains geometric shapes and field plotting utilities for visualization.
 
-shapes module
--------------
+shapes submodule
+----------------
 
 .. automodule:: visuals.shapes
     :members:
     :undoc-members:
     :show-inheritance:
 
-fields module
--------------
+fields submodule
+----------------
 
 .. automodule:: visuals.fields
     :members:

@@ -1,10 +1,10 @@
-"""Color schemes for nematic and tetratic orientational order.
+# -*- coding: utf-8 -*-
+"""
+Color schemes for nematic and tetratic orientational order.
 
 Provides simple coloring classes that map  p-atic magnitude, phase,
 defects and global summaries into RGB colors. Classes support
 dark/light themes.
-
-WIP: Classes DO NOT currently support projected particle geometries
 """
 
 import numpy as np

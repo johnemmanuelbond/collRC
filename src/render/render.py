@@ -1,5 +1,4 @@
-"""Functions for rendering simulation snapshots as publication-quality figures."""
-
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import gsd.hoomd

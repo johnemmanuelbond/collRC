@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Color schemes for highlighting various kinds of defects
 """

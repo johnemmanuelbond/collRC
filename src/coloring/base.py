@@ -1,9 +1,8 @@
+# -*- coding: utf-8 -*-
 """
-Color scheming module for visualizing particle simulation data.
-
-This module provides color mapping functions and classes for visualizing various
-physical properties of particle systems, including crystalline order, nematic order,
-and electrical potential fields. It supports both dark and light backgrounds.
+Base color scheming module for visualizing particle simulation data. Provides basic
+color definitions, color mixing functions, and a base class for defining coloring
+schemes based on particle state.
 """
 
 import numpy as np
