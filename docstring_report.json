@@ -1,0 +1,409 @@
+{
+  "src/calc/clusters.py": [
+    {
+      "type": "missing_docstring",
+      "msg": "Missing function docstring",
+      "lineno": 13
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing function docstring",
+      "lineno": 28
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing function docstring",
+      "lineno": 38
+    }
+  ],
+  "src/calc/locality.py": [
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"cutoff\" missing from docstring",
+      "lineno": 159
+    },
+    {
+      "type": "param_extra",
+      "msg": "Docstring documents parameter \"neighbor_cutoff\" which is not in signature",
+      "lineno": 159
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing function docstring",
+      "lineno": 185
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"pts\" missing from docstring",
+      "lineno": 198
+    },
+    {
+      "type": "param_extra",
+      "msg": "Docstring documents parameter \"x\" which is not in signature",
+      "lineno": 198
+    }
+  ],
+  "src/calc/morphology.py": [
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"gyr\" missing from docstring",
+      "lineno": 183
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"ref\" missing from docstring",
+      "lineno": 183
+    },
+    {
+      "type": "param_extra",
+      "msg": "Docstring documents parameter \"gyr_tensor\" which is not in signature",
+      "lineno": 183
+    }
+  ],
+  "src/coloring/base.py": [
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 114
+    },
+    {
+      "type": "return_missing",
+      "msg": "Function returns a value but docstring lacks :return/:rtype",
+      "lineno": 123
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 128
+    }
+  ],
+  "src/coloring/defectcolor.py": [
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 34
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 59
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 70
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 89
+    },
+    {
+      "type": "short_docstring",
+      "msg": "Docstring very short/uninformative",
+      "lineno": 101
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 106
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 120
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 141
+    },
+    {
+      "type": "short_docstring",
+      "msg": "Docstring very short/uninformative",
+      "lineno": 153
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 164
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 175
+    }
+  ],
+  "src/coloring/morphcolor.py": [
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 33
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 46
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 55
+    }
+  ],
+  "src/coloring/paticcolor.py": [
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 39
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 62
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 71
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 89
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 95
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 111
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 120
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 139
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 158
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 167
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 183
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 192
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing class docstring",
+      "lineno": 213
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 214
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 219
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 227
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 237
+    }
+  ],
+  "src/coloring/psicolor.py": [
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 53
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 77
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 90
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 135
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 150
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 154
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 176
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 183
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 205
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 224
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 235
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 251
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 256
+    },
+    {
+      "type": "return_mismatch",
+      "msg": "Docstring documents return value but function has no return with value",
+      "lineno": 271
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing method docstring",
+      "lineno": 278
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 283
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"snap\" missing from docstring",
+      "lineno": 296
+    }
+  ],
+  "src/render/render.py": [
+    {
+      "type": "param_extra",
+      "msg": "Docstring documents parameter \"kwargs\" which is not in signature",
+      "lineno": 15
+    },
+    {
+      "type": "param_extra",
+      "msg": "Docstring documents parameter \"kwargs\" which is not in signature",
+      "lineno": 110
+    },
+    {
+      "type": "return_missing",
+      "msg": "Function returns a value but docstring lacks :return/:rtype",
+      "lineno": 205
+    },
+    {
+      "type": "missing_docstring",
+      "msg": "Missing function docstring",
+      "lineno": 223
+    }
+  ],
+  "src/visuals/fields.py": [
+    {
+      "type": "short_docstring",
+      "msg": "Docstring very short/uninformative",
+      "lineno": 52
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"n\" missing from docstring",
+      "lineno": 52
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"dg\" missing from docstring",
+      "lineno": 52
+    },
+    {
+      "type": "return_mismatch",
+      "msg": "Docstring documents return value but function has no return with value",
+      "lineno": 118
+    },
+    {
+      "type": "param_extra",
+      "msg": "Docstring documents parameter \"contour_kwargs\" which is not in signature",
+      "lineno": 183
+    },
+    {
+      "type": "param_extra",
+      "msg": "Docstring documents parameter \"pcolormesh_kwargs\" which is not in signature",
+      "lineno": 235
+    },
+    {
+      "type": "param_extra",
+      "msg": "Docstring documents parameter \"quiver_kwargs\" which is not in signature",
+      "lineno": 285
+    }
+  ],
+  "src/visuals/shapes.py": [
+    {
+      "type": "short_docstring",
+      "msg": "Docstring very short/uninformative",
+      "lineno": 26
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"ax\" missing from docstring",
+      "lineno": 26
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"ay\" missing from docstring",
+      "lineno": 26
+    },
+    {
+      "type": "param_missing",
+      "msg": "Parameter \"n\" missing from docstring",
+      "lineno": 26
+    }
+  ]
+}

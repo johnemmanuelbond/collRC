@@ -209,3 +209,5 @@ __marimo__/
 # test gsd data
 src/**/*.gsd
 src/**/*.mp4
+
+src/tools/
