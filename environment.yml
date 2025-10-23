@@ -13,4 +13,5 @@ dependencies:
   - sphinx-rtd-theme
   - pip
   - sphinx-book-theme
+  - sphinxcontrib-video
 prefix: /home/jonck/miniconda3/envs/color-scheming

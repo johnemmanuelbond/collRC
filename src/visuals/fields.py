@@ -143,37 +143,42 @@ class Field:
         all_angles = np.full(shape,angles)
         ss = np.sin(m*(all_angles - t0s))
 
+    def update_from_gsd(self, frame:gsd.hoomd.Frame):
+        """Reads field parameters from a GSD frame log and updates the current Field instance.
 
-def read_field_from_gsd(frame:gsd.hoomd.Frame, field=None) -> Field:
-    """Reads field parameters from a GSD frame log and returns a :py:class:`Field` instance.
+        :param frame: A GSD frame containing field parameters in its log.
+        :type frame: gsd.hoomd.Frame
+        """
 
-    :param frame: A GSD frame containing field parameters in its log.
-    :type frame: gsd.hoomd.Frame
-    :param field: An optional ``Field`` instance to populate. If None, a new instance is created., defaults to None
-    :type field: ``Field``, optional
-    :return: A ``Field`` instance initialized with parameters from the frame log.
-    :rtype: :py:class:`Field`
-    """
+        log = frame.log
+        try:
+            dg = log['dg'][0]
+            k_trans = log['k_trans']
+            k_rot = log['k_rot']
+            direct = log['direct']
+        except KeyError as e:
+            raise KeyError("The provided GSD frame does not contain field parameters in its log.") from e
 
-    log = frame.log
-    try:
-        dg = log['dg']
-        k_trans = log['k_trans']
-        k_rot = log['k_rot']
-        direct = log['direct']
-    except KeyError as e:
-        raise KeyError("The provided GSD frame does not contain field parameters in its log.") from e
+        assert self.num_fields == len(direct), "Provided Field instance has a different number of fields than the GSD frame log."
 
-    if field is None:
-        field = Field(n=len(direct), dg=dg[0])
-    else:
-        assert field.num_fields == len(direct), "Provided Field instance has a different number of fields than the GSD frame log."
+        self.direct = direct
+        self.k_trans = k_trans
+        self.k_rot = k_rot
+        self.electrode_gap = dg
 
-    field.direct = direct
-    field.k_trans = k_trans
-    field.k_rot = k_rot
+    @classmethod
+    def create_from_gsd(cls, frame:gsd.hoomd.Frame):
+        """Reads field parameters from a GSD frame log and returns a :py:class:`Field` instance.
 
-    return field
+        :param frame: A GSD frame containing field parameters in its log.
+        :type frame: gsd.hoomd.Frame
+        :return: A ``Field`` instance initialized with parameters from the frame log.
+        :rtype: :py:class:`Field`
+        """
+        n = len(frame.log['direct'])
+        field = cls(n=n)
+        field.update_from_gsd(frame)
+        return field
 
 
 _default_qpole = Field(n=2,dg=30)
@@ -199,8 +204,8 @@ def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, **contour
     # Create a grid for evaluating the potential
     xx = np.linspace(-dg/2, dg/2, 1000)
     yy = np.linspace(-dg/2, dg/2, 1000)
-    XY = np.meshgrid(0.5*(xx[1:]+xx[:-1]), 0.5*(yy[1:]+yy[:-1]))
-    U = field.U_trans(*XY)
+    XX,YY = np.meshgrid(0.5*(xx[1:]+xx[:-1]), 0.5*(yy[1:]+yy[:-1]))
+    U = field.U_trans(XX,YY)
 
     # Determine appropriate contour levels based on potential range
     if levels is None:
@@ -225,7 +230,7 @@ def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, **contour
     if 'colors' not in contour_kwargs:
         contour_kwargs['colors'] = 'grey'
 
-    cs = ax.contour(0.5*(xx[1:]+xx[:-1]), 0.5*(yy[1:]+yy[:-1]), U,
+    cs = ax.contour(XX,YY, U,
                     levels= levels, **contour_kwargs)
 
     return cs

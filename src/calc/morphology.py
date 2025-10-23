@@ -13,7 +13,7 @@ def central_eta(pts:np.ndarray, box:list, ptcl_area:float = np.pi/4, nbins:int=3
 
     .. math::
 
-        \\eta = \\langle\\frac{N\\cdot A_p}{A_{bin}}\\rangle_{{bins}}
+        \\eta = \\bigg\\langle\\frac{N\\cdot A_p}{A_{bin}}\\bigg\\rangle_{{bins}}
 
     :param pts: an (N,d) array of particle positions in any dimensions (though only the first two are used)
     :type pts: ndarray
@@ -111,6 +111,7 @@ def gyration_tensor(pts:np.ndarray, ref:np.ndarray|None = None) -> np.ndarray:
     gyrate = centered.T @ centered
     return gyrate/len(pts)
 
+
 def acylindricity(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     """returns the acylindricity of a set of points, defined as a function of the gyration tensor eigenvalues:
 
@@ -157,6 +158,7 @@ def asphericity(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     gyr_evals = np.linalg.eigvalsh(gyr)
     return (gyr_evals[1] - gyr_evals[0]) / np.mean(gyr_evals[:2])
 
+
 def shape_anisotropy(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     """returns the anisotropy of a set of points, defined as a function of the gyration tensor eigenvalues:
 
@@ -180,32 +182,23 @@ def shape_anisotropy(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     lz, ly, lx = np.linalg.eigvalsh(gyr) # ascending order
     return (3/2 * (lz**4 + ly**4 + lx**4) / (lx**2 + ly**2 + lz**2)**2) - 1/2
 
-def circularity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.array([0,1,0])) -> float:
+
+def circularity(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     """
-    the 'circularity' of a colloidal cluster as used in `Zhang, Sci. Adv. 2020 <https://doi.org/10.1126/sciadv.abd6716>`_. This metric is calcuated using the principal moments of the :py:meth:`gyration_tensor`. For 2d ensembles, after diagonalization:
+    returns the 'circularity' of a 2D colloidal cluster as used in `Zhang, Sci. Adv. 2020 <https://doi.org/10.1126/sciadv.abd6716>`_:
 
     .. math::
 
-        S_{mn} = \\begin{pmatrix}
-        \\lambda_1^2 & 0 & 0 \\\\
-        0 & \\lambda_2^2 & 0 \\\\
-        0 & 0 & \\lambda_3^2=0
-        \\end{pmatrix}
-
-    With the prinicipal moments defined as :math:`\\lambda_1>\\lambda_2`. Under these definitions, we can compute the radius of gyration :math:`R_g=\\sqrt{{\\lambda_1^2 + \\lambda_2^2}}` and the acylindricity :math:`a = \\lambda_1-\\lambda_2`, then combine them to define the circularity:
-
-    .. math::
-
-        c = 1 - \\frac{a}{R_g}
+        c = 1 - \\frac{\\lambda_x-\\lambda_y}{\\sqrt{\\lambda_x^2 + \\lambda_y^2}} 
     
-    When the cluster is circular the two principal moments are equal and so :math:`a=0 \\to c=1`. When the cluster is a linear chain, the smaller principal moment approaches zero, and so :math:`a=R_g=\\lambda_1 \\to c=0`.
-
+    Where :math:`\\lambda_x^2\\geq\\lambda_y^2\\geq\\lambda_z^2\\simeq0` are the eigenvalues of the gyration tensor (notably ordered opposite from the other methods defined above). When the cluster is circular the two principal moments are equal and so :math:`c=1`. When the cluster is a linear chain, the smaller principal moment approaches zero, and so :math:`c\\to0`. 
+        
     :param pts: (N,d) array of particle positions in 'd' dimensions
     :type pts: ndarray
     :param gyr: (d,d) gyration tensor of the ensemble, optional
     :type gyr: ndarray
-    :return: _description_
-    :rtype: float
+    :return: the complex circularity of the particles
+    :rtype: complex
     """
     if gyr is None:
         assert pts is not None, 'must provide either pts or gyr'
@@ -218,6 +211,55 @@ def circularity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.arra
     a = lx**0.5 - ly**0.5
     rg = (lx+ly)**0.5
     c = 1-a/rg
+
+    return c
+
+
+def ellipticity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.array([0,1,0])) -> float:
+    """
+    Here we expand on the 'circularity' of a colloidal cluster as used in `Zhang, Sci. Adv. 2020 <https://doi.org/10.1126/sciadv.abd6716>`_. This metric is calcuated using the principal moments of the :py:meth:`gyration_tensor`. For 2d ensembles, after diagonalization:
+
+    .. math::
+
+        S_{mn} \\to \\Lambda_{mn} = \\begin{pmatrix}
+        \\lambda_x^2 & 0 & 0 \\\\
+        0 & \\lambda_y^2 & 0 \\\\
+        0 & 0 & \\lambda_z^2\\simeq0
+        \\end{pmatrix}
+
+    With the prinicipal moments defined :math:`\\lambda_x^2\\geq\\lambda_y^2\\geq\\lambda_z^2`. Using these principal moments and the major axis (largest eigenvector) :math:`\\mathbf{e}_x`), we can define the circularity magnitude and orientation of the cluster relative to a reference vector, :math:`\\hat{\\mathbf{\\gamma}}`, (wrapped from -π/2 to π/2):
+
+    .. math::
+
+        1 - c = \\frac{\\lambda_x-\\lambda_y}{\\sqrt{\\lambda_x^2 + \\lambda_y^2}} \\quad \\theta = \\arccos(\\mathbf{e}_x \\cdot \\hat{\\mathbf{\\gamma}})
+    
+    When the cluster is circular the two principal moments are equal and so :math:`1-c=0`, and the angle `\\theta` is irrelevant. When the cluster is a linear chain, the smaller principal moment approaches zero, and so :math:`1-c\\to1` and the angle `\\theta` points along the line: we can summarily express this as a complex number:
+
+    .. math::
+
+        \\varepsilon = (1-c) e^{i\\theta}
+        
+
+    :param pts: (N,d) array of particle positions in 'd' dimensions
+    :type pts: ndarray
+    :param gyr: (d,d) gyration tensor of the ensemble, optional
+    :type gyr: ndarray
+    :param ref: reference direction in d-dimensional space to which to measure the major axis orientation, defaults to y-axis
+    :type ref: ndarray , optional
+    :return: the complex circularity of the particles
+    :rtype: complex
+    """
+    if gyr is None:
+        assert pts is not None, 'must provide either pts or gyr'
+        gyr = gyration_tensor(pts)
+
+    mom, evecs = np.linalg.eig(gyr)
+    lx = np.sort(mom)[-1]
+    ly = np.sort(mom)[-2]
+
+    a = lx**0.5 - ly**0.5
+    rg = (lx+ly)**0.5
+    c = a/rg
 
     ax = evecs[np.sort(mom)][:, -1]
     theta = (np.arccos(ax @ ref)+np.pi/2)%np.pi - np.pi/2

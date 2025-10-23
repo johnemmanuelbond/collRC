@@ -6,7 +6,7 @@ Contains methods to calculate bond orientational order. First in flat space, the
 import numpy as np
 
 
-def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6) -> tuple[np.ndarray,float]:
+def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_global=False) -> tuple[np.ndarray,float]:
     """Calculates the local and global bond orientational order parameter of each particle in a 2D configuration with respect to the y axis. The local n-fold bond orientaitonal order for a particle :math:`j` is:
 
     .. math::
@@ -27,6 +27,8 @@ def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6) -> tuple
     :type nei_bool: ndarray
     :param order: n-fold order defines the argument of the complex number used to calculate psi_n, defaults to 6
     :type order: int, optional
+    :param ret_global: whether to return the global bond order parameter, defaults to False
+    :type ret_global: bool, optional
     :return: [N] array of complex bond orientational order parameters, and the norm of their mean.
     :rtype: tuple(ndarray, scalar)
     """
@@ -59,11 +61,20 @@ def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6) -> tuple
     psi[sizes>0]*=1/sizes[sizes>0]
     psi[sizes==0]=0
 
-    return psi
+    if ret_global:
+        return psi, np.abs(psi_ij.mean())
+    else:
+        return psi
 
 
-def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray, rx:float = 1.0, ry:float = 1.0, order:int = 6) -> tuple[np.ndarray,float]:
-    """Computes the local and global stretched bond orientational order parameter. This calculation rotates coordinates into a frame of reference stretched according to the long and short axes of each particle according to equations given in `(Torrez-Diaz Soft Matter, 2022) <https://doi.org/10.1039/D1SM01523K>`_.
+def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray, rx:float = 1.0, ry:float = 1.0, order:int = 6, ret_global=False) -> tuple[np.ndarray,float]:
+    """Computes the local and global stretched bond orientational order parameter. This calculation rotates coordinates into a frame of reference stretched according to the long and short axes of each particle according to equations given in `(Torrez-Diaz Soft Matter, 2022) <https://doi.org/10.1039/D1SM01523K>`_. In the stretched coordinate system, the angle between particles is given as:
+
+    .. math::
+
+        \\theta^s_{jk} = \\tan^{-1}\\big[(\\delta y_jk/r_y) \\big/ (\\delta x_jk/r_x)\\big]
+
+
 
     :param pts: [Nxd] array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
     :type pts: ndarray
@@ -111,7 +122,10 @@ def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray,
     psi[sizes>0]*=1/sizes[sizes>0]
     psi[sizes==0]=0
     
-    return psi
+    if ret_global:
+        return psi, np.abs(psi_ij.mean())
+    else:
+        return psi
 
 from .locality import local_vectors
 

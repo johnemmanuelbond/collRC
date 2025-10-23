@@ -11,7 +11,11 @@ DEFAULT_CUTOFF = 0.5*(1+np.sqrt(3))
 
 
 def neighbors(pts:np.ndarray, neighbor_cutoff:float|None = None, num_closest:int|None = None) -> np.ndarray:
-    """Determines neighbors in a configuration of particles based on a cutoff distance.
+    """Determines neighbors in a configuration of particles based on a cutoff distance:
+
+    .. math::
+
+        n_{ij} = \\delta r_{ij} < r_{cut}
 
     :param pts: (N,d) array of particle positions in 'D' dimensions.
     :type pts: ndarray
@@ -43,7 +47,7 @@ def neighbors(pts:np.ndarray, neighbor_cutoff:float|None = None, num_closest:int
 def quat_to_angle(quat:np.ndarray) -> np.ndarray:
     """
 
-    Finds the angle :math:`\\theta` about the z-axis from a quaternion representation in 2D: :math:`q = \\cos(\\theta/2) + \\sin(\\theta/2) \\mathbf{k}`
+    Finds the angle :math:`\\theta` about the z-axis from a quaternion representation in 2D: :math:`q = \\cos(\\theta/2) + \\sin(\\theta/2)\\mathbf{k}`
 
     :param quat: a list of quaterions encoding particle orientation
     :type quat: ndarray
@@ -55,7 +59,13 @@ def quat_to_angle(quat:np.ndarray) -> np.ndarray:
 
 
 def stretched_neighbors(pts:np.ndarray, angles:np.ndarray, rx:float = 1.0, ry:float = 1.0, neighbor_cutoff:float = 2.6) ->np.ndarray:
-    """Determines neighbors in a configuration of anisotropic particles based on a cutoff distance in the rotated/stretched frame of each particle.
+    """Determines neighbors in a configuration of anisotropic particles based on a cutoff distance in the rotated/stretched frame of each particle using the equaitons defined in `(Torrez-Diaz Soft Matter, 2022) <https://doi.org/10.1039/D1SM01523K>`_:
+
+    .. math::
+
+        n_{ij} = \\sqrt{\\big(\\mathbf{\\delta r_ij} \\cdot \\hat{\\mathbf{x_i}}/r_x\\big) + \\big(\\mathbf{\\delta r_ij} \\cdot \\hat{\\mathbf{y_i}}/r_y\\big)} < n_{cut}
+
+    Where :math:`\\hat{\\mathbf{x_i}} = \\cos(\\theta_i)\\hat{\\mathbf{x}} + \\sin(\\theta_i)\\hat{\\mathbf{y}}` and :math:`\\hat{\\mathbf{y_i}} = -\\sin(\\theta_i)\\hat{\\mathbf{x}} + \\cos(\\theta_i)\\hat{\\mathbf{y}}` are the local unit vectors along the long (:math:`r_x`) and short (:math:`r_y`) axes of particle :math:`i`, respectively.
 
     :param pts: the position of the centers of each anisotropic particle in the configuration
     :type pts: ndarray
@@ -65,7 +75,7 @@ def stretched_neighbors(pts:np.ndarray, angles:np.ndarray, rx:float = 1.0, ry:fl
     :type rx: scalar, optional
     :param ry: the radius of the short axis of the partice (i.e. insphere radius), defaults to 1.0
     :type ry: scalar, optional
-    :param neighbor_cutoff: specify the stretched distance which defines neighbors. Defaults to 2.6.
+    :param neighbor_cutoff: specify the dimemsionless stretched distance which defines neighbors. Defaults to 2.6.
     :type neighbor_cutoff: scalar, optional
     :return: (N,N) boolean array indicating which particles are neighbors
     :rtype: ndarray
@@ -157,7 +167,13 @@ def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8)-
 
 
 def padded_neighbors(pts:np.ndarray, basis:np.ndarray, neighbor_cutoff:float = DEFAULT_CUTOFF, padfrac:float = 0.8) -> np.ndarray:
-    """Determines neighbors in a configuration of particles based on a cutoff distance while respecting the periodic boundary condition using :py:meth:`expand_around_pbc`.
+    """Determines neighbors in a configuration of particles based on a cutoff distance while respecting the periodic boundary condition using :py:meth:`expand_around_pbc`:
+
+    .. math::
+
+        n_{ij} = \\delta r_{ij} < r_{cut} || \\delta r_{ij'} < r_{cut}
+    
+    For particles :math:`j'` which are periodic images of particle :math:`j`.
 
     :param pts: (N,d) array of particle positions in 'd' dimensions.
     :type pts: ndarray
@@ -196,14 +212,14 @@ def _lvec(x,gradient,ref = np.array([0,-1,0])):
     return e1, e2
 
 def local_vectors(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,-1,0])):
-    """computes two orthogonal unit vectors tangent to the local surface defined by the normal vector (gradient of implicit function):
+    """computes two orthogonal unit vectors tangent to the local surface at a point :math:`\\mathbf{r}_i`:
 
     .. math::
 
-        \\mathbf{e}_1 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{r}}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{r}|} \\\\
-        \\mathbf{e}_2 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{e}_1}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{e}_1|}
+        \\mathbf{e}_{1,i} = \\frac{\\nabla f(\\mathbf{r}_i) \\times \\hat{\\mathbf{\\gamma}}}{|\\nabla f(\\mathbf{r}_i) \\times \\hat{\\mathbf{\\gamma}}|} \\\\
+        \\mathbf{e}_{2,i} = \\frac{\\nabla f(\\mathbf{r}_i) \\times \\mathbf{e}_1}{|\\nabla f(\\mathbf{r}_i) \\times \\mathbf{e}_1|}
     
-    given the implicit function :math:`f(x,y,z)=0` defines the surface, and :math:`\\mathbf{r}` is an arbitrary reference vector.
+    Given the implicit function :math:`f(x,y,z)=0` defines the surface, its gradient :math:`\\nabla f` defines the normal vector, and :math:`\\hat{\\mathbf{\\gamma}}` is an arbitrary reference unit vector.
 
     :param pts: an (N,3) array of positions at which to compute local tangent vectors
     :type pts: ndarray
@@ -222,9 +238,9 @@ def tangent_connection(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.arra
 
     .. math::
 
-        R_{ij} = e^{i \\theta_{ij}} = \\exp\\big[i\\arctan(\\frac{e_{1,i} \\cdot e_{2,j}}{e_{1,i}) \\cdot e_{1,j}}\\big]
+        R_{ij} = e^{i \\theta_{ij}} = \\exp\\bigg[i\\tan^{-1}\\bigg(\\frac{e_{1,i} \\cdot e_{2,j}}{e_{1,i} \\cdot e_{1,j}}\\bigg)\\bigg]
 
-    where the local tangent vectors :math:`e_{1,i}` and :math:`e_{2,i}` are computed using :py:meth:`local_vectors`.
+    where the local tangent vectors :math:`e_{1,i}` and :math:`e_{2,i}` are computed using :py:meth:`local_vectors`. :math:`R_{ij}` describes how to rotate complex numbers defined relative to :math:`e_{1,i}` into those defined relative to :math:`e_{1,j}`.
 
     :param pts: an [Nx3] array of positions at which to compute local tangent vectors
     :type pts: ndarray
