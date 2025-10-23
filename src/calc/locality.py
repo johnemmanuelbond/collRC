@@ -13,13 +13,13 @@ DEFAULT_CUTOFF = 0.5*(1+np.sqrt(3))
 def neighbors(pts:np.ndarray, neighbor_cutoff:float|None = None, num_closest:int|None = None) -> np.ndarray:
     """Determines neighbors in a configuration of particles based on a cutoff distance.
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions.
+    :param pts: (N,d) array of particle positions in 'D' dimensions.
     :type pts: ndarray
     :param neighbor_cutoff: specify the distance which defines neighbors. Defaults to halfway between the first coordination peaks for a perfect crystal.
     :type neighbor_cutoff: scalar, optional
     :param num_closest: specify the maximum number of neighbors (within the cutoff) per particle. a.k.a pick that many of the closest neighbors per particle.
     :type num_closest: int, optional
-    :return:  [NxN] boolean array indicating which particles are neighbors
+    :return:  (N,N) boolean array indicating which particles are neighbors
     :rtype: ndarray
     """
 
@@ -42,6 +42,9 @@ def neighbors(pts:np.ndarray, neighbor_cutoff:float|None = None, num_closest:int
 
 def quat_to_angle(quat:np.ndarray) -> np.ndarray:
     """
+
+    Finds the angle :math:`\\theta` about the z-axis from a quaternion representation in 2D: :math:`q = \\cos(\\theta/2) + \\sin(\\theta/2) \\mathbf{k}`
+
     :param quat: a list of quaterions encoding particle orientation
     :type quat: ndarray
     :return: the quadrant-corrected 2d angular orientations of the particles
@@ -64,7 +67,7 @@ def stretched_neighbors(pts:np.ndarray, angles:np.ndarray, rx:float = 1.0, ry:fl
     :type ry: scalar, optional
     :param neighbor_cutoff: specify the stretched distance which defines neighbors. Defaults to 2.6.
     :type neighbor_cutoff: scalar, optional
-    :return: [NxN] boolean array indicating which particles are neighbors
+    :return: (N,N) boolean array indicating which particles are neighbors
     :rtype: ndarray
     """    
 
@@ -82,12 +85,17 @@ def stretched_neighbors(pts:np.ndarray, angles:np.ndarray, rx:float = 1.0, ry:fl
     return nei
 
 
-def hoomd_matrix_to_box(box:np.ndarray) -> np.ndarray:
-    """returns the hoomd box from a given set of basis vectors
+def matrix_to_box(box:np.ndarray) -> np.ndarray:
+    """
+    .. math::
+        \\begin{bmatrix} L_x & xy*L_y & xz*L_z \\\\ 
+        0 & L_y & yz*L_z \\\\ 
+        0 & 0 & L_z 
+        \\end{bmatrix} \\rightarrow [L_x,L_y,L_z,xy,xz,yz]
 
     :param box: a matrix containing the basis vectors of a bounding box
     :type box: ndarray
-    :return: a length 6 list of box paramters [Lx,Ly,Lz,xy,xz,yz]
+    :return: a length 6 list of box parameters
     :rtype: ndarray
     """    
     hbox= np.array([box[0,0],box[1,1],box[2,2],box[0,1]/box[1,1],box[0,2]/box[2,2],box[1,2]/box[2,2]])
@@ -96,10 +104,15 @@ def hoomd_matrix_to_box(box:np.ndarray) -> np.ndarray:
         hbox[5]=0
     return hbox
 
-def hoomd_box_to_matrix(box:list) -> np.ndarray:
-    """returns the matrix form of a hoomd box for use in minimum image calculations
+def box_to_matrix(box:list) -> np.ndarray:
+    """
+    .. math::
+        [L_x,L_y,L_z,xy,xz,yz] \\rightarrow \\begin{bmatrix} L_x & xy*L_y & xz*L_z \\\\ 
+        0 & L_y & yz*L_z \\\\ 
+        0 & 0 & L_z 
+        \\end{bmatrix}
 
-    :param box: a length 6 list of box paramters [Lx,Ly,Lz,xy,xz,yz]
+    :param box: a length 6 list of box parameters
     :type box: array_like
     :return: a matrix containing the basis vectors for the equivalent hoomd box
     :rtype: ndarray
@@ -114,13 +127,13 @@ def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8)-
     particles back to their original image. This will enable methods like
     scipy.voronoi to respect periodic boundary conditions.
 
-    :param coords: a [Nxd] list of particle coordinates in d-dimensions
+    :param coords: a (N,d) array of particle coordinates in d-dimensions
     :type coords: ndarray
-    :param basis: a [dxd] matrix of basis vectors for the simulation box
+    :param basis: a (d,d) matrix of basis vectors for the simulation box
     :type basis: ndarray
     :param padfrac: the number of extra particles, as a fraction of the total number, to include in the 'pad' of surrounding particles, defaults to 0.8
     :type padfrac: float, optional
-    :return: a [(N+N*padfrac) x d ] array of particle coordinates in d-dimensions which respect periodic boundary conditions around the central N particles, as well as a [N+N*padfrac] list of indices relating padded particles back to their original image
+    :return: a ((N+N*padfrac), d) array of particle coordinates in d-dimensions which respect periodic boundary conditions around the central N particles, as well as a (N+N*padfrac,) array of indices relating padded particles back to their original image
     :rtype: np.ndarray, np.ndarray
     """    
 
@@ -142,16 +155,16 @@ def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8)-
 
 
 def padded_neighbors(pts:np.ndarray, basis:np.ndarray, cutoff:float = DEFAULT_CUTOFF, padfrac:float = 0.8) -> np.ndarray:
-    """Determines neighbors in a configuration of particles based on a cutoff distance while respecting the periodic boundary condition using :py:meth:`utils.geometry.expand_around_pbc`.
+    """Determines neighbors in a configuration of particles based on a cutoff distance while respecting the periodic boundary condition using :py:meth:`expand_around_pbc`.
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions.
+    :param pts: (N,d) array of particle positions in 'd' dimensions.
     :type pts: ndarray
-    :param basis: a [dxd] matrix of basis vectors for the simulation box
+    :param basis: a (d,d) matrix of basis vectors for the simulation box
     :type basis: ndarray
     :param neighbor_cutoff: specify the distance which defines neighbors. Defaults to halfway between the first coordination peaks for a perfect crystal.
     :type neighbor_cutoff: scalar, optional
     :param padfrac: the number of extra particles, as a fraction of the total number, to include in the 'pad' of surrounding particles, defaults to 0.8
-    :return:  [NxN] boolean array indicating which particles are neighbors
+    :return:  (N,N) boolean array indicating which particles are neighbors
     :rtype: ndarray
     """
 
@@ -184,16 +197,19 @@ def local_vectors(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,
     """computes two orthogonal unit vectors tangent to the local surface defined by the normal vector (gradient of implicit function):
 
     .. math:
-        \\mathbf{e}_1 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{r}}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{r}|} \\\\
+        \\mathbf{e}_1 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{r}}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{r}|}
+        
+        \\\\
+        
         \\mathbf{e}_2 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{e}_1}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{e}_1|}
     
-    given :math:`f(x,y,z)=0` defines the surface, and :math:`\\mathbf{r}` is an arbitrary reference vector.
+    given the implicit function :math:`f(x,y,z)=0` defines the surface, and :math:`\\mathbf{r}` is an arbitrary reference vector.
 
-    :param x: an [Nx3] array of positions at which to compute local tangent vectors
+    :param x: an (N,3) array of positions at which to compute local tangent vectors
     :type x: ndarray
     :param gradient: a function which computes normal vector to a surface
     :type gradient: callable
-    :param ref: a reference vector to help define the local frame, defaults to np.array([0,-1,0])
+    :param ref: a reference vector to help define the local frame, defaults to (0,-1,0) (so that :math:`e_1=\\hat{x}` usually)
     :type ref: ndarray, optional
     :return: two orthogonal unit vectors tangent to the local surface defined by the gradient at each x
     :rtype: tuple(ndarray, ndarray)
@@ -205,8 +221,9 @@ def tangent_connection(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.arra
     """computes the complex connection between local tangent planes at each pair of points. This factor takes the form
 
     .. math::
-        R_{ij} = e^{i \\theta_{ij}} \\\\
-        \\theta_{ij} = \\arctan\\left(\\frac{\\mathbf{e}_1(\\mathbf{x}_i) \\cdot \\mathbf{e}_2(\\mathbf{x}_j)}{\\mathbf{e}_1(\\mathbf{x}_i) \\cdot \\mathbf{e}_1(\\mathbf{x}_j)}\\right)
+        R_{ij} = e^{i \\theta_{ij}} = \\exp\\big[i\\arctan(\\frac{e_{1,i} \\cdot e_{2,j}}{e_{1,i}) \\cdot e_{1,j}}\\big]
+
+    where the local tangent vectors :math:`e_{1,i}` and :math:`e_{2,i}` are computed using :py:meth:`local_vectors`.
 
     :param pts: an [Nx3] array of positions at which to compute local tangent vectors
     :type pts: ndarray

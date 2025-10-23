@@ -1,34 +1,52 @@
-calc package
-============
+calc module
+===========
 
-Contains various methods for calculating local and global reaction coordinates using particle coordinates.
+collRC is all about calculating and representing reaction coordinates from simulated colloidal ensembles. This module contains all of the framework to build up the various calculations needed to compute robust reaction coordinates:
 
-locality module
----------------
+The `:mod:locality` module processes particle positions to compute local environment metrics like nearest neighbors in flat, stretched, and projected 2D spaces.
+
+The `:mod:morphology` module computes information like local density and gyration tensors of ensembles and ensemble subsets.
+
+The `:mod:orient_order` module computes complex-valued local and global p-atic orientational order.
+
+The `:mod:bond_order` module computes complex-valued bond orientational order parameters in flat, stretched, and projected 2D spaces.
+
+The `:mod:clusters` module computes identifies spatially correlated groups of particles and computes statistics on their sizes and shapes.
+
+locality submodule
+------------------
 
 .. automodule:: calc.locality
     :members:
     :undoc-members:
     :show-inheritance:
 
-orient_order module
--------------------
+morphology submodule
+--------------------
+
+.. automodule:: calc.morphology
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+orient_order submodule
+----------------------
 
 .. automodule:: calc.orient_order
     :members:
     :undoc-members:
     :show-inheritance:
 
-bond_order module
------------------
+bond_order submodule
+--------------------
 
 .. automodule:: calc.bond_order
     :members:
     :undoc-members:
     :show-inheritance:
 
-clusters module
-----------------
+clusters submodule
+------------------
 
 .. automodule:: calc.clusters
     :members:

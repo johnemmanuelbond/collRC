@@ -22,7 +22,7 @@ Prerequisites
 | color-scheming is easily set up using anaconda. Create a conda environment with the following packages installed.
 | \- `numpy`_, `scipy`_, `graph-tool`_: for calculating reaction coordinates
 | \- `gsd`_: to store simulated particle trajectories
-| \- `matplotlib_`, `moviepy_`: to render movies of particle trajectories
+| \- `matplotlib`_, `moviepy`_: to render movies of particle trajectories
 | \- `ffmpeg`_: is automatically installed as a dependency of `moviepy`_
 
 .. code-block:: bash
@@ -55,7 +55,7 @@ Uninstall with
 
 .. _numpy: https://numpy.org/doc/stable/
 .. _scipy: https://docs.scipy.org/doc/scipy/
-.. _graph-tool: https://graph-tool.skewed.de/static/docs/latest/
+.. _graph-tool: https://graph-tool.skewed.de/static/docs/stable/
 .. _gsd: https://gsd.readthedocs.io/en/latest/
 .. _matplotlib: https://matplotlib.org/stable/contents.html
 .. _ffmpeg: https://www.ffmpeg.org/documentation.html

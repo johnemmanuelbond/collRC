@@ -1,9 +1,11 @@
 Documentation
 =============
 
+collRC is divided into the following modules:
+
 .. toctree::
    :maxdepth: 3
-   :caption: Packages
+   :caption:
    
    calc
    visuals

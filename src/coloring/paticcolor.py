@@ -46,9 +46,7 @@ class ColorByS2(ColorBase):
         angles = quat_to_angle(self.snap.particles.orientation)
         self.ori = np.exp(1j * angles)
         
-        # Global nematic order and director
-        Z, phi = global_patic(angles, p=2)
-        self.nem_g = Z * np.exp(1j * 2 * phi)
+        self.nem_g = global_patic(angles, p=2)
 
         # Local nematic order around each particle
         pts = self.snap.particles.position
@@ -59,8 +57,7 @@ class ColorByS2(ColorBase):
         # nnei[np.eye(nnei.shape[0], dtype=bool)] = False
         # self.nei = snei
 
-        Zs, phis = local_patic(angles, self.nei, p=2)
-        self.nem_l = Zs * np.exp(1j * 2 * phis)
+        self.nem_l = local_patic(angles, self.nei, p=2)
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping local S2 magnitude (white/grey -> red).
@@ -130,7 +127,7 @@ class ColorByS2g(ColorByS2):
 
 
 
-class ColorByT4(ColorByS2):
+class ColorByT4(ColorBase):
     """Color particles by local tetratic magnitude (T4) using orange scale.
 
     :param shape: particle geometry
@@ -150,14 +147,13 @@ class ColorByT4(ColorByS2):
         self.ori = np.exp(1j * angles)
         
         # Global nematic order and director
-        Z, phi = global_patic(angles, p=2)
-        self.tet_g = Z * np.exp(1j * 4 * phi)
+        self.tet_g = global_patic(angles, p=4)
 
         # Local nematic order around each particle
         pts = self.snap.particles.position
         self.nei = neighbors(pts, neighbor_cutoff=6*self._shape.ax)
-        Zs, phis = local_patic(angles, self.nei, p=2)
-        self.tet_l = Zs * np.exp(1j * 4 * phis)
+
+        self.tet_l = local_patic(angles, self.nei, p=4)
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGB colors mapping local T4 magnitude (white/grey -> orange).
