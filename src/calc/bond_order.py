@@ -182,7 +182,7 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
     """Computes the crystal connectivity of each particle in a 2D configuration. The crystal connectivity measures the similarity of bond-orientational order parameter over all pairs of neighboring particles in order to determine which particles are part of a definite crystalline domain. The crystal connectivity of particle :math:`j` is given by:
 
     .. math::
-        
+
         C_n^j = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_j\\psi_k^*\\big]}{|\\psi_j\\psi_k^*|} \\geq \\Theta_C \\bigg]
 
     Where the :math:`\\psi`\'s are any-fold bond orientational order parameters for each particle, :math:`\\Theta_{C}` is a \'crystallinity threshold\' used to determine whether two neighboring particles are part of the same crystalline domain, and :math:`n` is a factor used to simply normalize :math:`C_6^j` between zero and one.

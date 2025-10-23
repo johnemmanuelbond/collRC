@@ -88,6 +88,7 @@ def stretched_neighbors(pts:np.ndarray, angles:np.ndarray, rx:float = 1.0, ry:fl
 def matrix_to_box(box:np.ndarray) -> np.ndarray:
     """
     .. math::
+
         \\begin{bmatrix} L_x & xy*L_y & xz*L_z \\\\ 
         0 & L_y & yz*L_z \\\\ 
         0 & 0 & L_z 
@@ -107,6 +108,7 @@ def matrix_to_box(box:np.ndarray) -> np.ndarray:
 def box_to_matrix(box:list) -> np.ndarray:
     """
     .. math::
+
         [L_x,L_y,L_z,xy,xz,yz] \\rightarrow \\begin{bmatrix} L_x & xy*L_y & xz*L_z \\\\ 
         0 & L_y & yz*L_z \\\\ 
         0 & 0 & L_z 
@@ -197,10 +199,8 @@ def local_vectors(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,
     """computes two orthogonal unit vectors tangent to the local surface defined by the normal vector (gradient of implicit function):
 
     .. math:
-        \\mathbf{e}_1 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{r}}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{r}|}
-        
-        \\\\
-        
+
+        \\mathbf{e}_1 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{r}}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{r}|} \\\\
         \\mathbf{e}_2 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{e}_1}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{e}_1|}
     
     given the implicit function :math:`f(x,y,z)=0` defines the surface, and :math:`\\mathbf{r}` is an arbitrary reference vector.
@@ -221,6 +221,7 @@ def tangent_connection(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.arra
     """computes the complex connection between local tangent planes at each pair of points. This factor takes the form
 
     .. math::
+
         R_{ij} = e^{i \\theta_{ij}} = \\exp\\big[i\\arctan(\\frac{e_{1,i} \\cdot e_{2,j}}{e_{1,i}) \\cdot e_{1,j}}\\big]
 
     where the local tangent vectors :math:`e_{1,i}` and :math:`e_{2,i}` are computed using :py:meth:`local_vectors`.

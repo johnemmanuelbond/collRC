@@ -12,6 +12,7 @@ def central_eta(pts:np.ndarray, box:list, ptcl_area:float = np.pi/4, nbins:int=3
     """Computes the average area fraction in the central region of a configuration of particles, accounting for the jacobian of the coordinate system:
 
     .. math::
+
         \\eta = \\langle\\frac{N\\cdot A_p}{A_{bin}}\\rangle_{{bins}}
 
     :param pts: an [Nxd] array of particle positions in any dimensions (though only the first two are used)
@@ -114,6 +115,7 @@ def acylindricity(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     """returns the acylindricity of a set of points, defined as a function of the gyration tensor eigenvalues:
 
     .. math::
+
         c \\equiv \\lambda_y^2 - \\lambda_x^2
 
     Where :math:`\\lambda_x^2\\leq\\lambda_y^2\\leq\\lambda_z^2` are the eigenvalues of the gyration tensor.
@@ -136,6 +138,7 @@ def asphericity(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     """returns the asphericity of a set of points, defined as a function of the gyration tensor eigenvalues:
 
     .. math::
+
         b \\equiv \\\\lambda_z^2 - \\frac{{1}}{{2}}\\big(\\lambda_y^2 + \\lambda_x^2\\big)
 
     Where :math:`\\lambda_x^2\\leq\\lambda_y^2\\leq\\lambda_z^2` are the eigenvalues of the gyration tensor.
@@ -158,6 +161,7 @@ def shape_anisotropy(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     """returns the anisotropy of a set of points, defined as a function of the gyration tensor eigenvalues:
 
     .. math::
+
         \\kappa^2 \\equiv \\frac{{3}}{{2}}\\frac{{\\lambda_z^4 + \\lambda_y^4 + \\lambda_x^4}}{{(\\lambda_x^2 + \\lambda_y^2 + \\lambda_z^2)^2}} - \\frac{{1}}{{2}} = \\frac{{b^2 + (3/4)c^2}}{{R_g^4}}
 
     Where :math:`\\lambda_x^2\\leq\\lambda_y^2\\leq\\lambda_z^2` are the eigenvalues of the gyration tensor.
@@ -191,6 +195,7 @@ def circularity(pts=None, gyr=None, ref:np.ndarray=np.array([0,1,0])) -> float:
     With the prinicipal moments defined as :math:`\\lambda_1>\\lambda_2`. Under these definitions, we can compute the radius of gyration :math:`R_g=\\sqrt{{\\lambda_1^2 + \\lambda_2^2}}` and the acylindricity :math:`a = \\lambda_1-\\lambda_2`, then combine them to define the circularity:
 
     .. math::
+
         c = 1 - \\frac{a}{R_g}
     
     When the cluster is circular the two principal moments are equal and so :math:`a=0 \\to c=1`. When the cluster is a linear chain, the smaller principal moment approaches zero, and so :math:`a=R_g=\\lambda_1 \\to c=0`.

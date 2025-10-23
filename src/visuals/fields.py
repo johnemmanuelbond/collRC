@@ -28,7 +28,7 @@ class Field:
     Where :math:`k_{{tr,i}}` and :math:`k_{{rot,i}}` correspond to the :math:`i` th translational and rotational energy scales (in kT units), :math:`d_g` is the distance between the virtual electrodes (in simulation units), and :math:`m` is a symmetry factor corresponding to the particles within the electrode (a rectangle has :math:`m=1`, a square has :math:`m=2`, and a disc has :math:`m=\\infty`). The unitless distance :math:`r` and the angle :math:`\\Delta\\theta` are defined relative to an angle :math:`\\theta_i` which defines the axis along which the harmonic trap drives particle translation, and along which the trap aligns particle orientations:
 
     .. math::
-        
+
         r \\equiv \\vec{{r_p}}\\cdot\\hat{{d}}/d_g= \\frac{{1}}{{d_g}}\\big(x_p\\cos\\theta_i + y_p\\sin\\theta_i\\big)
 
     .. math::
@@ -145,14 +145,14 @@ class Field:
 
 
 def read_field_from_gsd(frame:gsd.hoomd.Frame, field=None) -> Field:
-    """Reads field parameters from a GSD frame log and returns a :py::class:`Field` instance.
+    """Reads field parameters from a GSD frame log and returns a :py:class:`Field` instance.
 
     :param frame: A GSD frame containing field parameters in its log.
     :type frame: gsd.hoomd.Frame
     :param field: An optional ``Field`` instance to populate. If None, a new instance is created., defaults to None
     :type field: ``Field``, optional
     :return: A ``Field`` instance initialized with parameters from the frame log.
-    :rtype: :py::class:`Field`
+    :rtype: :py:class:`Field`
     """
 
     log = frame.log
@@ -180,11 +180,11 @@ _default_qpole = Field(n=2,dg=30)
 _default_qpole.k_trans[:] = 150.0
 
 def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, **contour_kwargs):
-    """Places a contour plot of the translational potential energy landscape contained in a :py::class:`Field` instance on the provided ``Axis``.
+    """Places a contour plot of the translational potential energy landscape contained in a :py:class:`Field` instance on the provided ``Axis``.
 
     :param ax: Axis to draw the contours on. If None, a new figure and axis will be created.
     :type ax: matplotlib.axes.Axes, optional
-    :param field: An :py::class:`Field` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
+    :param field: An :py:class:`Field` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
     :type field: Field, optional
     :param levels: Contour levels to draw. If None, levels are automatically determined from the potential.
     :type levels: array-like, optional
@@ -232,11 +232,11 @@ def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, **contour
 
 
 def spectral_PEL(ax=None, field: Field = _default_qpole, levels = None, **pcolormesh_kwargs):
-    """"Places a colorm-mapped plot of the translational potential energy landscape contained in an :py::class:`Field` instance on the provided ``Axis``.  Regions outside the virtual electrode gap or outside the normalization range are mapped to none. coloring defaults to the Spectral colormap on a 200kT scale, but these are configurable via ``pcolormesh_kwargs``.
+    """"Places a colorm-mapped plot of the translational potential energy landscape contained in an :py:class:`Field` instance on the provided ``Axis``.  Regions outside the virtual electrode gap or outside the normalization range are mapped to none. coloring defaults to the Spectral colormap on a 200kT scale, but these are configurable via ``pcolormesh_kwargs``.
 
     :param ax: Axis to draw the contours on. If None, a new figure and axis will be created.
     :type ax: matplotlib.axes.Axes, optional
-    :param field: A :py::class:`Field` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
+    :param field: A :py:class:`Field` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
     :type field: Field, optional
     :param levels: Contour levels to draw. If None, levels are automatically determined from the potential.
     :type levels: array-like, optional
@@ -282,11 +282,11 @@ def spectral_PEL(ax=None, field: Field = _default_qpole, levels = None, **pcolor
 
 
 def PEL_arrows(ax=None, field: Field = _default_qpole, pts=None, **quiver_kwargs):
-    """Draw the force at a point is computed from the translational harmonic traps in :py::class:`Field` as ``F = -\\nabla U`` and draws a quiver on the provided ``Axis``.
+    """Draw the force at a point is computed from the translational harmonic traps in :py:class:`Field` as ``F = -\\nabla U`` and draws a quiver on the provided ``Axis``.
 
     :param ax: Axis to draw the contours on. If None, a new figure and axis will be created.
     :type ax: matplotlib.axes.Axes, optional
-    :param field: A :py::class:`Field` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
+    :param field: A :py:class:`Field` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
     :type field: Field, optional
     :param pts: An [N x 2] array of points (in simulation length units) at which to evaluate and draw force vectors. If None, a default set of points is generated automatically.
     :type pts: ndarray, optional

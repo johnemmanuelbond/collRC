@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Color schemes for order-parameter visualizations.
 

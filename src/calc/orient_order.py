@@ -15,6 +15,7 @@ def global_patic(angles:np.ndarray, p:int=2) -> tuple[float,float]:
     Computes the global p-atic order of a particle ensemble. Traditionally this is a scalar-valued order parameter which characterizes how aligned particles are with a *director* orientation:
 
     .. math::
+
         |P_p| = \\max_{\\theta_p}\\langle\\cos(p(\\theta_j-\\theta_p))\\rangle = |\\langle e^{ip\\theta_j}\\rangle_j|
 
     But, it is convienient to represent this as a complex-valued quantity which also encodes the director angle:
@@ -42,6 +43,7 @@ def local_patic(angles:np.ndarray, nei_bool:np.ndarray, p:int =2) -> tuple[np.nd
     Or, more succinctly:
 
     .. math::
+
         P_{p,j} = \\langle e^{ip\\theta_k}\\rangle_{j(r_{jk}<6a_x)} = |P_{p,j}|e^{i p \\theta_{p,j}}
 
     :param angles: the orientation of each particle in the frame

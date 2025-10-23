@@ -1,3 +1,5 @@
+"""Module src/calc/__init__.py."""
+
 
 from .locality import neighbors, padded_neighbors, stretched_neighbors, tangent_connection
 from .locality import box_to_matrix, matrix_to_box, expand_around_pbc
