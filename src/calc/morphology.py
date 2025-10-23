@@ -15,7 +15,7 @@ def central_eta(pts:np.ndarray, box:list, ptcl_area:float = np.pi/4, nbins:int=3
 
         \\eta = \\langle\\frac{N\\cdot A_p}{A_{bin}}\\rangle_{{bins}}
 
-    :param pts: an [Nxd] array of particle positions in any dimensions (though only the first two are used)
+    :param pts: an (N,d) array of particle positions in any dimensions (though only the first two are used)
     :type pts: ndarray
     :param box: a list defining the simulation box in the `gsd <https://gsd.readthedocs.io/en/stable/schema-hoomd.html#chunk-configuration-box>`_ convention
     :type box: array-like
@@ -76,7 +76,7 @@ def gyration_radius(pts:np.ndarray) -> float:
 
     where the :math:`j>i` in the summation index indicates that repeated pairs are not summed over
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions
+    :param pts: (N,d) array of particle positions in 'd' dimensions
     :type pts: ndarray
     :return: the radius of gyration of the particles about their center of mass
     :rtype: scalar
@@ -96,11 +96,11 @@ def gyration_tensor(pts:np.ndarray, ref:np.ndarray|None = None) -> np.ndarray:
 
     where the positions, :math:`r`, are defined in their center of mass reference frame
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions,
+    :param pts: (N,d) array of particle positions in 'd' dimensions,
     :type pts: ndarray
     :param ref: point in d-dimensional space from which to reference particle positions, defaults to the mean position of the points. Use this for constraining the center of mass to the surface of a manifold, for instance.
     :type ref: ndarray , optional
-    :return: the [dxd] gyration tensor of the ensemble
+    :return: the (d,d) gyration tensor of the ensemble
     :rtype: ndarray
     """    
 
@@ -139,13 +139,13 @@ def asphericity(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
 
     .. math::
 
-        b \\equiv \\\\lambda_z^2 - \\frac{{1}}{{2}}\\big(\\lambda_y^2 + \\lambda_x^2\\big)
+        b \\equiv \\lambda_z^2 - \\frac{{1}}{{2}}\\big(\\lambda_y^2 + \\lambda_x^2\\big)
 
     Where :math:`\\lambda_x^2\\leq\\lambda_y^2\\leq\\lambda_z^2` are the eigenvalues of the gyration tensor.
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions
+    :param pts: (N,d) array of particle positions in 'd' dimensions
     :type pts: ndarray
-    :param gyr: [dxd] gyration tensor of the ensemble, optional
+    :param gyr: (d,d) gyration tensor of the ensemble, optional
     :type gyr: ndarray
     :return: the asphericity of the particles
     :rtype: float
@@ -166,9 +166,9 @@ def shape_anisotropy(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
 
     Where :math:`\\lambda_x^2\\leq\\lambda_y^2\\leq\\lambda_z^2` are the eigenvalues of the gyration tensor.
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions
+    :param pts: (N,d) array of particle positions in 'd' dimensions
     :type pts: ndarray
-    :param gyr: [dxd] gyration tensor of the ensemble, optional
+    :param gyr: (d,d) gyration tensor of the ensemble, optional
     :type gyr: ndarray
     :return: the anisotropy of the particles
     :rtype: float
@@ -180,7 +180,7 @@ def shape_anisotropy(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     lz, ly, lx = np.linalg.eigvalsh(gyr) # ascending order
     return (3/2 * (lz**4 + ly**4 + lx**4) / (lx**2 + ly**2 + lz**2)**2) - 1/2
 
-def circularity(pts=None, gyr=None, ref:np.ndarray=np.array([0,1,0])) -> float:
+def circularity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.array([0,1,0])) -> float:
     """
     the 'circularity' of a colloidal cluster as used in `Zhang, Sci. Adv. 2020 <https://doi.org/10.1126/sciadv.abd6716>`_. This metric is calcuated using the principal moments of the :py:meth:`gyration_tensor`. For 2d ensembles, after diagonalization:
 
@@ -200,10 +200,10 @@ def circularity(pts=None, gyr=None, ref:np.ndarray=np.array([0,1,0])) -> float:
     
     When the cluster is circular the two principal moments are equal and so :math:`a=0 \\to c=1`. When the cluster is a linear chain, the smaller principal moment approaches zero, and so :math:`a=R_g=\\lambda_1 \\to c=0`.
 
-    :param gyr_tensor: [dxd] array , defaults to None
-    :type gyr_tensor: ndarray, optional
-    :param pts: an ensemble of colloidal positions, defaults to None
-    :type pts: ndarray, optional
+    :param pts: (N,d) array of particle positions in 'd' dimensions
+    :type pts: ndarray
+    :param gyr: (d,d) gyration tensor of the ensemble, optional
+    :type gyr: ndarray
     :return: _description_
     :rtype: float
     """

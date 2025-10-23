@@ -20,7 +20,7 @@ def global_patic(angles:np.ndarray, p:int=2) -> tuple[float,float]:
 
     But, it is convienient to represent this as a complex-valued quantity which also encodes the director angle:
 
-     .. math:
+     .. math::
         `P_p = \\langle e^{i p \\theta_p}\\rangle` = |P_p|e^{i p \\theta_p}.
 
     :param angles: the orientation of each particle in the frame

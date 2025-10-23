@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Module src/render/render.py."""
+"""
+Contains methods for rendering particle configurations on matplotlib figures. Contains methods to animate rendered matplotlib figures into moviepy movies.
+"""
 
 import numpy as np
 import gsd.hoomd
@@ -105,7 +107,6 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
     return fig, ax
 
 
-
 def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
                   view_dir = np.array([0,0,1]), view_dist=100, show_text=True,
                   dpi=600, figsize=3.5, dark=True, **kwargs):
@@ -198,7 +199,6 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
     fig.tight_layout()
 
     return fig, ax
-
 
 
 def animate(render_frames:gsd.hoomd.HOOMDTrajectory, outpath:str, figure_maker:callable, fps:int=20, codec='mpeg4'):

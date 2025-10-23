@@ -156,7 +156,7 @@ def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8)-
     return np.array([*coords,*pad]), np.array([*np.arange(pnum),*(pad_idx%pnum)])
 
 
-def padded_neighbors(pts:np.ndarray, basis:np.ndarray, cutoff:float = DEFAULT_CUTOFF, padfrac:float = 0.8) -> np.ndarray:
+def padded_neighbors(pts:np.ndarray, basis:np.ndarray, neighbor_cutoff:float = DEFAULT_CUTOFF, padfrac:float = 0.8) -> np.ndarray:
     """Determines neighbors in a configuration of particles based on a cutoff distance while respecting the periodic boundary condition using :py:meth:`expand_around_pbc`.
 
     :param pts: (N,d) array of particle positions in 'd' dimensions.
@@ -172,8 +172,8 @@ def padded_neighbors(pts:np.ndarray, basis:np.ndarray, cutoff:float = DEFAULT_CU
 
     pnum = pts.shape[0]
     pts_padded, idx_padded = expand_around_pbc(pts,basis,padfrac=padfrac)
-    
-    nei_padded = squareform(pdist(pts_padded)) <= cutoff    
+
+    nei_padded = squareform(pdist(pts_padded)) <= neighbor_cutoff
     nei_padded[np.eye(pts_padded.shape[0])==1]=False
     nei_real = nei_padded[:pnum,:pnum]
     for i,n in enumerate(nei_padded[:pnum]):
@@ -198,15 +198,15 @@ def _lvec(x,gradient,ref = np.array([0,-1,0])):
 def local_vectors(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,-1,0])):
     """computes two orthogonal unit vectors tangent to the local surface defined by the normal vector (gradient of implicit function):
 
-    .. math:
+    .. math::
 
         \\mathbf{e}_1 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{r}}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{r}|} \\\\
         \\mathbf{e}_2 = \\frac{\\nabla f(\\mathbf{x}) \\times \\mathbf{e}_1}{|\\nabla f(\\mathbf{x}) \\times \\mathbf{e}_1|}
     
     given the implicit function :math:`f(x,y,z)=0` defines the surface, and :math:`\\mathbf{r}` is an arbitrary reference vector.
 
-    :param x: an (N,3) array of positions at which to compute local tangent vectors
-    :type x: ndarray
+    :param pts: an (N,3) array of positions at which to compute local tangent vectors
+    :type pts: ndarray
     :param gradient: a function which computes normal vector to a surface
     :type gradient: callable
     :param ref: a reference vector to help define the local frame, defaults to (0,-1,0) (so that :math:`e_1=\\hat{x}` usually)

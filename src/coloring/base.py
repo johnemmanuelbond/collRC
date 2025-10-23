@@ -112,6 +112,9 @@ class ColorBase():
     """
     
     def __init__(self, dark: bool = True):
+        """
+        Constructor
+        """
         # Choose base color based on background theme
         if dark:
             self._c = base_colors['white']
