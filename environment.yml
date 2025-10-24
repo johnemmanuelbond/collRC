@@ -1,4 +1,4 @@
-name: color-scheming
+name: collRC
 channels:
   - defaults
   - conda-forge
@@ -14,4 +14,3 @@ dependencies:
   - pip
   - sphinx-book-theme
   - sphinxcontrib-video
-prefix: /home/jonck/miniconda3/envs/color-scheming

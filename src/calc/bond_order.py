@@ -4,6 +4,7 @@ Contains methods to calculate bond orientational order. First in flat space, the
 """
 
 import numpy as np
+from scipy.special import sph_harm_y
 
 
 def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_global=False) -> tuple[np.ndarray,np.complexfloating]:
@@ -216,7 +217,81 @@ def projected_bond_order(pts:np.ndarray, gradient:callable, nei_bool:np.ndarray,
     return psi_i
 
 
-def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_threshold:float = 0.32, norm:float|None=6, phase_rotate:np.ndarray|None=None) -> np.ndarray:
+def steinhardt_bond_order(pts:np.ndarray, nei_bool:np.ndarray, l:int = 6, ret_global:bool=False) -> tuple[np.ndarray,np.complexfloating]:
+    """Calculates the local and global bond orientational Steinhardt order parameter of each particle in a 3D configuration using a superposition of complex spherical harmonics. The local l-fold bond orientaitonal order for a particle :math:`j` is:
+
+    .. math::
+
+        q_{lm,j} = \\big\{\\frac{1}{N_j}\\sum_kY_{lm}(\\theta_{jk},\\phi_{jk})\\big\\}_m
+
+    Where the sum is over all :math:`N_j` neighboring particles and :math:`\\theta_{jk}, \\phi_{jk}` are the angles (in spherical coordinates) between particles :math:`j` and :math:`k`.
+    
+    The global l-fold bond orientational order is:
+
+    .. math::
+
+        q_l = \\langle \\sum_mY_{lm}(\\theta_{jk},\\phi_{jk}) \\rangle_{jk}
+
+    Where the mean is over all unique bonds between particle pairs :math:`j` and :math:`k`.
+
+    :param pts: (N,d) array of particle positions in 'd' dimensions, though the calculation only access the first three dimensions.
+    :type pts: ndarray
+    :param nei_bool: a (N,N) boolean array indicating neighboring particles.
+    :type nei_bool: ndarray
+    :param l: The degree of the spherical harmonics used to calculate l-fold bond order parameter, defaults to 6
+    :type l: int, optional
+    :param ret_global: whether to return the global bond order parameter, defaults to False
+    :type ret_global: bool, optional
+    :return: (N,2l+1) array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
+    :rtype: ndarray[complex] (, complex)
+    """
+    
+    pnum = pts.shape[0]
+    i,j = np.mgrid[0:pnum,0:pnum]
+    dr_vec = pts[i]-pts[j]
+
+    # double-check for degenerate neighborless states
+    if not np.any(nei_bool): return np.zeros(pnum),0
+    # get neighbor count per particle, and cumulative
+    sizes = np.sum(nei_bool,axis=-1)
+    csizes = np.cumsum(sizes)
+
+    #assemble lists of vectors to evaluate angles between (us and vs)
+    bonds = dr_vec[nei_bool]
+    xs = bonds[:,0]
+    ys = bonds[:,1]
+    rs = (xs**2+ys**2)**0.5
+    zs = bonds[:,2]
+    phis = np.arctan2(ys,xs)
+    thetas = np.arccos(np.clip(zs/rs, -1, 1))
+
+    # set up matrices of spherical harmonic orders, degrees, and eval points for each bond.
+    m = np.arange(-l,l+1)
+    mm, pphi  = np.meshgrid(m,phis)
+    _, ttheta = np.meshgrid(m,thetas)
+    _, ssizes = np.meshgrid(m,sizes)
+    ll = l*np.ones_like(mm)
+
+    # calculate spherical harmonics for each bond given order l and degree m.
+    qlm_ij = sph_harm_y(ll,mm,ttheta,pphi)
+    # pick out only the last summed psi for each particle
+    qlm_csum = np.array([0*m,*np.cumsum(qlm_ij,axis=0)])
+    # subtract off the previous particles' summed psi values
+    c_idx = np.array([0,*csizes])
+    qlm = qlm_csum[c_idx[1:]]-qlm_csum[c_idx[:-1]]
+
+    #return the neighbor-averaged psi
+    qlm[ssizes>0]*=1/ssizes[ssizes>0]
+    qlm[ssizes==0]=0
+
+    if ret_global:
+        return qlm, np.abs(qlm_ij.sum(axis=-1).mean())
+    else:
+        return qlm
+
+
+
+def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_threshold:float = 0.32, norm:float|None=6, phase_rotate:np.ndarray|None=None, calc_3d = False) -> np.ndarray:
     """Computes the crystal connectivity of each particle in a 2D configuration. The crystal connectivity measures the similarity of bond-orientational order parameter over all pairs of neighboring particles in order to determine which particles are part of a definite crystalline domain. The crystal connectivity of particle :math:`j` is given by:
 
     .. math::
@@ -233,8 +308,14 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
 
     Where :math:`R_{jk}` encodes the rotation between neighboring tangent planes, i.e. the output of :py:meth:`tangent_connection() <calc.locality.tangent_connection>`. :math:`(R_{jk})^n` is then used to rotate the n-fold bond orientational order of neighboring particles.
 
+    Optionally, users may pass in an (N,2l+1) array of complex spherical harmonic Steinhardt order parameters for use in 3D systems. In this case, the inner product is computed over all (2l+1) components of the Steinhardt order parameter rather than a single complex bond-OP:
 
-    :param psis: (N,) array of complex bond orientational order parameters
+    .. math::
+
+        C_{l,j} = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\sum_{m=-l}^{l}q_{lm,j}q_{lm,k}^*\\big]}{\\sqrt{\\sum_{m=-l}^{l}|q_{lm,j}|^2} \\sqrt{\\sum_{m=-l}^{l}|q_{lm,k}|^2}} \\geq \\Theta_C \\bigg]
+
+
+    :param psis: (N,) array of complex bond orientational order parameters. Optionally, an (N,2l+1) array of complex spherical harmonic Steinhardt order parameters for use in 3D systems.
     :type psis: ndarray
     :param nei_bool: a (N,N) array indicating neighboring particles.
     :type nei_bool: ndarray
@@ -244,6 +325,8 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
     :type norm: float | None, optional
     :param phase_rotate: an optional (N,N) array of complex phase factors (:math:`R_{jk}^n`) to include a rotation between neighboring particles' bond-OPs, defaults to None
     :type phase_rotate: ndarray | None, optional
+    :param calc_3d: whether to compute the 3D version of the crystal connectivity using spherical harmonic Steinhardt order parameters, defaults to False
+    :type calc_3d: bool, optional
     :return: (N,) array of real crystal connectivities
     :rtype: ndarray
     """    
@@ -260,17 +343,25 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
         norm = c6_hex
 
     # include optional phase rotation between neighbors
-    if phase_rotate is not None:
+    if calc_3d:
+        nei_rotate = np.array([nei_bool.T] * psis.shape[1]).T
+    elif phase_rotate is not None:
         nei_rotate = nei_bool*phase_rotate
     else:
         nei_rotate = nei_bool*1.0
 
-    pnum = len(psis)
-    psi_i = np.array([psis]*pnum)
-    psi_j = np.conjugate(nei_rotate*psi_i.T)
+    psi_i = np.array([psis]*psis.shape[0])
+    psi_j = np.conjugate(nei_rotate*np.swapaxes(psi_i,0,1))
 
-    chi_top = np.abs(np.real(psi_i*psi_j))
-    chi_bot = np.abs(psi_i*psi_j)
+    if not calc_3d:
+        chi_top = np.abs(np.real(psi_i*psi_j))
+        chi_bot = np.abs(psi_i*psi_j)
+    else:
+        chi_top = np.sum(np.real(psi_i*psi_j),axis=-1)
+        qi = np.sum(np.abs(psi_i)**2,axis=-1)**0.5
+        qj = np.sum(np.abs(psi_j)**2,axis=-1)**0.5
+        chi_bot = qi*qj
+
     chi_top[chi_bot==0]=0
     chi_bot[chi_bot==0]=1  # prevent div by zero
     chi_ij = chi_top/chi_bot
