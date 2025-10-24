@@ -1,7 +1,7 @@
 Tutorial
 ========
 
-.. video:: _static/test-sphere-short.webm
+.. video:: _static/test-sphere.mp4
    :width: 700
    :autoplay:
    :loop:

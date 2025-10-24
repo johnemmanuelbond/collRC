@@ -231,7 +231,7 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
 
         C_{n,j} = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}((R_{jk})^n\\psi_{n,k})^*\\big]}{|\\psi_{n,j}((R_{jk})^n\\psi_{n,k})^*|} \\geq \\Theta_C \\bigg]
 
-    Where :math:`R_{jk}` encodes the rotation between neighboring tangent planes, i.e. the output of :py:meth:`calc.locality.tangent_connection`. :math:`(R_{jk})^n` is then used to rotate the n-fold bond orientational order of neighboring particles.
+    Where :math:`R_{jk}` encodes the rotation between neighboring tangent planes, i.e. the output of :py:meth:`tangent_connection() <calc.locality.tangent_connection>`. :math:`(R_{jk})^n` is then used to rotate the n-fold bond orientational order of neighboring particles.
 
 
     :param psis: (N,) array of complex bond orientational order parameters
