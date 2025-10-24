@@ -6,7 +6,7 @@ Contains methods to calculate bond orientational order. First in flat space, the
 import numpy as np
 
 
-def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_global=False) -> tuple[np.ndarray,float]:
+def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_global=False) -> tuple[np.ndarray,np.complexfloating]:
     """Calculates the local and global bond orientational order parameter of each particle in a 2D configuration with respect to the y axis. The local n-fold bond orientaitonal order for a particle :math:`j` is:
 
     .. math::
@@ -21,16 +21,16 @@ def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_glob
 
     Where the sum is over all unique bonds between particles :math:`j` and :math:`k`.
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
+    :param pts: (N,d) array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
     :type pts: ndarray
-    :param nei_bool: a [NxN] boolean array indicating neighboring particles.
+    :param nei_bool: a (N,N) boolean array indicating neighboring particles.
     :type nei_bool: ndarray
     :param order: n-fold order defines the argument of the complex number used to calculate psi_n, defaults to 6
     :type order: int, optional
     :param ret_global: whether to return the global bond order parameter, defaults to False
     :type ret_global: bool, optional
-    :return: [N] array of complex bond orientational order parameters, and the norm of their mean.
-    :rtype: tuple(ndarray, scalar)
+    :return: (N,) array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
+    :rtype: ndarray[complex] (, complex)
     """
 
     pnum = pts.shape[0]
@@ -67,20 +67,32 @@ def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_glob
         return psi
 
 
-def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray, rx:float = 1.0, ry:float = 1.0, order:int = 6, ret_global=False) -> tuple[np.ndarray,float]:
+def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray, rx:float = 1.0, ry:float = 1.0, order:int = 6, ret_global=False) -> tuple[np.ndarray,np.complexfloating]:
     """Computes the local and global stretched bond orientational order parameter. This calculation rotates coordinates into a frame of reference stretched according to the long and short axes of each particle according to equations given in `(Torrez-Diaz Soft Matter, 2022) <https://doi.org/10.1039/D1SM01523K>`_. In the stretched coordinate system, the angle between particles is given as:
+
+    .. math::
+
+        \\psi_j = \\frac{1}{N_j}\\sum_k\\psi_{jk}=\\frac{1}{N_j}\\sum_ke^{in\\theta^s_{jk}}e^{in\\theta_j}
+
+    Where the sum is over all :math:`N_j` neighboring particles :math:`k` to particle :math:`j`, :math:`\\theta_j` is the orientaion of particle :math:`j`, and :math:`\\theta^s_{jk}` is the angle between particles :math:`j` and :math:`k` in the stretched coordiante system a of particle :math:`j`:
 
     .. math::
 
         \\theta^s_{jk} = \\tan^{-1}\\big[(\\delta y_jk/r_y) \\big/ (\\delta x_jk/r_x)\\big]
 
+    Similarly, the global n-fold bond orientational order is:
 
+    .. math::
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
+        \\psi_g = \\frac{1}{N}\\frac{1}{N_j}\\sum_{jk}\\psi_{jk}=\\frac{1}{N}\\frac{1}{N_j}\\sum_{jk}e^{in\\theta^s_{jk}}e^{in\\theta_j}
+
+    Where the sum is over all unique bonds between particles :math:`j` and :math:`k`.
+
+    :param pts: (N,d) array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
     :type pts: ndarray
     :param angles: the orientation of each anisotropic particle in the configuration
     :type angles: ndarray
-    :param nei_bool: a [NxN] boolean array indicating neighboring particles.
+    :param nei_bool: a (N,N) boolean array indicating neighboring particles.
     :type nei_bool: ndarray
     :param rx: the radius of the long axis of the particle (insphere radius times aspect ratio), defaults to 1.0
     :type rx: scalar, optional
@@ -88,8 +100,10 @@ def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray,
     :type ry: scalar, optional
     :param order: n-fold order defines the argument of the complex number used to calculate psi_n, defaults to 6
     :type order: int, optional
-    :return: [N] array of complex bond orientational order parameters, and the norm of their mean.
-    :rtype: tuple(ndarray, scalar)
+    :param ret_global: whether to return the global bond order parameter, defaults to False
+    :type ret_global: bool, optional
+    :return: (N,) array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
+    :rtype: ndarray[complex] (, complex)
     """    
     pnum = pts.shape[0]
     i,j = np.mgrid[0:pnum,0:pnum]
@@ -136,20 +150,24 @@ def projected_bond_order(pts:np.ndarray, gradient:callable, nei_bool:np.ndarray,
 
         \\psi_j = \\frac{1}{N_j}\\sum_k\\psi_{jk}=\\frac{1}{N_j}\\sum_ke^{in\\theta_{jk}}
 
-    Where the sum is over all :math:`N_j` neighboring particles :math:`k` to particle :math:`j` and :math:`\\theta_{jk}` is the angle between particles :math:`j` and :math:`k` projected onto the local tangent plane of particle :math:`j`. 
+     Where the sum is over all :math:`N_j` neighboring particles :math:`k` to particle :math:`j :math:`\\theta_{jk}` is the angle between particles :math:`j` and :math:`k` projected onto the local tangent plane of particle :math:`j`, defined by a basis :math:`\\{\\hat{\\mathbf{{e}}_1^j,\\hat{\\mathbf{{e}}_2^j}\\}` computed using the provided gradient function and the :py:meth:`calc.locality.local_vectors` method.
 
-    :param pts: [Nxd] array of particle positions in 'd' dimensions.
+    .. math::
+
+        \\theta_{jk} = \\tan^{-1}\\big[ (\\mathbf{r}_{jk}\\cdot\\hat{\\mathbf{{e}}_2^j)\\big/(\\mathbf{r}_{jk}\\cdot\\hat{\\mathbf{{e}}_1^j) \\big]
+
+    :param pts: (N,d) array of particle positions in 'd' dimensions.
     :type pts: ndarray
     :param gradient: a callable function that computes the local gradient at a given point
     :type gradient: callable
-    :param nei_bool: a [NxN] boolean array indicating neighboring particles.
+    :param nei_bool: a (N,N) boolean array indicating neighboring particles.
     :type nei_bool: ndarray
     :param order: n-fold order defines the argument of the complex number used to calculate psi_n, defaults to 6
     :type order: int, optional
     :param ref: a reference vector to help define the local frame, defaults to np.array([0,-1,0])
     :type ref: ndarray, optional
-    :return: [N] array of complex bond orientational order parameters, and the norm of their mean.
-    :rtype: tuple(ndarray, scalar)
+    :return: (N,) array of complex bond orientational order parameters, and the norm of their mean.
+    :rtype: ndarray[complex]
     """    
 
     pnum = pts.shape[0]
@@ -197,22 +215,30 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
 
     .. math::
 
-        C_n^j = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_j\\psi_k^*\\big]}{|\\psi_j\\psi_k^*|} \\geq \\Theta_C \\bigg]
+        C_n^j = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}\\psi_{n,k}^*\\big]}{|\\psi_{n,j}\\psi_{n,k}^*|} \\geq \\Theta_C \\bigg]
 
     Where the :math:`\\psi`\'s are any-fold bond orientational order parameters for each particle, :math:`\\Theta_{C}` is a \'crystallinity threshold\' used to determine whether two neighboring particles are part of the same crystalline domain, and :math:`n` is a factor used to simply normalize :math:`C_6^j` between zero and one.
 
+    On curved surfaces neighboring particles may have bond orientational order parameters defined in different local tangent planes. In this case the crystalline connectivity becomes:
 
-    :param psis: [N] array of complex bond orientational order parameters
+    .. math::
+
+        C_n^j = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}(R_{jk}^n\\psi_{n,k})^*\\big]}{|\\psi_{n,j}(R_{jk}^n\\psi_{n,k})^*|} \\geq \\Theta_C \\bigg]
+
+    Where :math:`R_{jk}` encodes the rotation between neighboring tangent planes, i.e. the output of :py:meth:`calc.locality.tangent_connection`. :math:`R_{jk}^n` is then used to rotate the n-fold bond orientational order of neighboring particles.
+
+
+    :param psis: (N,) array of complex bond orientational order parameters
     :type psis: ndarray
-    :param nei_bool: a [NxN] array indicating neighboring particles.
+    :param nei_bool: a (N,N) array indicating neighboring particles.
     :type nei_bool: ndarray
     :param crystallinity_threshold: the minimum inner product of adjacent complex bond-OPs needed in order to consider adjacent particles 'connected', defaults to 0.32
     :type crystallinity_threshold: float, optional
     :param norm: an optional factor to normalize the result, defaults to 6, but passing ``None`` will reference the connectivity value for a perfectly crystalline hexagon (i.e. equations 8 and 10 in the SI from `(Juarez, Lab on a Chip 2012) <https://doi.org/10.1039/C2LC40692F>`_)
     :type norm: float | None, optional
-    :param phase_rotate: an optional [N] array of complex phase factors to include a rotation between neighboring particles' bond-OPs (i.e. the output of :py:meth:`calc.locality.tangent_connection`) defaults to None
+    :param phase_rotate: an optional (N,N) array of complex phase factors (:math:`R_{jk}^n`) to include a rotation between neighboring particles' bond-OPs, defaults to None
     :type phase_rotate: ndarray | None, optional
-    :return: [N] array of real crystal connectivities
+    :return: (N,) array of real crystal connectivities
     :rtype: ndarray
     """    
 

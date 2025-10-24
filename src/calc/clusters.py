@@ -10,14 +10,13 @@ from graph_tool import topology as gtop
 # from .locality import gyration_tensor
 
 
-def graph_clusters(c6, nei_rotate):
+def graph_clusters(c6, nei):
 
     pnum = len(c6)
     is_defect = (np.abs(1-c6)>0.05)
     ii,jj = np.mgrid[0:pnum, 0:pnum]
 
     match = ((is_defect[ii])==(is_defect[jj]))
-    nei = (np.abs(nei_rotate)>0)
     bonds = np.logical_and(nei,match)
 
     g = Graph(lil_matrix(bonds),directed=False)

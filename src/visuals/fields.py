@@ -47,10 +47,21 @@ class Field:
     :type n: int, optional
     :param dg: gap between all sets of virtual electrodes (in simulation units), defaults to 30
     :type dg: float, optional
+    :ivar k_trans: sets the translational field strengths in kT units constraining particles along each multipole axis, defaults to None
+    :type k_trans: list | np.ndarray, optional
+    :ivar k_rot: sets the rotational field strengths in kT units aligning particles along each multipole axis, defaults to None
+    :type k_rot: list | np.ndarray, optional
+    :ivar direct: sets the direction (in radians) of each multipole axis, defaults to None, defaults to None
+    :type direct: list | np.ndarray, optional
     """        
     def __init__(self, n:int=2, dg:float=30):
         """
         Constructor
+
+        :param n: number of fields to superimpose, defaults to 2
+        :type n: int, optional
+        :param dg: gap between all sets of virtual electrodes (in simulation units), defaults to 30
+        :type dg: float, optional
         """
         self.k_trans = np.zeros(n)
         self.k_rot = np.zeros(n)
@@ -143,6 +154,8 @@ class Field:
         all_angles = np.full(shape,angles)
         ss = np.sin(m*(all_angles - t0s))
 
+        return np.sum(0.5 * ks * ss**2,axis=0)
+
     def update_from_gsd(self, frame:gsd.hoomd.Frame):
         """Reads field parameters from a GSD frame log and updates the current Field instance.
 
@@ -193,9 +206,8 @@ def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, **contour
     :type field: Field, optional
     :param levels: Contour levels to draw. If None, levels are automatically determined from the potential.
     :type levels: array-like, optional
-    :param contour_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.contour` (colors, linewidths, etc)
-    :type contour_kwargs: dict
-
+    :param **contour_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.contour` (colors, linewidths, etc)
+    :type **contour_kwargs: dict
     :return: The ContourSet object created by :meth:`Axes.contour`.
     :rtype: matplotlib.contour.ContourSet
     """
@@ -245,9 +257,8 @@ def spectral_PEL(ax=None, field: Field = _default_qpole, levels = None, **pcolor
     :type field: Field, optional
     :param levels: Contour levels to draw. If None, levels are automatically determined from the potential.
     :type levels: array-like, optional
-    :param pcolormesh_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.pcolormesh` (cmap, norm, etc)
-    :type pcolormesh_kwargs: dict
-
+    :param **pcolormesh_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.pcolormesh` (cmap, norm, etc)
+    :type **pcolormesh_kwargs: dict
     :return: The QuadMesh returned by :meth:`Axes.pcolormesh`.
     :rtype: matplotlib.collections.QuadMesh
     """
@@ -295,9 +306,8 @@ def PEL_arrows(ax=None, field: Field = _default_qpole, pts=None, **quiver_kwargs
     :type field: Field, optional
     :param pts: An [N x 2] array of points (in simulation length units) at which to evaluate and draw force vectors. If None, a default set of points is generated automatically.
     :type pts: ndarray, optional
-    :param quiver_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.quiver` (color, scale, etc)
-    :type quiver_kwargs: dict
-
+    :param **quiver_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.quiver` (color, scale, etc)
+    :type **quiver_kwargs: dict
     :return: The Quiver object returned by :meth:`Axes.quiver`.
     :rtype: matplotlib.quiver.Quiver
     """

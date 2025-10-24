@@ -49,9 +49,9 @@ def quat_to_angle(quat:np.ndarray) -> np.ndarray:
 
     Finds the angle :math:`\\theta` about the z-axis from a quaternion representation in 2D: :math:`q = \\cos(\\theta/2) + \\sin(\\theta/2)\\mathbf{k}`
 
-    :param quat: a list of quaterions encoding particle orientation
+    :param quat: an (N,4) array of quaterions encoding particle orientation
     :type quat: ndarray
-    :return: the quadrant-corrected 2d angular orientations of the particles
+    :return: an (N,) array of quadrant-corrected 2d angular orientations of the particles
     :rtype: ndarray
     """    
     angles = 2.0*np.arctan2(quat[:,-1],quat[:,0])
@@ -67,9 +67,9 @@ def stretched_neighbors(pts:np.ndarray, angles:np.ndarray, rx:float = 1.0, ry:fl
 
     Where :math:`\\hat{\\mathbf{x_i}} = \\cos(\\theta_i)\\hat{\\mathbf{x}} + \\sin(\\theta_i)\\hat{\\mathbf{y}}` and :math:`\\hat{\\mathbf{y_i}} = -\\sin(\\theta_i)\\hat{\\mathbf{x}} + \\cos(\\theta_i)\\hat{\\mathbf{y}}` are the local unit vectors along the long (:math:`r_x`) and short (:math:`r_y`) axes of particle :math:`i`, respectively.
 
-    :param pts: the position of the centers of each anisotropic particle in the configuration
+    :param pts: an (N,d) array of the positions each anisotropic particle in the configuration
     :type pts: ndarray
-    :param angles: the orientation of each anisotropic particle in the configuration
+    :param angles: an (N,) array of the orientation of each anisotropic particle in the configuration
     :type angles: ndarray
     :param rx: the radius of the long axis of the particle (insphere radius times aspect ratio), defaults to 1.0
     :type rx: scalar, optional
@@ -227,8 +227,8 @@ def local_vectors(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,
     :type gradient: callable
     :param ref: a reference vector to help define the local frame, defaults to (0,-1,0) (so that :math:`e_1=\\hat{x}` usually)
     :type ref: ndarray, optional
-    :return: two orthogonal unit vectors tangent to the local surface defined by the gradient at each x
-    :rtype: tuple(ndarray, ndarray)
+    :return: an (N,2,3) array of two orthogonal unit vectors tangent to the local surface defined by the gradient at each x
+    :rtype: ndarray
     """
     return np.array([_lvec(x,gradient,ref=ref) for x in pts])
 
@@ -242,14 +242,14 @@ def tangent_connection(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.arra
 
     where the local tangent vectors :math:`e_{1,i}` and :math:`e_{2,i}` are computed using :py:meth:`local_vectors`. :math:`R_{ij}` describes how to rotate complex numbers defined relative to :math:`e_{1,i}` into those defined relative to :math:`e_{1,j}`.
 
-    :param pts: an [Nx3] array of positions at which to compute local tangent vectors
+    :param pts: an (N,3) array of positions at which to compute local tangent vectors
     :type pts: ndarray
     :param gradient: a function which computes normal vector to a surface
     :type gradient: callable
     :param ref: a reference vector to help define the local frame, defaults to np.array([0,-1,0])
     :type ref: ndarray, optional
-    :return: an [NxN] complex representation of the connection between local tangent planes at each pair of points
-    :rtype: ndarray
+    :return: an (N,N) complex representation of the connection between local tangent planes at each pair of points
+    :rtype: ndarray[complex]
     """
 
     pnum = pts.shape[0]

@@ -19,13 +19,25 @@ class SuperEllipse():
     :type ax: scalar, optional
     :param ay: the other radius of the superellipse, defaults to 1.0
     :type ay: scalar, optional
-    :param n: the 'superellipse parameter' defines how sharp the corners are. :math:`n\\to\\infty` produces rectangles, :math:`n=2` gives ellipses, :math:`n\\to1` produces rhombuses, defaults to 2.0:
+    :param n: the 'superellipse parameter' defines how sharp the corners are. :math:`n\\to\\infty` produces rectangles, :math:`n=2` gives ellipses, :math:`n\\to1` produces rhombuses, defaults to 2.0
+    :type n: scalar, optional
+    :ivar ax: one of the radii of the superellipse, defaults to 1.0
+    :type ax: scalar, optional
+    :ivar ay: the other radius of the superellipse, defaults to 1.0
+    :type ay: scalar, optional
+    :ivar n: the 'superellipse parameter' defines how sharp the corners are. :math:`n\\to\\infty` produces rectangles, :math:`n=2` gives ellipses, :math:`n\\to1` produces rhombuses, defaults to 2.0:
     :type n: scalar, optional
 
     """
     def __init__(self,ax:float=1.0,ay:float=1.0,n:float=2.0):
         """
         Constructor
+
+        :param ax: one of the radii of the superellipse, defaults to 1.0
+        :type ax: scalar, optional
+        :param ay: the other radius of the superellipse, defaults to 1.0
+        :type ay: scalar, optional
+        :param n: the 'superellipse parameter' defines how sharp the corners are. :math:`n\\to\\infty` produces rectangles, :math:`n=2` gives ellipses, :math:`n\\to1` produces rhombuses, defaults to 2.0
         """        
         self.ax = max(ax,ay)
         self.ay = min(ax,ay)

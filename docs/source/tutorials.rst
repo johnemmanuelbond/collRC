@@ -2,18 +2,11 @@ Tutorial
 ========
 
 .. video:: _static/test-sphere-short.webm
-   :width: 50
+   :width: 700
    :autoplay:
    :loop:
    :nocontrols:
    :muted:
-
-.. raw:: html
-
-    <video width="700" controls muted autoplay loop>
-        <source src="_static/test-sphere-short.webm" type="video/webm">
-        Your browser does not support the video tag.
-    </video>
 
 .. The overarching goal of SMRL is to collect a variety of control problems in soft matter and express them in a common language so that reinforcement learning methods may be applied interchangably between problems. In this way, lessons learned from one system can translate to better controlling another.
 
