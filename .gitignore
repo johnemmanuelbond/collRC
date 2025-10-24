@@ -206,9 +206,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# test gsd data
-# src/**/*.gsd
-src/**/*.mp4
-tests/*.mp4
+# test gsd and mp4 data
+**/*.gsd
+**/*.mp4
 
 tools/
+tests/
