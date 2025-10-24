@@ -15,7 +15,8 @@
 
 .twocol {
   display: flex;
-  gap: 1rem;
+  /* keep columns tight together on wide screens (no visual gap) */
+  gap: 0;
   align-items: flex-start;
   box-sizing: border-box;
   width: 100%;
@@ -23,21 +24,23 @@
 
 .leftcol {
   /* main column grows to fill remaining space */
-  flex: 1 1 65%;
+  flex: 1 1 auto;
   min-width: 0; /* allow children to shrink properly */
+  /* small internal spacing so text doesn't touch the aside */
   padding-right: 0.5rem;
 }
 
 .rightcol {
-  /* aside column keeps a fixed-ish width */
-  flex: 0 0 32%;
-  max-width: 32%;
-  padding-left: 0.75rem;
+  /* aside column keeps a fixed-ish width and sits immediately beside the left column */
+  flex: 0 0 min(32%, 320px);
+  width: min(32%, 320px);
+  padding-left: 0; /* no gap so it appears flush next to the main column */
   /* keep the aside visible while scrolling on wide screens */
   position: sticky;
   top: 1rem;
   align-self: flex-start;
-  border-left: 1px solid rgba(0,0,0,0.06);
+  /* subtle separation can be handled by the leftcol's padding; remove left border for a flush appearance */
+  border-left: none;
 }
 
 /* make images and figures responsive inside either column */
@@ -61,6 +64,8 @@
     position: static; /* disable sticky on small screens */
     padding: 0;
     border-left: none;
+    /* each column takes full width when stacked */
+    width: 100%;
   }
 }
 
