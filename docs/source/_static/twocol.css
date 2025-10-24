@@ -137,3 +137,35 @@ body .twocol .rightcol {
     width: 100% !important;
   }
 }
+
+/* Remove extra spacing and floats coming from Sphinx/docutils wrappers when
+   using the `.. container::` directive. These rules apply only inside the
+   two-column layout to avoid globally changing container behavior. */
+.bd-content .twocol > .docutils.container,
+.page .twocol > .docutils.container,
+.document .twocol > .docutils.container,
+.content .twocol > .docutils.container,
+body .twocol > .docutils.container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.bd-content .twocol .sphinx-contrib-video-container,
+.page .twocol .sphinx-contrib-video-container,
+.document .twocol .sphinx-contrib-video-container,
+.content .twocol .sphinx-contrib-video-container,
+body .twocol .sphinx-contrib-video-container {
+  margin: 0 !important;
+  padding: 0 !important;
+  float: none !important; /* prevent alignment helpers from separating columns */
+  display: block !important;
+}
+
+.bd-content .twocol .docutils.container > *,
+.page .twocol .docutils.container > *,
+.document .twocol .docutils.container > *,
+.content .twocol .docutils.container > *,
+body .twocol .docutils.container > * {
+  margin: 0 !important;
+  padding: 0 !important;
+}
