@@ -115,7 +115,7 @@ class ColorByS2g(ColorByS2):
         :rtype: ndarray
         """
         if snap is not None: self.snap = snap
-        return self._c([np.abs(self.nem_g)]*len(self.nem_l))
+        return self._c(np.array([np.abs(self.nem_g)]*len(self.nem_l)))
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
@@ -187,7 +187,7 @@ class ColorByT4g(ColorByT4):
         :rtype: ndarray
         """
         if snap is not None: self.snap = snap
-        return self._c([np.abs(self.tet_g)]*len(self.tet_l))
+        return self._c(np.array([np.abs(self.tet_g)]*len(self.tet_l)))
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
@@ -259,12 +259,65 @@ if __name__ == "__main__":
     #     print(neicolor.nth_neighbors(a, n=n).astype(int))
     #     print()
 
+    # # make example movies
+    # from render import render_npole
 
-    from render import render_npole
+    # frame = gsd.hoomd.open("../render/test-rect1.gsd", mode='r')[1200]
+    # rect = SuperEllipse(ax=1.0, ay=0.5, n=20)
+    # style = neicolor(shape=rect, dark=False, ptcl=250)
 
-    frame = gsd.hoomd.open("../render/test-rect.gsd", mode='r')[1200]
-    rect = SuperEllipse(ax=1.0, ay=0.5, n=20)
-    style = neicolor(shape=rect, dark=False, ptcl=250)
+    # fig,ax = render_npole(frame, style, figsize=4, dpi=200)
+    # fig.savefig('test-nei-coloring.jpg',bbox_inches='tight')
 
-    fig,ax = render_npole(frame, style, figsize=4, dpi=200)
-    fig.savefig('test-nei-coloring.jpg',bbox_inches='tight')
+    from render import render_npole, render_sphere, animate
+    import traceback
+
+    try:
+        # Helper to render a rectangular trajectory with a given style
+        def _make_rect_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=500, iend=1500, istride=10, sphere=False):
+            try:
+                frames = gsd.hoomd.open(gsd_path, mode='r')
+            except Exception as _e:
+                print(f"Could not open {gsd_path}: {_e}")
+                traceback.print_exc()
+                return
+            sel = frames[istart:iend:istride]
+            if sphere:
+                L0 = frames[0].configuration.box[0]
+                figure_maker = lambda snap: render_sphere(snap, style=style, view_dir=None, view_dist=100, dark=True, figsize=4, dpi=300, L=L0)
+            else:
+                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=300)
+            animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+
+        # Create movies for the p-atic colorings
+        for rect_gsd in ['../tests/test-rect1.gsd', '../tests/test-rect2.gsd']:
+            if 'rect1' in rect_gsd: out = 'rect1'
+            elif 'rect2' in rect_gsd: out = 'rect2'
+            # ColorByS2
+            style = ColorByS2(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            _make_rect_movie(rect_gsd, f'../tests/s2-{out}.mp4', style)
+            _make_rect_movie(rect_gsd, f'../docs/source/_static/s2-{out}.webm', style, codec='libvpx')
+
+            # ColorByS2g
+            style = ColorByS2g(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            _make_rect_movie(rect_gsd, f'../tests/s2g-{out}.mp4', style)
+            _make_rect_movie(rect_gsd, f'../docs/source/_static/s2g-{out}.webm', style, codec='libvpx')
+
+            # ColorS2Phase
+            style = ColorS2Phase(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            _make_rect_movie(rect_gsd, f'../tests/s2p-{out}.mp4', style)
+            _make_rect_movie(rect_gsd, f'../docs/source/_static/s2p-{out}.webm', style, codec='libvpx')
+
+            # ColorByT4
+            style = ColorByT4(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            _make_rect_movie(rect_gsd, f'../tests/t4-{out}.mp4', style)
+            _make_rect_movie(rect_gsd, f'../docs/source/_static/t4-{out}.webm', style, codec='libvpx')
+
+            # ColorByT4g
+            style = ColorByT4g(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            _make_rect_movie(rect_gsd, f'../tests/t4g-{out}.mp4', style)
+            _make_rect_movie(rect_gsd, f'../docs/source/_static/t4g-{out}.webm', style, codec='libvpx')
+
+    except Exception as e:
+        print('Agent movie creation skipped due to error:', e)
+        traceback.print_exc()

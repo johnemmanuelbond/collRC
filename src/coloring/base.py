@@ -9,6 +9,7 @@ import numpy as np
 import gsd.hoomd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcol
+from visuals import SuperEllipse
 
 ############################################################################################################
 # BASE COLOR DEFINITIONS AND MIXING FUNCTIONS
@@ -76,6 +77,8 @@ def color_blender(c00=base_colors['white'], c01=base_colors['red'], c10=base_col
 # STATECOLOR BASE CLASS
 ############################################################################################################
 
+# Default sphere geometry for calculations
+_default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 
 def _gsd_match(gsd1: gsd.hoomd.Frame, gsd2: gsd.hoomd.Frame) -> bool:
     """ Check if two `GSD`<>_ frames are identical. Only checks positions, orientations, and types, not logged metadata.
@@ -111,7 +114,7 @@ class ColorBase():
     :type dark: bool, optional
     """
     
-    def __init__(self, dark: bool = True):
+    def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
         """
         Constructor
         """
@@ -121,11 +124,22 @@ class ColorBase():
         else:
             self._c = base_colors['grey']
         self._f = None
+        self._shape = shape
 
     @property
     def snap(self) -> gsd.hoomd.Frame:
         """Get the current GSD frame used for coloring."""
         return self._f
+    
+    @property
+    def shape(self) -> SuperEllipse:
+        """Get the shape used for coloring."""
+        return self._shape
+
+    @shape.setter
+    def shape(self, shape: SuperEllipse):
+        """Set the shape used for coloring."""
+        self._shape = shape
 
     @snap.setter
     def snap(self, snap: gsd.hoomd.Frame):
@@ -192,7 +206,7 @@ if __name__ == "__main__":
 
     # Display the results
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
-    axes[0].imshow(img1.reshape(1, -1, 3), aspect='auto')
+    axes[0].imshow(img1.reshape(1, -1, 4), aspect='auto')
     axes[0].set_title('color_gradient')
     axes[0].axis('off')
 
@@ -205,4 +219,53 @@ if __name__ == "__main__":
     axes[2].axis('off')
 
     fig.savefig("color_demo.png", dpi=600, bbox_inches='tight')
+
+    # make example movies
+    import traceback
+    from render import render_npole, render_sphere, animate
+
+    try:
+        def _make_base_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=0, iend=-1, istride=10, sphere=False):
+            try:
+                frames = gsd.hoomd.open(gsd_path, mode='r')
+            except Exception as _e:
+                print(f"Could not open {gsd_path}: {_e}")
+                traceback.print_exc()
+                return
+            sel = frames[istart:iend:istride]
+            if sphere:
+                L0 = frames[0].configuration.box[0]
+                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=5, dpi=300, L=L0)
+            else:
+                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=300)
+            animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+
+        # simple base coloring on control and rectangle examples
+        # style = ColorBase()
+        # _make_base_movie('../tests/test-control.gsd', '../tests/base-qpole.mp4', style, istride=100)
+        # _make_base_movie('../tests/test-control.gsd', '../docs/source/_static/base-qpole.webm', style, codec='libvpx', istride=100)
+
+        # style = ColorBase()
+        # _make_base_movie('../tests/test-opole1.gsd', '../tests/base-opole1.mp4', style, istride=25)
+        # _make_base_movie('../tests/test-opole1.gsd', '../docs/source/_static/base-opole1.webm', style, codec='libvpx', istride=25, iend=2500)
+
+        # style = ColorBase()
+        # _make_base_movie('../tests/test-sphere.gsd', '../tests/base-sphere.mp4', style, sphere=True, iend=100, istride=2)
+        # _make_base_movie('../tests/test-sphere.gsd', '../docs/source/_static/base-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
+
+        style = ColorBase(shape = SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+        _make_base_movie('../tests/test-rect1.gsd', '../tests/base-rect1.mp4', style, istart=500, iend=1500)
+        _make_base_movie('../tests/test-rect1.gsd', '../docs/source/_static/base-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
+
+        style = ColorBase(shape = SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+        _make_base_movie('../tests/test-rect2.gsd', '../tests/base-rect2.mp4', style, istart=500, iend=1500)
+        _make_base_movie('../tests/test-rect2.gsd', '../docs/source/_static/base-rect2.webm', style, codec='libvpx', istart=500, iend=1500)
+
+
+    except Exception as e:
+        # Print the exception and full traceback so the caller can see where the
+        # error originated (file name and line number). This makes debugging
+        # failures in the demo code much easier than a single-line message.
+        print('Agent movie creation skipped due to error:', e)
+        traceback.print_exc()
 

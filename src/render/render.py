@@ -58,7 +58,7 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
 
     # Apply coloring and styling
     local_colors = style.local_colors()
-    patches = flat_patches(pts, qts, shape = style._shape)
+    patches = flat_patches(pts, qts, shape = style.shape)
     ptcls = ax.add_collection(patches, autolim=True)
     ptcls.set_fc(local_colors)  # Face colors from coloring scheme
     if dark:
@@ -176,7 +176,7 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
 
     # Apply coloring and styling
     local_colors = style.local_colors()
-    patches, to_render = projected_patches(pts, qts, shape = style._shape, view_dir=view_dir, view_dist=view_dist)
+    patches, to_render = projected_patches(pts, qts, shape = style.shape, view_dir=view_dir, view_dist=view_dist)
     ptcls = ax.add_collection(patches, autolim=True)
     ptcls.set_fc(local_colors[to_render])  # Face colors from coloring scheme
     if dark:
@@ -187,7 +187,7 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
 
     # Add text annotations in top-left corner
     state_string = style.state_string()
-    r_string = f"$R/2a = {R/style._shape.ay/2:.2f}$"
+    r_string = f"$R/2a = {R/style.shape.ay/2:.2f}$"
     if show_text:
         if state_string == "":
             textbox = r_string
@@ -248,9 +248,9 @@ if __name__ == "__main__":
     # style = QpoleSuite(dark=True)
 
     # figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=600)
-    # frames = gsd.hoomd.open('./test-opole.gsd',mode='r')
+    # frames = gsd.hoomd.open('../tests/test-opole1.gsd',mode='r')
     # f_select = frames[::25]
-    # animate(f_select, outpath='test-opole.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
+    # animate(f_select, outpath='../tests/test-opole1.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
 
 
     # from coloring import ColorByConn, ColorC4Defects
@@ -263,9 +263,9 @@ if __name__ == "__main__":
     # style = ColorS2Defects(shape=rect, dark=True, bgColor=bg_style)
 
     # figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=500)
-    # frames = gsd.hoomd.open('./test-rect.gsd',mode='r')
+    # frames = gsd.hoomd.open('../tests/test-rect.gsd',mode='r')
     # f_select = frames[::10]
-    # animate(f_select, outpath='test-rect.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
+    # animate(f_select, outpath='../tests/test-rect.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
 
     aeff = SuperEllipse(ax=0.52, ay=0.52, n=2.0)
     sphere_grad = lambda r: r/np.linalg.norm(r, axis=-1, keepdims=True)
@@ -277,13 +277,13 @@ if __name__ == "__main__":
     bg_style = ColorByConn(dark=True, order=6, surface_normal=sphere_grad)
     style = ColorC6Defects(dark=True, bgColor=bg_style, surface_normal=sphere_grad)
 
-    frames = gsd.hoomd.open('./test-sphere.gsd',mode='r')
+    frames = gsd.hoomd.open('../tests/test-sphere.gsd',mode='r')
     f_select = frames[0:600:3]
     R0 = np.linalg.norm(frames[0].particles.position, axis=-1).mean()
     L0 = 1.05*R0*2
 
     figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=5, dpi=500, L=L0)
-    # animate(f_select, outpath='test-sphere.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
+    # animate(f_select, outpath='../tests/test-sphere.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
 
     f_select = frames[0:100:2]
-    animate(f_select, outpath='test-sphere-short.webm', figure_maker=figure_maker, fps=5, codec='libvpx')
+    animate(f_select, outpath='../tests/test-sphere-short.webm', figure_maker=figure_maker, fps=5, codec='libvpx')

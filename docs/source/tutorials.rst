@@ -1,12 +1,76 @@
 Tutorial
 ========
 
-.. video:: _static/test-sphere.mp4
-   :width: 700
+.. container:: twocol
+
+   .. container:: leftside
+
+      .. video:: _static/base-qpole.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+      
+   .. container:: rightside
+
+      .. video:: _static/base-opole1.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+
+.. video:: _static/base-sphere.webm
+   :width: 600
    :autoplay:
    :loop:
    :nocontrols:
    :muted:
+
+
+.. container:: twocol
+
+   .. container:: leftside
+
+      .. video:: _static/phase-qpole.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+      
+   .. container:: rightside
+
+      .. video:: _static/phase-opole1.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+
+
+
+.. container:: twocol
+
+   .. container:: leftside
+
+      .. video:: _static/c6-sphere.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+      
+   .. container:: rightside
+
+      .. video:: _static/c6d-sphere.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+
 
 .. The overarching goal of SMRL is to collect a variety of control problems in soft matter and express them in a common language so that reinforcement learning methods may be applied interchangably between problems. In this way, lessons learned from one system can translate to better controlling another.
 

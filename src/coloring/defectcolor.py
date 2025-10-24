@@ -189,5 +189,61 @@ class ColorC4Defects(ColorByConn):
 
 if __name__ == "__main__":
     
-    # test code
-    pass
+    from render import render_npole, render_sphere, animate
+    from coloring import ColorByEta0, ColorBase
+    import traceback
+
+    try:
+        def _make_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=0, iend=-1, istride=10, sphere=False):
+            try:
+                frames = gsd.hoomd.open(gsd_path, mode='r')
+            except Exception as _e:
+                print(f"Could not open {gsd_path}: {_e}")
+                traceback.print_exc()
+                return
+            sel = frames[istart:iend:istride]
+            if sphere:
+                L0 = frames[0].configuration.box[0]
+                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=4, dpi=300, L=L0)
+            else:
+                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=300)
+            animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+
+        # C6 defects on q-pole control
+        bg_style = ColorBase()
+        style = ColorC6Defects(bgColor=bg_style)
+        _make_movie('../tests/test-control.gsd', '../tests/c6d-qpole.mp4', style, istride=100)
+        _make_movie('../tests/test-control.gsd', '../docs/source/_static/c6d-qpole.webm', style, codec='libvpx', istride=100)
+
+        # C6 defects on sphere (small sample)
+        bg_style = ColorByConn()
+        style = ColorC6Defects(bgColor=bg_style)
+        _make_movie('../tests/test-sphere.gsd', '../tests/c6d-sphere.mp4', style, sphere=True, iend=100, istride=2)
+        _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6d-sphere.webm', style, sphere=True, codec='libvpx', iend=100, istride=2)
+
+        # C4 defects on rectangle (use tightened frame window)
+        bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4,norm=4)
+        style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), bgColor=bg_style)
+        _make_movie('../tests/test-rect.gsd', '../tests/c4d-rect.mp4', style, istart=500, iend=1500)
+        _make_movie('../tests/test-rect.gsd', '../docs/source/_static/c4d-rect.webm', style, codec='libvpx', istart=500, iend=1500)
+
+        # S2 defects on rectangle
+        bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=2.0))
+        style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=2.0), bgColor=bg_style)
+        _make_movie('../tests/test-rect.gsd', '../tests/s2d-rect.mp4', style, istart=500, iend=1500)
+        _make_movie('../tests/test-rect.gsd', '../docs/source/_static/s2d-rect.webm', style, codec='libvpx', istart=500, iend=1500)
+
+        # Additional rectangle movie variants (new test rect1/rect2)
+        bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4,norm=4)
+        style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), bgColor=bg_style)
+        _make_movie('../tests/test-rect1.gsd', '../tests/c4d-rect1.mp4', style, istart=500, iend=1500)
+        _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
+
+        bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=2.0))
+        style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=2.0), bgColor=bg_style)
+        _make_movie('../tests/test-rect2.gsd', '../tests/s2d-rect2.mp4', style, istart=500, iend=1500)
+        _make_movie('../tests/test-rect2.gsd', '../docs/source/_static/s2d-rect2.webm', style, codec='libvpx', istart=500, iend=1500)
+
+    except Exception as e:
+        print('Agent movie creation skipped due to error:', e)
+        traceback.print_exc()
