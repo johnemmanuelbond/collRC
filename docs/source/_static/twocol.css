@@ -73,3 +73,67 @@
 @media (prefers-color-scheme: dark) {
   .rightcol { border-left-color: rgba(255,255,255,0.06); }
 }
+
+/* Stronger theme-safe overrides: target common Sphinx theme wrappers and
+   increase specificity so the theme does not accidentally override the
+   two-column behavior. Use !important only where necessary. */
+.bd-content .twocol,
+.page .twocol,
+.document .twocol,
+.content .twocol,
+body .twocol {
+  display: flex !important;
+  gap: 0 !important;
+  align-items: flex-start !important;
+}
+
+.bd-content .twocol .leftcol,
+.page .twocol .leftcol,
+.document .twocol .leftcol,
+.content .twocol .leftcol,
+body .twocol .leftcol {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  padding-right: 0.5rem !important;
+}
+
+.bd-content .twocol .rightcol,
+.page .twocol .rightcol,
+.document .twocol .rightcol,
+.content .twocol .rightcol,
+body .twocol .rightcol {
+  flex: 0 0 min(32%, 320px) !important;
+  width: min(32%, 320px) !important;
+  padding-left: 0 !important;
+  position: sticky !important;
+  top: 1rem !important;
+  align-self: flex-start !important;
+  border-left: none !important;
+}
+
+@media (max-width: 900px) {
+  .bd-content .twocol,
+  .page .twocol,
+  .document .twocol,
+  .content .twocol,
+  body .twocol {
+    flex-direction: column !important;
+  }
+  .bd-content .twocol .rightcol,
+  .page .twocol .rightcol,
+  .document .twocol .rightcol,
+  .content .twocol .rightcol,
+  body .twocol .rightcol,
+  .bd-content .twocol .leftcol,
+  .page .twocol .leftcol,
+  .document .twocol .leftcol,
+  .content .twocol .leftcol,
+  body .twocol .leftcol {
+    flex-basis: auto !important;
+    max-width: 100% !important;
+    position: static !important;
+    padding: 0 !important;
+    border-left: none !important;
+    width: 100% !important;
+  }
+}

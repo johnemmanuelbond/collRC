@@ -222,25 +222,25 @@ if __name__ == "__main__":
         # _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6d-sphere.webm', style, sphere=True, codec='libvpx', iend=100, istride=2)
 
         # C4 defects on rectangle (use tightened frame window)
-        bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4)
-        style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), bgColor=bg_style)
-        _make_movie('../tests/test-rect.gsd', '../tests/c4d-rect.mp4', style, istart=500, iend=1500)
-        _make_movie('../tests/test-rect.gsd', '../docs/source/_static/c4d-rect.webm', style, codec='libvpx', istart=500, iend=1500)
-
-        # S2 defects on rectangle
-        bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=2.0))
-        style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=2.0), bgColor=bg_style)
-        _make_movie('../tests/test-rect.gsd', '../tests/s2d-rect.mp4', style, istart=500, iend=1500)
-        _make_movie('../tests/test-rect.gsd', '../docs/source/_static/s2d-rect.webm', style, codec='libvpx', istart=500, iend=1500)
-
-        # Additional rectangle movie variants (new test rect1/rect2)
-        bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4)
-        style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), bgColor=bg_style)
+        bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), order=4)
+        style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
         _make_movie('../tests/test-rect1.gsd', '../tests/c4d-rect1.mp4', style, istart=500, iend=1500)
         _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
 
-        bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=2.0))
-        style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=2.0), bgColor=bg_style)
+        # S2 defects on rectangle
+        bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+        style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
+        _make_movie('../tests/test-rect1.gsd', '../tests/s2d-rect1.mp4', style, istart=500, iend=1500)
+        _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/s2d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
+
+        # Additional rectangle movie variants (new test rect1/rect2)
+        bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), order=4)
+        style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
+        _make_movie('../tests/test-rect1.gsd', '../tests/c4d-rect1.mp4', style, istart=500, iend=1500)
+        _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
+
+        bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+        style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
         _make_movie('../tests/test-rect2.gsd', '../tests/s2d-rect2.mp4', style, istart=500, iend=1500)
         _make_movie('../tests/test-rect2.gsd', '../docs/source/_static/s2d-rect2.webm', style, codec='libvpx', istart=500, iend=1500)
 

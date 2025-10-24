@@ -13,7 +13,7 @@ Tutorial
          :muted:
       
    .. container:: rightcol
-      
+
       .. video:: _static/base-opole1.webm
          :width: 250
          :autoplay:
@@ -70,7 +70,6 @@ Tutorial
          :loop:
          :nocontrols:
          :muted:
-
 
 .. The overarching goal of SMRL is to collect a variety of control problems in soft matter and express them in a common language so that reinforcement learning methods may be applied interchangably between problems. In this way, lessons learned from one system can translate to better controlling another.
 
