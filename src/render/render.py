@@ -16,7 +16,7 @@ from coloring import ColorBase
 def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
                  PEL='contour', show_text=True,
                  dpi=600, figsize=3.5, dark=True,
-                **kwargs):
+                 **kwargs):
     """
     Create a visualization of a single GSD frame with superellipse particles and optional field overlays.
 
@@ -34,8 +34,8 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
     :type figsize: float, optional
     :param dark: Whether to use dark background theme (default: True)
     :type dark: bool, optional
-    :param **kwargs: Additional options for customizating action strings and other overlays
-    :type **kwargs: dict
+    :param kwargs: Additional options for customizating action strings and other overlays
+    :type kwargs: dict
     :return: Matplotlib figure and axis objects
     :rtype: Tuple[plt.Figure, plt.Axes]
     """
@@ -130,8 +130,8 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
     :type figsize: float, optional
     :param dark: Whether to use dark background theme (default: True)
     :type dark: bool, optional
-    :param **kwargs: Additional options for customizating action strings and other overlays. Can include 'Lx', 'Ly' or 'L' to specify static box dimensions. Defaults to box dimensions from GSD frame, but since these may change over the course of a trajectory, specifying fixed values can help maintain consistent aspect ratios across frames. 
-    :type **kwargs: dict
+    :param kwargs: Additional options for customizating action strings and other overlays. Can include 'Lx', 'Ly' or 'L' to specify static box dimensions. Defaults to box dimensions from GSD frame, but since these may change over the course of a trajectory, specifying fixed values can help maintain consistent aspect ratios across frames. 
+    :type kwargs: dict
     :return: Matplotlib figure and axis objects
     :rtype: Tuple[plt.Figure, plt.Axes]
     """

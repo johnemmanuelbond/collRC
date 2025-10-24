@@ -11,15 +11,17 @@ def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_glob
 
     .. math::
 
-        \\psi_j = \\frac{1}{N_j}\\sum_k\\psi_{jk}=\\frac{1}{N_j}\\sum_ke^{in\\theta_{jk}}
+        \\psi_{n,j} = \\frac{1}{N_j}\\sum_k\\psi_{n,jk}=\\frac{1}{N_j}\\sum_ke^{in\\theta_{jk}}
 
-    Where the sum is over all :math:`N_j` neighboring particles :math:`k` to particle :math:`j` and :math:`\\theta_{jk}` is the angle between particles :math:`j` and :math:`k`. Similarly, the global n-fold bond orientational order is:
+    Where the sum is over all :math:`N_j` neighboring particles and :math:`\\theta_{jk}` is the angle between particles :math:`j` and :math:`k`.
+    
+    The global n-fold bond orientational order is:
 
     .. math::
 
-        \\psi_g = \\frac{1}{N}\\frac{1}{N_j}\\sum_{jk}\\psi_{jk}=\\frac{1}{N}\\frac{1}{N_j}\\sum_{jk}e^{in\\theta_{jk}}
+        \\psi_{n,g} = \\langle e^{in\\theta_{jk}} \\rangle_{jk}
 
-    Where the sum is over all unique bonds between particles :math:`j` and :math:`k`.
+    Where the mean is over all unique bonds between particle pairs :math:`j` and :math:`k`.
 
     :param pts: (N,d) array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
     :type pts: ndarray
@@ -72,21 +74,23 @@ def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray,
 
     .. math::
 
-        \\psi_j = \\frac{1}{N_j}\\sum_k\\psi_{jk}=\\frac{1}{N_j}\\sum_ke^{in\\theta^s_{jk}}e^{in\\theta_j}
+        \\psi_{n,j} = \\frac{1}{N_j}\\sum_k\\psi_{n,jk}=\\frac{1}{N_j}\\sum_ke^{in\\theta^s_{jk}}e^{in\\theta_j}
 
-    Where the sum is over all :math:`N_j` neighboring particles :math:`k` to particle :math:`j`, :math:`\\theta_j` is the orientaion of particle :math:`j`, and :math:`\\theta^s_{jk}` is the angle between particles :math:`j` and :math:`k` in the stretched coordiante system a of particle :math:`j`:
-
-    .. math::
-
-        \\theta^s_{jk} = \\tan^{-1}\\big[(\\delta y_jk/r_y) \\big/ (\\delta x_jk/r_x)\\big]
-
-    Similarly, the global n-fold bond orientational order is:
+    Where the sum is over all :math:`N_j` neighboring particles, :math:`\\theta_j` is the orientaion of particle :math:`j`, and :math:`\\theta^s_{jk}` is the angle between particles :math:`j` and :math:`k` in the stretched coordiante system of particle :math:`j`:
 
     .. math::
 
-        \\psi_g = \\frac{1}{N}\\frac{1}{N_j}\\sum_{jk}\\psi_{jk}=\\frac{1}{N}\\frac{1}{N_j}\\sum_{jk}e^{in\\theta^s_{jk}}e^{in\\theta_j}
+        \\theta^s_{jk} = \\tan^{-1}\\bigg[\\frac{\\mathbf{\\delta r_{jk}} \\cdot \\hat{\\mathbf{y_j}}/r_y}{\\mathbf{\\delta r_{jk}} \\cdot \\hat{\\mathbf{x_j}}/r_x}\\bigg]
 
-    Where the sum is over all unique bonds between particles :math:`j` and :math:`k`.
+    Where :math:`\\hat{\\mathbf{x_j}} = \\cos(\\theta_j)\\hat{\\mathbf{x}} + \\sin(\\theta_j)\\hat{\\mathbf{y}}` and :math:`\\hat{\\mathbf{y_j}} = -\\sin(\\theta_j)\\hat{\\mathbf{x}} + \\cos(\\theta_j)\\hat{\\mathbf{y}}` are the local unit vectors along the long (:math:`r_x`) and short (:math:`r_y`) axes of particle :math:`j`, respectively.
+
+    The global n-fold stretched bond orientational order is:
+
+    .. math::
+
+        \\psi_{n,g} = \\langle e^{in\\theta^s_{jk}}e^{in\\theta_j} \\rangle_{jk}
+
+    Where the mean is over all unique bonds between particles :math:`j` and :math:`k`.
 
     :param pts: (N,d) array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
     :type pts: ndarray
@@ -148,13 +152,15 @@ def projected_bond_order(pts:np.ndarray, gradient:callable, nei_bool:np.ndarray,
 
     .. math::
 
-        \\psi_j = \\frac{1}{N_j}\\sum_k\\psi_{jk}=\\frac{1}{N_j}\\sum_ke^{in\\theta_{jk}}
+        \\psi_{n,j} = \\frac{1}{N_j}\\sum_k\\psi_{n,jk}=\\frac{1}{N_j}\\sum_ke^{in\\theta_{jk}}
 
-     Where the sum is over all :math:`N_j` neighboring particles :math:`k` to particle :math:`j :math:`\\theta_{jk}` is the angle between particles :math:`j` and :math:`k` projected onto the local tangent plane of particle :math:`j`, defined by a basis :math:`\\{\\hat{\\mathbf{{e}}_1^j,\\hat{\\mathbf{{e}}_2^j}\\}` computed using the provided gradient function and the :py:meth:`calc.locality.local_vectors` method.
+    Where the sum is over all :math:`N_j` neighboring particles and :math:`\\theta_{jk}` is the angle between particles :math:`j` and :math:`k` projected onto the local tangent plane of particle :math:`j`, defined by a basis :math:`\\{\\hat{\\mathbf{e}}_{1,j},\\hat{\\mathbf{e}}_{2,j}\\}` computed using the provided gradient function and the :py:meth:`local_vectors() <calc.locality.local_vectors>` method.
 
     .. math::
 
-        \\theta_{jk} = \\tan^{-1}\\big[ (\\mathbf{r}_{jk}\\cdot\\hat{\\mathbf{{e}}_2^j)\\big/(\\mathbf{r}_{jk}\\cdot\\hat{\\mathbf{{e}}_1^j) \\big]
+        \\theta_{jk} = \\tan^{-1}\\big[ (\\mathbf{r}_{jk}\\cdot\\hat{\\mathbf{e}}_{2,j})\\big/(\\mathbf{r}_{jk}\\cdot\\hat{\\mathbf{e}}_{1,j}) \\big]
+    
+    Due to parallel transport on curved surfaces, there is no well-defined global bond orientational order because of the lack of a common reference vector.
 
     :param pts: (N,d) array of particle positions in 'd' dimensions.
     :type pts: ndarray
@@ -215,7 +221,7 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
 
     .. math::
 
-        C_n^j = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}\\psi_{n,k}^*\\big]}{|\\psi_{n,j}\\psi_{n,k}^*|} \\geq \\Theta_C \\bigg]
+        C_{n,j} = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}\\psi_{n,k}^*\\big]}{|\\psi_{n,j}\\psi_{n,k}^*|} \\geq \\Theta_C \\bigg]
 
     Where the :math:`\\psi`\'s are any-fold bond orientational order parameters for each particle, :math:`\\Theta_{C}` is a \'crystallinity threshold\' used to determine whether two neighboring particles are part of the same crystalline domain, and :math:`n` is a factor used to simply normalize :math:`C_6^j` between zero and one.
 
@@ -223,9 +229,9 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
 
     .. math::
 
-        C_n^j = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}(R_{jk}^n\\psi_{n,k})^*\\big]}{|\\psi_{n,j}(R_{jk}^n\\psi_{n,k})^*|} \\geq \\Theta_C \\bigg]
+        C_{n,j} = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}((R_{jk})^n\\psi_{n,k})^*\\big]}{|\\psi_{n,j}((R_{jk})^n\\psi_{n,k})^*|} \\geq \\Theta_C \\bigg]
 
-    Where :math:`R_{jk}` encodes the rotation between neighboring tangent planes, i.e. the output of :py:meth:`calc.locality.tangent_connection`. :math:`R_{jk}^n` is then used to rotate the n-fold bond orientational order of neighboring particles.
+    Where :math:`R_{jk}` encodes the rotation between neighboring tangent planes, i.e. the output of :py:meth:`calc.locality.tangent_connection`. :math:`(R_{jk})^n` is then used to rotate the n-fold bond orientational order of neighboring particles.
 
 
     :param psis: (N,) array of complex bond orientational order parameters

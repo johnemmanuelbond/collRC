@@ -16,7 +16,7 @@ def global_patic(angles:np.ndarray, p:int=2) -> np.complexfloating:
 
     .. math::
 
-        |P_p| = \\max_{\\theta_p}\\langle\\cos(p(\\theta_j-\\theta_p))\\rangle =
+        |P_p| = \\max_{\\theta_p}\\langle\\cos(p(\\theta_j-\\theta_p))\\rangle_j
 
     But, it's more convienient both to compute and represent this as a complex-valued quantity which also encodes the director angle:
 

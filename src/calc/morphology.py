@@ -72,7 +72,7 @@ def gyration_radius(pts:np.ndarray) -> float:
 
     .. math::
 
-        R_g^2 \\equiv \\frac{1}{N}\\sum_k|\\mathbf{r}_k-\\bar{\\mathbf{r}}|^2 = \\frac{1}{N^2}\\sum_{j>i}|\\mathbf{r}_i - \\mathbf{r}_j|^2 
+        R_g^2 \\equiv \\frac{1}{N}\\sum_k|\\mathbf{r}_k-\\bar{\\mathbf{r}}|^2 = \\frac{1}{N^2}\\sum_{k>j}|\\mathbf{r}_j - \\mathbf{r}_k|^2 
 
     where the :math:`j>i` in the summation index indicates that repeated pairs are not summed over
 

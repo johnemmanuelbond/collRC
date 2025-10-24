@@ -15,7 +15,7 @@ def neighbors(pts:np.ndarray, neighbor_cutoff:float|None = None, num_closest:int
 
     .. math::
 
-        n_{ij} = \\delta r_{ij} < r_{cut}
+        n_{jk} = \\delta r_{jk} < r_{cut}
 
     :param pts: (N,d) array of particle positions in 'D' dimensions.
     :type pts: ndarray
@@ -63,9 +63,9 @@ def stretched_neighbors(pts:np.ndarray, angles:np.ndarray, rx:float = 1.0, ry:fl
 
     .. math::
 
-        n_{ij} = \\sqrt{\\big(\\mathbf{\\delta r_ij} \\cdot \\hat{\\mathbf{x_i}}/r_x\\big) + \\big(\\mathbf{\\delta r_ij} \\cdot \\hat{\\mathbf{y_i}}/r_y\\big)} < n_{cut}
+        n_{jk} = \\sqrt{\\big(\\mathbf{\\delta r_jk} \\cdot \\hat{\\mathbf{x_j}}/r_x\\big)^2 + \\big(\\mathbf{\\delta r_jk} \\cdot \\hat{\\mathbf{y_j}}/r_y\\big)^2} < n_{cut}
 
-    Where :math:`\\hat{\\mathbf{x_i}} = \\cos(\\theta_i)\\hat{\\mathbf{x}} + \\sin(\\theta_i)\\hat{\\mathbf{y}}` and :math:`\\hat{\\mathbf{y_i}} = -\\sin(\\theta_i)\\hat{\\mathbf{x}} + \\cos(\\theta_i)\\hat{\\mathbf{y}}` are the local unit vectors along the long (:math:`r_x`) and short (:math:`r_y`) axes of particle :math:`i`, respectively.
+    Where :math:`\\hat{\\mathbf{x_j}} = \\cos(\\theta_j)\\hat{\\mathbf{x}} + \\sin(\\theta_j)\\hat{\\mathbf{y}}` and :math:`\\hat{\\mathbf{y_j}} = -\\sin(\\theta_j)\\hat{\\mathbf{x}} + \\cos(\\theta_j)\\hat{\\mathbf{y}}` are the local unit vectors along the long (:math:`r_x`) and short (:math:`r_y`) axes of particle :math:`j`, respectively.
 
     :param pts: an (N,d) array of the positions each anisotropic particle in the configuration
     :type pts: ndarray
@@ -134,10 +134,7 @@ def box_to_matrix(box:list) -> np.ndarray:
 
 def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8)->tuple[np.ndarray,np.ndarray]:
     """
-    given a frame and a box basis matrix, returns a larger frame which includes
-    surrounding particles from the nearest images, as well as the index relating padded
-    particles back to their original image. This will enable methods like
-    scipy.voronoi to respect periodic boundary conditions.
+    given a frame and a box basis matrix, returns a larger frame which includes surrounding particles from the nearest images, as well as the index relating padded particles back to their original image. This will enable methods like scipy.voronoi to respect periodic boundary conditions.
 
     :param coords: a (N,d) array of particle coordinates in d-dimensions
     :type coords: ndarray
@@ -171,9 +168,9 @@ def padded_neighbors(pts:np.ndarray, basis:np.ndarray, neighbor_cutoff:float = D
 
     .. math::
 
-        n_{ij} = \\delta r_{ij} < r_{cut} || \\delta r_{ij'} < r_{cut}
+        n_{jk} = \\delta r_{jk} < r_{cut} || \\delta r_{jk'} < r_{cut}
     
-    For particles :math:`j'` which are periodic images of particle :math:`j`.
+    For particles :math:`k'` which are periodic images of particle :math:`k`.
 
     :param pts: (N,d) array of particle positions in 'd' dimensions.
     :type pts: ndarray
@@ -212,12 +209,12 @@ def _lvec(x,gradient,ref = np.array([0,-1,0])):
     return e1, e2
 
 def local_vectors(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,-1,0])):
-    """computes two orthogonal unit vectors tangent to the local surface at a point :math:`\\mathbf{r}_i`:
+    """computes two orthogonal unit vectors tangent to the local surface at a point :math:`\\mathbf{r}_j`:
 
     .. math::
 
-        \\mathbf{e}_{1,i} = \\frac{\\nabla f(\\mathbf{r}_i) \\times \\hat{\\mathbf{\\gamma}}}{|\\nabla f(\\mathbf{r}_i) \\times \\hat{\\mathbf{\\gamma}}|} \\\\
-        \\mathbf{e}_{2,i} = \\frac{\\nabla f(\\mathbf{r}_i) \\times \\mathbf{e}_1}{|\\nabla f(\\mathbf{r}_i) \\times \\mathbf{e}_1|}
+        \\mathbf{e}_{1,j} = \\frac{\\nabla f(\\mathbf{r}_j) \\times \\hat{\\mathbf{\\gamma}}}{|\\nabla f(\\mathbf{r}_j) \\times \\hat{\\mathbf{\\gamma}}|} \\\\
+        \\mathbf{e}_{2,j} = \\frac{\\nabla f(\\mathbf{r}_j) \\times \\mathbf{e}_1}{|\\nabla f(\\mathbf{r}_j) \\times \\mathbf{e}_1|}
     
     Given the implicit function :math:`f(x,y,z)=0` defines the surface, its gradient :math:`\\nabla f` defines the normal vector, and :math:`\\hat{\\mathbf{\\gamma}}` is an arbitrary reference unit vector.
 
@@ -238,15 +235,15 @@ def tangent_connection(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.arra
 
     .. math::
 
-        R_{ij} = e^{i \\theta_{ij}} = \\exp\\bigg[i\\tan^{-1}\\bigg(\\frac{e_{1,i} \\cdot e_{2,j}}{e_{1,i} \\cdot e_{1,j}}\\bigg)\\bigg]
+        R_{jk} = e^{i \\theta_{jk}} = \\exp\\bigg[i\\tan^{-1}\\bigg(\\frac{e_{1,j} \\cdot e_{2,k}}{e_{1,j} \\cdot e_{1,k}}\\bigg)\\bigg]
 
-    where the local tangent vectors :math:`e_{1,i}` and :math:`e_{2,i}` are computed using :py:meth:`local_vectors`. :math:`R_{ij}` describes how to rotate complex numbers defined relative to :math:`e_{1,i}` into those defined relative to :math:`e_{1,j}`.
+    where the local tangent vectors :math:`e_{1,j}` and :math:`e_{2,j}` are computed using :py:meth:`local_vectors`. :math:`R_{jk}` describes how to rotate complex numbers defined relative to :math:`e_{1,j}` into those defined relative to :math:`e_{1,k}`.
 
     :param pts: an (N,3) array of positions at which to compute local tangent vectors
     :type pts: ndarray
     :param gradient: a function which computes normal vector to a surface
     :type gradient: callable
-    :param ref: a reference vector to help define the local frame, defaults to np.array([0,-1,0])
+    :param ref: a reference vector to help define the local frame, defaults to :math:`-\\hat{\\mathbf{y}}` so that :math:`e_1=\\hat{\\mathbf{x}}` usually
     :type ref: ndarray, optional
     :return: an (N,N) complex representation of the connection between local tangent planes at each pair of points
     :rtype: ndarray[complex]
