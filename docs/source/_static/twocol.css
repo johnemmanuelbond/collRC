@@ -1,0 +1,70 @@
+/* Two-column layout helpers for .twocol / .leftcol / .rightcol
+
+   Usage in reST/HTML:
+   .. raw:: html
+
+      <div class="twocol">
+        <div class="leftcol">... main content ...</div>
+        <div class="rightcol">... aside / figures / captions ...</div>
+      </div>
+
+   Notes:
+   - The layout is responsive and stacks on small screens.
+   - .rightcol uses `position: sticky` on wide screens so side content can stay visible while scrolling.
+*/
+
+.twocol {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.leftcol {
+  /* main column grows to fill remaining space */
+  flex: 1 1 65%;
+  min-width: 0; /* allow children to shrink properly */
+  padding-right: 0.5rem;
+}
+
+.rightcol {
+  /* aside column keeps a fixed-ish width */
+  flex: 0 0 32%;
+  max-width: 32%;
+  padding-left: 0.75rem;
+  /* keep the aside visible while scrolling on wide screens */
+  position: sticky;
+  top: 1rem;
+  align-self: flex-start;
+  border-left: 1px solid rgba(0,0,0,0.06);
+}
+
+/* make images and figures responsive inside either column */
+.twocol img,
+.twocol figure,
+.twocol video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Responsive fallback: stack the columns on narrow viewports */
+@media (max-width: 900px) {
+  .twocol {
+    flex-direction: column;
+  }
+  .rightcol,
+  .leftcol {
+    flex-basis: auto;
+    max-width: 100%;
+    position: static; /* disable sticky on small screens */
+    padding: 0;
+    border-left: none;
+  }
+}
+
+/* Respect dark mode for separator subtlety */
+@media (prefers-color-scheme: dark) {
+  .rightcol { border-left-color: rgba(255,255,255,0.06); }
+}

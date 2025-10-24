@@ -3,7 +3,8 @@ Tutorial
 
 .. container:: twocol
 
-   .. container:: leftside
+   .. container:: leftcol
+
       .. video:: _static/base-qpole.webm
          :width: 250
          :autoplay:
@@ -11,7 +12,8 @@ Tutorial
          :nocontrols:
          :muted:
       
-   .. container:: rightside
+   .. container:: rightcol
+      
       .. video:: _static/base-opole1.webm
          :width: 250
          :autoplay:
@@ -29,7 +31,8 @@ Tutorial
 
 .. container:: twocol
 
-   .. container:: leftside
+   .. container:: leftcol
+
       .. video:: _static/phase-qpole.webm
          :width: 250
          :autoplay:
@@ -37,7 +40,8 @@ Tutorial
          :nocontrols:
          :muted:
       
-   .. container:: rightside
+   .. container:: rightcol
+
       .. video:: _static/phase-opole1.webm
          :width: 250
          :autoplay:
@@ -49,7 +53,8 @@ Tutorial
 
 .. container:: twocol
 
-   .. container:: leftside
+   .. container:: leftcol
+      
       .. video:: _static/c6-sphere.webm
          :width: 250
          :autoplay:
@@ -57,7 +62,8 @@ Tutorial
          :nocontrols:
          :muted:
       
-   .. container:: rightside
+   .. container:: rightcol
+
       .. video:: _static/c6d-sphere.webm
          :width: 250
          :autoplay:
