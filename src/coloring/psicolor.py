@@ -331,57 +331,57 @@ if __name__ == "__main__":
                 figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=300)
             animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
 
-        # Control / q-pole examples
-        style = ColorByPhase()
-        _make_movie('../tests/test-control.gsd', '../tests/phase-qpole.mp4', style, istride=100)
-        _make_movie('../tests/test-control.gsd', '../docs/source/_static/phase-qpole.webm', style, codec='libvpx', istride=100)
+        # # Control / q-pole examples
+        # style = ColorByPhase()
+        # _make_movie('../tests/test-control.gsd', '../tests/phase-qpole.mp4', style, istride=100)
+        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/phase-qpole.webm', style, codec='libvpx', istride=100)
 
-        style = ColorByGlobalPsi()
-        _make_movie('../tests/test-control.gsd', '../tests/psig-qpole.mp4', style, istride=100)
-        _make_movie('../tests/test-control.gsd', '../docs/source/_static/psig-qpole.webm', style, codec='libvpx', istride=100)
+        # style = ColorByGlobalPsi()
+        # _make_movie('../tests/test-control.gsd', '../tests/psig-qpole.mp4', style, istride=100)
+        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/psig-qpole.webm', style, codec='libvpx', istride=100)
 
-        style = ColorByConn()
-        _make_movie('../tests/test-control.gsd', '../tests/c6-qpole.mp4', style, istride=100)
-        _make_movie('../tests/test-control.gsd', '../docs/source/_static/c6-qpole.webm', style, codec='libvpx', istride=100)
+        # style = ColorByConn()
+        # _make_movie('../tests/test-control.gsd', '../tests/c6-qpole.mp4', style, istride=100)
+        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/c6-qpole.webm', style, codec='libvpx', istride=100)
 
-        style = QpoleSuite()
-        _make_movie('../tests/test-control.gsd', '../tests/psi6c6-qpole.mp4', style, istride=100)
-        _make_movie('../tests/test-control.gsd', '../docs/source/_static/psi6c6-qpole.webm', style, codec='libvpx', istride=100)
-
-
-        # opole and sphere examples (reuse same style classes)
-        style = ColorByPhase()
-        _make_movie('../tests/test-opole1.gsd', '../tests/phase-opole1.mp4', style, istride=25)
-        _make_movie('../tests/test-opole1.gsd', '../docs/source/_static/phase-opole1.webm', style, codec='libvpx', istride=25, iend=200)
-
-        style = ColorByPhase()
-        _make_movie('../tests/test-opole2.gsd', '../tests/phase-opole2.mp4', style, istride=25)
-        _make_movie('../tests/test-opole2.gsd', '../docs/source/_static/phase-opole2.webm', style, codec='libvpx', istride=25, iend=200)
-
-        style = QpoleSuite()
-        _make_movie('../tests/test-opole1.gsd', '../tests/psi6c6-opole1.mp4', style, istride=25)
-        _make_movie('../tests/test-opole1.gsd', '../docs/source/_static/psi6c6-opole1.webm', style, codec='libvpx', istride=25, iend=200)
-
-        style = QpoleSuite()
-        _make_movie('../tests/test-opole2.gsd', '../tests/psi6c6-opole2.mp4', style, istride=25)
-        _make_movie('../tests/test-opole2.gsd', '../docs/source/_static/psi6c6-opole2.webm', style, codec='libvpx', istride=25, iend=200)
+        # style = QpoleSuite()
+        # _make_movie('../tests/test-control.gsd', '../tests/psi6c6-qpole.mp4', style, istride=100)
+        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/psi6c6-qpole.webm', style, codec='libvpx', istride=100)
 
 
-        style = ColorByPhase()
-        _make_movie('../tests/test-sphere.gsd', '../tests/phase-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/phase-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
+        # # opole and sphere examples (reuse same style classes)
+        # style = ColorByPhase()
+        # _make_movie('../tests/test-opole1.gsd', '../tests/phase-opole1.mp4', style, istride=25)
+        # _make_movie('../tests/test-opole1.gsd', '../docs/source/_static/phase-opole1.webm', style, codec='libvpx', istride=25, iend=200)
 
-        style = ColorByConn()
-        _make_movie('../tests/test-sphere.gsd', '../tests/c6-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
+        # style = ColorByPhase()
+        # _make_movie('../tests/test-opole2.gsd', '../tests/phase-opole2.mp4', style, istride=25)
+        # _make_movie('../tests/test-opole2.gsd', '../docs/source/_static/phase-opole2.webm', style, codec='libvpx', istride=25, iend=200)
+
+        # style = QpoleSuite()
+        # _make_movie('../tests/test-opole1.gsd', '../tests/psi6c6-opole1.mp4', style, istride=25)
+        # _make_movie('../tests/test-opole1.gsd', '../docs/source/_static/psi6c6-opole1.webm', style, codec='libvpx', istride=25, iend=200)
+
+        # style = QpoleSuite()
+        # _make_movie('../tests/test-opole2.gsd', '../tests/psi6c6-opole2.mp4', style, istride=25)
+        # _make_movie('../tests/test-opole2.gsd', '../docs/source/_static/psi6c6-opole2.webm', style, codec='libvpx', istride=25, iend=200)
+
+
+        # style = ColorByPhase()
+        # _make_movie('../tests/test-sphere.gsd', '../tests/phase-sphere.mp4', style, sphere=True, iend=100, istride=2)
+        # _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/phase-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
+
+        # style = ColorByConn()
+        # _make_movie('../tests/test-sphere.gsd', '../tests/c6-sphere.mp4', style, sphere=True, iend=100, istride=2)
+        # _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
 
 
         # rect examples
-        style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4, norm=4)
+        style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4)
         _make_movie('../tests/test-rect1.gsd', '../tests/c4-rect1.mp4', style)
         _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4-rect1.webm', style, codec='libvpx')
 
-        style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4, norm=4)
+        style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4)
         _make_movie('../tests/test-rect2.gsd', '../tests/c4-rect2.mp4', style)
         _make_movie('../tests/test-rect2.gsd', '../docs/source/_static/c4-rect2.webm', style, codec='libvpx')
 

@@ -4,25 +4,23 @@ Tutorial
 .. container:: twocol
 
    .. container:: leftside
-
       .. video:: _static/base-qpole.webm
-         :width: 300
+         :width: 250
          :autoplay:
          :loop:
          :nocontrols:
          :muted:
       
    .. container:: rightside
-
       .. video:: _static/base-opole1.webm
-         :width: 300
+         :width: 250
          :autoplay:
          :loop:
          :nocontrols:
          :muted:
 
 .. video:: _static/base-sphere.webm
-   :width: 600
+   :width: 500
    :autoplay:
    :loop:
    :nocontrols:
@@ -32,18 +30,16 @@ Tutorial
 .. container:: twocol
 
    .. container:: leftside
-
       .. video:: _static/phase-qpole.webm
-         :width: 300
+         :width: 250
          :autoplay:
          :loop:
          :nocontrols:
          :muted:
       
    .. container:: rightside
-
       .. video:: _static/phase-opole1.webm
-         :width: 300
+         :width: 250
          :autoplay:
          :loop:
          :nocontrols:
@@ -54,18 +50,16 @@ Tutorial
 .. container:: twocol
 
    .. container:: leftside
-
       .. video:: _static/c6-sphere.webm
-         :width: 300
+         :width: 250
          :autoplay:
          :loop:
          :nocontrols:
          :muted:
       
    .. container:: rightside
-
       .. video:: _static/c6d-sphere.webm
-         :width: 300
+         :width: 250
          :autoplay:
          :loop:
          :nocontrols:
