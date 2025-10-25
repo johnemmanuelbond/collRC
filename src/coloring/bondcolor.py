@@ -37,19 +37,38 @@ _rainbow = lambda c: hsv_map(c).clip(0, 1)
 class ColorByPsi(ColorBase):
     """Color particles by local b-fold bond-order :math:`\\psi_n`.
 
+    This class computes per-particle bond-orientational order (complex
+    numbers) and exposes both local and global statistics. It supports
+    flat, projected and anisotropic (stretched) calculations and sets a
+    canonical scalar :py:attr:`ci` (the magnitude of :math:`\\psi_n`) for the base
+    color mapping.
+
     :param shape: Particle geometry, defaults to a sphere with diameter 1.
-    :type shape: SuperEllipse, optional
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`, optional
     :param surface_normal: Surface normal function for optional projected calculations, defaults to None
     :type surface_normal: callable, optional
     :param order: Bond-order symmetry, defaults to 6 (though 4 is also common)
     :type order: int, optional
+    :param periodic: whether to apply periodic boundary conditions during neighbor search, default to False
+    :type periodic: bool, optional
     :param dark: whether to use the dark theme, default to True
     :type dark: bool, optional
+    :ivar nei: Neighbor boolean array/matrix used for local averages
+    :type nei: ndarray
+    :ivar rel_rot: `(if applicable)` Relative rotation factors for projected calculations
+    :type rel_rot: ndarray[complex]
+    :ivar psi: Per-particle complex bond-order values
+    :type psi: ndarray[complex]
+    :ivar psi_g: Global average bond-order (complex scalar)
+    :type psi_g: complex
+    :ivar ci: Real-valued scalar field (:py:attr:`abs(psi)`) used by :py:meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere,
                  surface_normal:callable = None,
                  order: int = 6, periodic=False, dark: bool = True):
+        """Constructor"""
         super().__init__(dark=dark)
         # Set color mapping function based on background
         self._c = _white_red if dark else _grey_red
@@ -64,34 +83,39 @@ class ColorByPsi(ColorBase):
         
 
     @property
-    def shape(self) -> SuperEllipse:
-        """The SuperEllipse shape used for particle geometry.
-
-        :rtype: SuperEllipse
-        """
-        return self._shape
-
-    @shape.setter
-    def shape(self, shape: SuperEllipse):
-        self._shape = shape
-        self._is_disc = (np.round(shape.aspect, 2) == 1 and np.round(shape.n, 2) == 2)
-
-    @property
     def surface_normal(self) -> callable:
-        """Surface normal function for projected calculations.
-
-        :rtype: callable or None
+        """
+        :return: Surface normal function for projected calculations.
+        :rtype: callable | None
         """
         return self._grad
 
     @surface_normal.setter
     def surface_normal(self, grad: callable):
+        """
+        :param grad: Surface normal function for projected calculations.
+        :type grad: callable
+        """
         self._grad = grad
         self._is_proj = grad is not None
 
     def calc_state(self):
         """
-        Compute bond-order and neighbor structures and store to self. If a surface normal function is provided, use it for projected calculations.
+        Compute bond-order and neighbor structures and store to self.
+
+        Implementation notes:
+        - For spherical/disc particles this uses :py:meth:`flat_bond_order <calc.bond_order.flat_bond_order>`.
+        - For projected geometries it uses :py:meth:`projected_bond_order <calc.bond_order.projected_bond_order>` and
+            computes a tangent connection via :py:meth:`tangent_connection <calc.bond_order.tangent_connection>`.
+        - For anisotropic particles it uses the stretched variants
+            (:py:meth:`stretched_neighbors <calc.bond_order.stretched_neighbors>` and :py:meth:`stretched_bond_order <calc.bond_order.stretched_bond_order>`).
+        - If ``periodic`` is True, applies periodic boundary conditions during neighbor search. IMPORTANT: this means that the
+            instance variables have size N\' instead of size N. :py:attr:`ci` fields automatically adjust for this, but other
+            instance variables (like :py:attr:`psi`) may need to be indexed accordingly.
+        
+        After computing the complex :py:attr:`psi`, this method sets :py:attr:`ci`
+        to the per-particle magnitude :py:attr:`abs(self.psi)` so the base mapping
+        (:py:meth:`ColorBase.local_colors`) can be used unchanged.
         """
         pts = self.snap.particles.position
         cut = DEFAULT_CUTOFF * self.shape.ax * 2
@@ -146,7 +170,16 @@ class ColorByPsi(ColorBase):
 class ColorByGlobalPsi(ColorByPsi):
     """Color all particles by the global bond-order magnitude: :math:`|\\langle\\psi_n\\rangle|`.
 
-    :see: ColorByPsi
+    :param shape: Particle geometry
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`, optional
+    :param order: Bond-order symmetry
+    :type order: int, optional
+    :param dark: whether to use the dark theme
+    :type dark: bool, optional
+    :ivar psi_g: Global average bond-order magnitude
+    :type psi_g: scalar
+    :ivar ci: Length-N array filled with :py:attr:`psi_g` used by :py:meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere,
@@ -154,8 +187,8 @@ class ColorByGlobalPsi(ColorByPsi):
         super().__init__(shape=shape, order=order, dark=dark)
 
     def calc_state(self):
-        """Calculate both global and local bond-order parameters and expose a uniform scalar field (ci)."""
-        # Ensure parent calculations run first so self.psi is populated
+        """Calculate both global and local bond-order parameters and expose a uniform scalar field (:py:attr:`ci`)."""
+        # Ensure parent calculations run first so :py:attr:`psi` is populated
         super().calc_state()
         self.psi_g = np.abs(np.mean(self.psi[:self.num_pts]))
         self.ci = np.array([self.psi_g] * self.num_pts)
@@ -164,9 +197,22 @@ class ColorByGlobalPsi(ColorByPsi):
 class ColorByPhase(ColorByPsi):
     """Color particles by phase (angle) of bond-order using a rainbow map.
 
-    :see: ColorByPsi
-    :param shift: Phase offset in color mapping
+    Converts the complex local :math:`\\psi_n` value into a phase and maps that
+    phase to hue using an HSV/rainbow map. The :py:attr:`shift` parameter rotates the
+    hue wheel for better visual separation in some datasets.
+
+    :param shape: Particle geometry
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`, optional
+    :param order: Bond-order symmetry
+    :type order: int, optional
+    :param shift: Phase offset in color mapping (0-1 scale)
     :type shift: float
+    :param surface_normal: Surface normal function for optional projected calculations, defaults to None
+    :type surface_normal: callable, optional
+    :param dark: whether to use the dark theme
+    :type dark: bool, optional
+    :ivar ci: Per-particle normalized phase in [0,1] used by :py:meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere,
@@ -178,7 +224,7 @@ class ColorByPhase(ColorByPsi):
                 self._c = lambda x: _rainbow(x)
 
     def calc_state(self):
-        """Compute parent state then cache the per-particle phase into ``self.ci``."""
+        """Compute parent state then cache the per-particle phase into :py:attr:`ci`."""
         super().calc_state()
         if self._is_proj:
             psi = self.psi * (self.rel_rot ** self._n)
@@ -186,28 +232,34 @@ class ColorByPhase(ColorByPsi):
             psi = self.psi
         self.ci = ((np.angle(psi[:self.num_pts]) + np.pi) / (2 * np.pi) + self._shift) % 1.0
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return per-particle RGB colors encoding the phase (angle) of :math:`\\psi_n`.
-
-        Mapping: uses a rainbow (HSV) color wheel so the hue corresponds to the complex phase of each particle's local :math:`\\psi_n`. This makes misoriented grains and grain boundaries visible because different orientations map to distinct hues.
-
-        :return: (N,3) array of RGB colors
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        return self._c(self.ci)
-
 
 class ColorByConn(ColorByPsi):
-    """Color particles by local crystal connectivity (i.e. C6) as defined in :py:meth:`calc.crystal_connectivity`. If a surface normal function is provided, use it for projected calculations.
+    """Color particles by local crystal connectivity (i.e. C6) as defined in :py:meth:`crystal_connectivity <calc.crystal_connectivity>`.
 
-    :see: ColorByPsi
+    Uses :py:meth:`crystal_connectivity <calc.crystal_connectivity>` applied to the previously computed
+    :py:attr:`psi` and neighbor structure. The resulting connectivity is
+    exposed as :py:attr:`ci` for the base color mapping.
+
+    :param shape: Particle geometry
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`, optional
+    :param surface_normal: Surface normal function for optional projected calculations, defaults to None
+    :type surface_normal: callable, optional
+    :param order: Bond-order symmetry
+    :type order: int, optional
+    :param periodic: whether to apply periodic boundary conditions during neighbor search, default to False
+    :type periodic: bool, optional
+    :param dark: whether to use the dark theme
+    :type dark: bool, optional
+    :ivar con: Per-particle connectivity values
+    :type con: ndarray
+    :ivar ci: Per-particle scalar connectivity used by :py:meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
     
     def __init__(self, shape: SuperEllipse = _default_sphere,
-                 order: int = 6, surface_normal: callable = None,
-                 dark: bool = True):
-        super().__init__(shape=shape, order=order, dark=dark, surface_normal=surface_normal)
+                 surface_normal: callable = None,
+                 order: int = 6, periodic = False, dark: bool = True):
+        super().__init__(shape=shape, order=order, dark=dark, surface_normal=surface_normal, periodic=periodic)
         # Use blue color scheme for connectivity
         self._c = _white_blue if dark else _grey_blue
     
@@ -236,17 +288,18 @@ class ColorByConn(ColorByPsi):
 class ColorByGlobalConn(ColorByConn):
     """Color all particles by global connectivity, which is just the average local connectivity
 
-    :see: ColorByPsi
-    :see: ColorByConn
+    :see: :py:class:`ColorByPsi`
+    :see: :py:class:`ColorByConn`
     """
     
     def __init__(self, shape: SuperEllipse = _default_sphere,
                  order: int = 6, surface_normal: callable = None,
                  dark: bool = True):
+        """Constructor"""
         super().__init__(shape=shape, order=order, dark=dark, surface_normal=surface_normal)
 
     def calc_state(self):
-        """Calculate both global and local bond-order parameters."""
+        """Calculate the average crystal connectivity and set as uniform field (:py:attr:`ci`)."""
         super().calc_state()
         con_g = np.mean(self.con[:self.num_pts])
         self.ci = np.array([con_g]*self.num_pts)
@@ -302,7 +355,10 @@ if __name__ == "__main__":
     
     # make example movies
     from render import render_npole, render_sphere, animate
+    from coloring import ColorBlender, base_colors, color_blender
     import traceback
+
+    white_purp = color_blender(c00=base_colors['white'], c01=base_colors['red'], c10=base_colors['blue'], c11=base_colors['purple'])
 
     try:
         def _make_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=0, iend=-1, istride=10, sphere=False):
@@ -347,11 +403,11 @@ if __name__ == "__main__":
         _make_movie('../tests/test-opole2.gsd', '../tests/phase-opole2.mp4', style, istride=25)
         _make_movie('../tests/test-opole2.gsd', '../docs/source/_static/phase-opole2.webm', style, codec='libvpx', istride=25, iend=2500)
 
-        style = QpoleSuite()
+        style = ColorBlender(white_purp, ColorByGlobalPsi(), ColorByConn())
         _make_movie('../tests/test-opole1.gsd', '../tests/psi6c6-opole1.mp4', style, istride=25)
         _make_movie('../tests/test-opole1.gsd', '../docs/source/_static/psi6c6-opole1.webm', style, codec='libvpx', istride=25, iend=2500)
 
-        style = QpoleSuite()
+        style = ColorBlender(white_purp, ColorByGlobalPsi(), ColorByConn())
         _make_movie('../tests/test-opole2.gsd', '../tests/psi6c6-opole2.mp4', style, istride=25)
         _make_movie('../tests/test-opole2.gsd', '../docs/source/_static/psi6c6-opole2.webm', style, codec='libvpx', istride=25, iend=2500)
 

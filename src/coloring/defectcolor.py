@@ -26,9 +26,18 @@ _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 class ColorS2Defects(ColorByS2):
     """Color nematic defects :math:`(S_{2,l} < 0.5)` cyan.
 
-    :param bgColor: an optional ColorBase instance to provide background coloring which the defect colors will supercede.
+    Highlights particles that disagree with their local nematic director and
+    paints them cyan while delegating non-defect coloring to an optional
+    background ColorBase instance.
+
+    :param shape: particle geometry, defaults to sphere with diameter 1.0
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
+    :param dark: dark theme flag
+    :type dark: bool, optional
+    :param bgColor: optional ColorBase instance providing background colors
     :type bgColor: ColorBase | None, optional
-    :see: process.paticcolor.ColorByS2
+    :ivar defects: Boolean mask of defective particles set in :meth:`calc_state`.
+    :type defects: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True, bgColor:ColorBase=None):
@@ -40,7 +49,12 @@ class ColorS2Defects(ColorByS2):
             self._bg = bgColor
 
     def calc_state(self):
-        """Identify nematic defects"""
+        """Identify nematic defects.
+
+        Calls the parent :meth:`ColorByS2.calc_state <coloring.ColorByS2.calc_state>` to compute local nematic
+        quantities, then marks particles as defects when their local
+        orientation misaligns with the local director.
+        """
         super().calc_state()
 
         # self.defects = np.abs(self.nem_l) < 0.5
@@ -57,9 +71,9 @@ class ColorS2Defects(ColorByS2):
 
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return RGB colors mapping the background colorbase with defects in cyan.
+        """Return RGBA colors mapping the background colorbase with defects in cyan.
 
-        :return: (N,3) RGB array
+        :return: (N,4) RGBA array
         :rtype: ndarray
         """
         if snap is not None: self.snap = snap
@@ -75,22 +89,39 @@ class ColorS2Defects(ColorByS2):
         if snap is not None: self.snap = snap
         def_percent = 100*self.defects.mean()
         old_str = self._bg.state_string(snap=self.snap)
-        return f'{old_str}\n$N_{{S2}} = {def_percent:.0f}\\%$'
+        new_str = f'$N_{{S2}} = {def_percent:.0f}\\%$'
+        if old_str == "": return new_str
+        return f'{old_str}\n{new_str}'
 
 
 class ColorC6Defects(ColorByConn):
-    """Color sixfold defects :math:`(C_{6} < 1)` to highight defects
+    """Color sixfold defects :math:`(C_{6} < 1)` to highlight defects.
 
-    :param bgColor: an optional ColorBase instance to provide background coloring which the defect colors will supercede.
+    This class wraps a connectivity-based color style and overrides the
+    per-particle colors to mark defective sites in red while allowing a
+    configurable background color base.
+
+    :param shape: particle geometry, defaults to sphere with diameter 1.0
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
+    :param surface_normal: optional surface normal for projected calculations
+    :type surface_normal: callable | None
+    :param periodic: whether to use periodic boundary conditions, defaults to False
+    :type periodic: bool, optional
+    :param dark: dark theme flag
+    :type dark: bool, optional
+    :param bgColor: optional ColorBase instance providing background colors
     :type bgColor: ColorBase | None, optional
-    :see: process.psicolor.ColorByConn
+    :ivar defects: Boolean mask of defective particles.
+    :type defects: ndarray
+    :ivar con: Per-particle connectivity values inherited from :py:class:`ColorByConn <coloring.defectcolor.ColorByConn>`
+    :type con: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere,
                  surface_normal: callable = None,
-                 dark: bool = True,
+                 periodic: bool = False, dark: bool = True, 
                  bgColor:ColorBase=None):
-        super().__init__(shape=shape, order=6, dark=dark, surface_normal=surface_normal)
+        super().__init__(shape=shape, order=6, dark=dark, surface_normal=surface_normal, periodic=periodic)
         # Set color mapping function based on background
         self._c = _white_red if dark else _grey_red
         if bgColor is None:
@@ -99,16 +130,20 @@ class ColorC6Defects(ColorByConn):
             self._bg = bgColor
 
     def calc_state(self):
-        """Identify C6 defects"""
+        """Identify C6 defects.
+
+        Runs the parent's connectivity calculation then marks particles as
+        defective when connectivity falls below a heuristic threshold.
+        """
         super().calc_state()
         self.defects = self.con<0.95
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return per-particle RGB colors highlighting defective particles in red.
+        """Return per-particle RGBA colors highlighting defective particles in red.
 
         Mapping: for dark backgrounds this uses a white->red gradient; for light backgrounds a grey->red gradient. 
 
-        :return: (N,3) array
+        :return: (N,4) RGBA array
         :rtype: ndarray
         """
         if snap is not None: self.snap = snap
@@ -125,24 +160,36 @@ class ColorC6Defects(ColorByConn):
         if snap is not None: self.snap = snap
         old_str = self._bg.state_string(snap=self.snap)
         con_g = self.con.mean()
-        return f'{old_str}\n$\\langle 1-C_6\\rangle = {1-con_g:.2f}$'
+        new_str = f'$\\langle 1-C_6\\rangle = {1-con_g:.2f}$'
+        if old_str == "": return new_str
+        return f'{old_str}\n{new_str}'
     
 
 class ColorC4Defects(ColorByConn):
     """Color fourfold defects :math:`(C_{4} < 1)` to highlight defects.
 
-    Notably the class has to recalculate the connectivity :py:meth:`calc.crystal_connectivity` using a different threshold :math:`\\Theta` to identify defects. 
+    This variant recalculates connectivity with a tetratic (p=4) normalization
+    and a tightened crystallinity threshold to detect fourfold defect sites.
 
-    :param bgColor: an optional ColorBase instance to provide background coloring which the defect colors will supercede.
+    :param shape: particle geometry
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
+    :param surface_normal: optional surface normal for projected calculations
+    :type surface_normal: callable | None
+    :param periodic: periodic boundary conditions flag
+    :type periodic: bool, optional
+    :param dark: dark theme flag
+    :type dark: bool, optional
+    :param bgColor: optional ColorBase instance providing background colors
     :type bgColor: ColorBase | None, optional
-    :see: process.psicolor.ColorByConn
+    :ivar defects: Boolean mask of defective particles.
+    :type defects: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere,
                  surface_normal: callable = None,
-                 dark: bool = True,
+                 periodic: bool = False, dark: bool = True,
                  bgColor:ColorBase=None):
-        super().__init__(shape=shape, order=4, dark=dark, surface_normal=surface_normal)
+        super().__init__(shape=shape, order=4, dark=dark, surface_normal=surface_normal, periodic=periodic)
         # Set color mapping function based on background
         self._c = _gold
         if bgColor is None:
@@ -151,7 +198,12 @@ class ColorC4Defects(ColorByConn):
             self._bg = bgColor
 
     def calc_state(self):
-        """Identify C4 defects"""
+        """Identify C4 defects.
+
+        Recomputes connectivity using :py:func:`calc.crystal_connectivity` with
+        ``norm=4`` and a tightened crystallinity threshold before marking
+        defective sites.
+        """
         super().calc_state()
         
         if self._is_proj:
@@ -162,9 +214,9 @@ class ColorC4Defects(ColorByConn):
         self.defects = c4<0.95
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return per-particle RGB colors highlighting defective particles in gold.
+        """Return per-particle RGBA colors highlighting defective particles in gold.
 
-        :return: (N,3) array
+        :return: (N,4) RGBA array
         :rtype: ndarray
         """
         if snap is not None: self.snap = snap
@@ -180,7 +232,9 @@ class ColorC4Defects(ColorByConn):
         if snap is not None: self.snap = snap
         def_percent = 100*self.defects.mean()
         old_str = self._bg.state_string(snap=self.snap)
-        return f'{old_str}\n$N_{{C4}} = {def_percent:.0f}\\%$'
+        new_str = f'$N_{{C4}} = {def_percent:.0f}\\%$'
+        if old_str == "": return new_str
+        return f'{old_str}\n{new_str}'
 
 
 # ############################################################################################################

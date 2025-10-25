@@ -30,19 +30,40 @@ _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 class ColorByS2(ColorBase):
     """Color particles by local nematic magnitude (S2).
 
+    Uses :py:meth:`local_patic <calc.orient_order.local_patic>` to compute
+    a local p-atic order parameter around each particle and maps its magnitude
+    through a white->red (or grey->red) gradient.
+
     :param shape: particle geometry
-    :type shape: SuperEllipse
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
-    :type dark: bool
+    :type dark: bool, optional
+    :ivar ori: Complex director field (exp(i*theta)) computed from orientations
+    :type ori: ndarray[complex]
+    :ivar nem_g: Global p-atic order (complex scalar) computed by :py:meth:`global_patic <calc.orient_order.global_patic>`.
+    :type nem_g: complex
+    :ivar nem_l: Local p-atic order per particle (complex array) computed by :py:meth:`local_patic <calc.orient_order.local_patic>`.
+    :type nem_l: ndarray[complex]
+    :ivar nei: Neighborhood boolean matrix used to compute local order.
+    :type nei: ndarray
+    :ivar ci: Real-valued scalar field (:py:attr:`abs(nem_l)`) used by :py:meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
+        """Constructor"""
         super().__init__(dark=dark)
         self._shape = shape
         self._c = _white_red if dark else _grey_red
 
     def calc_state(self):
-        """Calculate both global and local nematic order parameters."""
+        """Calculate global and local p-atic order parameters.
+
+        This computes particle orientations, the global p-atic order via
+        :py:meth:`global_patic <calc.orient_order.global_patic>` and the local p-atic order via
+        :py:meth:`local_patic <calc.orient_order.local_patic>`. It also determines neighbors
+        using :py:meth:`neighbors <calc.locality.neighbors>` so callers can inspect :py:attr:`nei`.
+        """
         angles = quat_to_angle(self.snap.particles.orientation)
         self.ori = np.exp(1j * angles)
         
@@ -73,21 +94,34 @@ class ColorByS2(ColorBase):
 
 
 class ColorS2Phase(ColorByS2):
-    """Color particles by the phase angle of the local p-atic director using a rainbow wheel. 
+    """Color particles by the phase angle of the local p-atic director using a rainbow wheel.
 
-    :see: ColorByS2
+    This style converts the complex local p-atic order into a phase in [0,1]
+    (optionally shifted) and maps it to an HSV rainbow via the color mapper.
+
+    :param shape: particle geometry
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
+    :param dark: use dark theme if True
+    :type dark: bool
     :param shift: Phase offset in color mapping
     :type shift: float
+    :ivar ci: Phase per particle in [0,1] used by :meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True, shift: float = 0.0):
+        """Constructor"""
         super().__init__(shape=shape, dark=dark)
         self._shift = shift
         # use rainbow mapping
         self._c = lambda x: _rainbow(x)
 
     def calc_state(self):
-        """Calculate both global and local nematic order parameters."""
+        """Compute parent state then cache the per-particle phase.
+
+        Relies on :py:meth:`local_patic <calc.orient_order.local_patic>` populated by the parent
+        implementation; converts complex local order to a normalized phase.
+        """
         super().calc_state()
         self.ci = ((np.angle(self.nem_l) + np.pi) / (2 * np.pi) + self._shift) % 1.0
     # Use ColorBase.local_colors by default (ci is set in calc_state)
@@ -96,11 +130,21 @@ class ColorS2Phase(ColorByS2):
 class ColorByS2g(ColorByS2):
     """Color all particles uniformly by global nematic order (S2).
 
-    :see: ColorByS2
+    This style computes the global p-atic magnitude and exposes a uniform
+    scalar :py:attr:`ci` so all particles receive the same color.
+
+    :param shape: particle geometry
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
+    :param dark: use dark theme if True
+    :type dark: bool, optional
+    :ivar nem_g: Global p-atic order (complex scalar)
+    :type nem_g: complex
+    :ivar ci: Length-N array filled with :py:attr:`abs(nem_g)` used by :py:meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
 
     def calc_state(self):
-        """Calculate both global and local nematic order parameters."""
+        """Compute parent state then expose the uniform scalar based on the global magnitude."""
         super().calc_state()
         self.ci = np.array([np.abs(self.nem_g)]*self.num_pts)
     # Use ColorBase.local_colors by default (ci is set in calc_state)
@@ -116,21 +160,37 @@ class ColorByS2g(ColorByS2):
 
 
 class ColorByT4(ColorBase):
-    """Color particles by local tetratic magnitude (T4) using orange scale.
+    """Color particles by local tetratic magnitude (T4) using an orange gradient.
 
     :param shape: particle geometry
-    :type shape: SuperEllipse
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
-    :type dark: bool
+    :type dark: bool, optional
+    :ivar ori: Complex director field (exp(i*theta)) computed from orientations
+    :type ori: ndarray[complex]
+    :ivar tet_g: Global tetratic order (complex scalar)
+    :type tet_g: complex
+    :ivar tet_l: Local tetratic order per particle (complex array)
+    :type tet_l: ndarray[complex]
+    :ivar nei: Neighborhood boolean matrix used to compute local order.
+    :type nei: ndarray
+    :ivar ci: Real-valued scalar field (:py:attr:`abs(tet_l)`) used by :py:meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
+        """Constructor"""
         super().__init__(dark=dark)
         self._shape = shape
         self._c = _white_orange if dark else _grey_orange
 
     def calc_state(self):
-        """Calculate both global and local nematic order parameters."""
+        """Compute tetratic global and local order.
+
+        Uses :py:meth:`global_patic <calc.orient_order.global_patic>` and
+        :py:meth:`local_patic <calc.orient_order.local_patic>` (with ``p=4``) to compute the
+        tetratic order parameters and neighbor structure.
+        """
         angles = quat_to_angle(self.snap.particles.orientation)
         self.ori = np.exp(1j * angles)
         
@@ -159,11 +219,18 @@ class ColorByT4(ColorBase):
 class ColorByT4g(ColorByT4):
     """Color all particles uniformly by global tetratic order (T4).
 
-    :see: ColorByT4
+    :param shape: particle geometry
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
+    :param dark: use dark theme if True
+    :type dark: bool, optional
+    :ivar tet_g: Global tetratic order (complex scalar)
+    :type tet_g: complex
+    :ivar ci: Length-N array filled with :py:attr:`abs(tet_g)` used by :py:meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
 
     def calc_state(self):
-        """Calculate both global and local nematic order parameters."""
+        """Compute parent state then expose the uniform scalar based on the global tetratic magnitude."""
         super().calc_state()
         self.ci = np.array([np.abs(self.tet_g)]*self.num_pts)
     # Use ColorBase.local_colors by default (ci is set in calc_state)

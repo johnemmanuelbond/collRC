@@ -106,17 +106,15 @@ class ColorBase():
     
     Provides basic infrastructure for coloring particles based on their state. Supports both dark and light background themes (grey and white particles respectively).
 
-    StateColor has a :code:`snap` attribute that caches the last GSD frame used for coloring, to avoid redundant computations.
+    StateColor has a :py:attr:`snap` attribute that caches the last GSD frame used for coloring, to avoid redundant computations.
 
-    StateColor subclasses should implement the :code:`calc_state`, :code:`local_colors` and :code:`state_string` methods to provide specific coloring logic and state descriptions.
+    StateColor subclasses should implement the :py:meth:`calc_state`, :py:meth:`local_colors` and :py:meth:`state_string` methods to provide specific coloring logic and state descriptions.
     
     :param shape: Particle geometry used for calculations, defaults to a sphere of radius 0.5
     :type shape: SuperEllipse
-    :param shape: Particle geometry used for calculations
-    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: Whether to use a dark background theme, defaults to True
     :type dark: bool, optional
-    :ivar ci: Canonical scalar field (length N) that will be mapped to colors. Subclasses should set this in :code:`calc_state`.
+    :ivar ci: Canonical scalar field (length N) that will be mapped to colors. Subclasses should set this in :py:meth:`calc_state`.
     :type ci: ndarray
     """
     
@@ -149,7 +147,7 @@ class ColorBase():
     def num_pts(self) -> int:
         """Get the number of particles in the current frame."""
         try:
-            self._f.particles.N
+            return self._f.particles.N
         except AttributeError:
             return 0
 
@@ -202,10 +200,10 @@ class ColorBase():
 class ColorBlender(ColorBase):
     """Blend two coloring styles using a two-argument color blending function.
 
-    This helper composes two :class:`ColorBase` instances and a blending
-    callable that accepts two scalar fields (the :code:`ci` arrays of the two
+    This helper composes two :py:class:`ColorBase` instances and a blending
+    callable that accepts two scalar fields (the :py:attr:`ci` arrays of the two
     styles) and returns an array of RGBA colors. The blender delegates
-    state computation to both styles and then applies :code:`c_func` to their
+    state computation to both styles and then applies :py:meth:`c_func` to their
     computed scalar fields.
 
     :param c_func: Callable accepting two scalar fields :code:`(x, y)` and returning RGBA colors.
@@ -218,11 +216,12 @@ class ColorBlender(ColorBase):
     :type s1: :py:class:`ColorBase`
     :ivar s2: The secondary :py:class:`ColorBase` instance (same as :code:`otherstyle`).
     :type s2: :py:class:`ColorBase`
-    :ivar c_func: The blending callable used to combine :code:`s1.ci` and :code:`s2.ci` into colors.
+    :ivar c_func: The blending callable used to combine :py:attr:`s1.ci` and :py:attr:`s2.ci` into colors.
     :type c_func: callable
     """
 
     def __init__(self, c_func:callable, mainstyle:ColorBase, otherstyle:ColorBase):
+        """Constructor"""
         super().__init__(mainstyle._shape)
         self.s1 = mainstyle
         self.s2 = otherstyle
@@ -233,7 +232,7 @@ class ColorBlender(ColorBase):
         """Compute and cache the state for both constituent styles.
 
         This delegates to the two composed :py:class:`ColorBase` instances
-        and ensures their :code:`ci` fields are up-to-date. The blender does
+        and ensures their :py:attr:`ci` fields are up-to-date. The blender does
         not itself store additional state beyond the two styles.
 
         :return: None
@@ -244,9 +243,9 @@ class ColorBlender(ColorBase):
     def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return blended RGBA colors for the provided (or cached) frame.
 
-        If :code:`snap` is provided the underlying styles will be updated with
-        that frame before blending. The function :code:`self.c_func` is expected
-        to accept two scalar fields (:code:`s1.ci`, :code:`s2.ci`) and return an
+        If :py:attr:`snap` is provided the underlying styles will be updated with
+        that frame before blending. The function :py:meth:`c_func` is expected
+        to accept two scalar fields (:py:attr:`s1.ci`, :py:attr:`s2.ci`) and return an
         (N,4) RGBA array.
 
         :param snap: optional GSD frame to compute colors for
@@ -262,7 +261,7 @@ class ColorBlender(ColorBase):
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """Return a combined descriptive string from both styles.
 
-        If ``snap`` is provided the underlying styles will be updated with
+        If :py:attr:`snap` is provided the underlying styles will be updated with
         that frame before the strings are requested. The returned string is
         the primary style's state_string followed by the secondary's,
         separated by a newline.

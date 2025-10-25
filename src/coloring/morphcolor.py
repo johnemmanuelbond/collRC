@@ -22,25 +22,26 @@ _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 
 
 class ColorByEta0(ColorBase):
-    """Color all particles by the central area fraction (``eta0``).
+    """Color all particles by the central area fraction (:math:`\eta_0`).
 
     This style computes a single scalar value for the central area
-    fraction (``eta0``) via :py:meth:`central_eta <calc.morphology.central_eta>` and applies a
+    fraction (:math:`\eta_0`) via :py:meth:`central_eta <calc.morphology.central_eta>` and applies a
     single-parameter color gradient to every particle.
 
     :param shape: particle geometry
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
-    :type dark: bool
+    :type dark: bool, optional
     :param jac: Jacobian mode passed to :py:meth:`central_eta <calc.morphology.central_eta>`
     :type jac: str, optional
     :ivar eta0: The central area fraction computed from particle positions and box.
     :type eta0: scalar
-    :ivar ci: Length-N numpy array containing ``eta0`` repeated for every particle; used by :py:meth:`ColorBase.local_colors`.
+    :ivar ci: Length-N numpy array containing :py:attr:`eta0` repeated for every particle; used by :py:meth:`ColorBase.local_colors`.
     :type ci: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True, jac='x'):
+        """Constructor"""
         super().__init__(dark=dark)
         self._shape = shape
         self._c = _white_green if dark else _grey_green
