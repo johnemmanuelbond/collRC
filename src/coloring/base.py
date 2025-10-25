@@ -110,20 +110,14 @@ class ColorBase():
 
     StateColor subclasses should implement the :code:`calc_state`, :code:`local_colors` and :code:`state_string` methods to provide specific coloring logic and state descriptions.
     
-    Constructor parameters
-    ^^^^^^^^^^^^^^^^^^^^^^
-
     :param shape: Particle geometry used for calculations, defaults to a sphere of radius 0.5
     :type shape: SuperEllipse
     :param shape: Particle geometry used for calculations
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: Whether to use a dark background theme, defaults to True
     :type dark: bool, optional
-
-    Calculated attributes (set in :code:`calc_state`)
-    ---------------------------------------------
-
     :ivar ci: Canonical scalar field (length N) that will be mapped to colors. Subclasses should set this in :code:`calc_state`.
+    :type ci: ndarray
     """
     
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
@@ -205,7 +199,7 @@ class ColorBase():
         if snap is not None: self.snap = snap
         return ""
 
-class ColorBlender():
+class ColorBlender(ColorBase):
     """Blend two coloring styles using a two-argument color blending function.
 
     This helper composes two :class:`ColorBase` instances and a blending
@@ -214,28 +208,26 @@ class ColorBlender():
     state computation to both styles and then applies :code:`c_func` to their
     computed scalar fields.
 
-    Constructor parameters
-    ^^^^^^^^^^^^^^^^^^^^^^
-    
     :param c_func: Callable accepting two scalar fields :code:`(x, y)` and returning RGBA colors.
     :type c_func: callable
     :param mainstyle: Primary coloring style whose scalar field will be used as the first blend axis.
     :type mainstyle: ColorBase
     :param otherstyle: Secondary coloring style whose scalar field will be used as the second blend axis.
     :type otherstyle: ColorBase
-
-    Calculated attributes (set in ``calc_state``)
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    :ivar s1: The primary :class:`ColorBase` instance (same as :code:`mainstyle`).
-    :ivar s2: The secondary :class:`ColorBase` instance (same as :code:`otherstyle`).
+    :ivar s1: The primary :py:class:`ColorBase` instance (same as :code:`mainstyle`).
+    :type s1: :py:class:`ColorBase`
+    :ivar s2: The secondary :py:class:`ColorBase` instance (same as :code:`otherstyle`).
+    :type s2: :py:class:`ColorBase`
     :ivar c_func: The blending callable used to combine :code:`s1.ci` and :code:`s2.ci` into colors.
+    :type c_func: callable
     """
 
     def __init__(self, c_func:callable, mainstyle:ColorBase, otherstyle:ColorBase):
+        super().__init__(mainstyle._shape)
         self.s1 = mainstyle
         self.s2 = otherstyle
         self.c_func = c_func
+
 
     def calc_state(self):
         """Compute and cache the state for both constituent styles.

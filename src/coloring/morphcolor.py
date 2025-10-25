@@ -28,19 +28,16 @@ class ColorByEta0(ColorBase):
     fraction (``eta0``) via :py:meth:`central_eta <calc.morphology.central_eta>` and applies a
     single-parameter color gradient to every particle.
 
-    Constructor parameters
-    ----------------------
     :param shape: particle geometry
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
     :type dark: bool
-    :param jac: Jacobian mode passed to ``central_eta`` (see :py:meth:`central_eta <calc.morphology.central_eta>`)
+    :param jac: Jacobian mode passed to :py:meth:`central_eta <calc.morphology.central_eta>`
     :type jac: str, optional
-
-    Calculated attributes (set in ``calc_state``)
-    ---------------------------------------------
     :ivar eta0: The central area fraction computed from particle positions and box.
-    :ivar ci: Length-N numpy array containing ``eta0`` repeated for every particle; used by :meth:`ColorBase.local_colors`.
+    :type eta0: scalar
+    :ivar ci: Length-N numpy array containing ``eta0`` repeated for every particle; used by :py:meth:`ColorBase.local_colors`.
+    :type ci: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True, jac='x'):
@@ -62,7 +59,7 @@ class ColorByEta0(ColorBase):
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
-        :return: LaTeX-formatted summary string. i.e. ":math:`\\langle S_2\\rangle = 0.00`".
+        :return: LaTeX-formatted summary string. i.e. ":math:`\\eta_0 = 0.00`".
         :rtype: str
         """
         if snap is not None: self.snap = snap
