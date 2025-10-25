@@ -44,4 +44,6 @@ html_css_files = [
 html_theme_options = {
     "repository_url": "https://github.com/johnemmanuelbond/collRC",
     "use_repository_button": True,
+    "show_toc_level": 2,
+    # Other theme options can be set here
 }
