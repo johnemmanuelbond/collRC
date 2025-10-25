@@ -28,10 +28,10 @@ _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 
 
 class ColorByS2(ColorBase):
-    """Color particles by local nematic magnitude (S2).
+    """Color particles by local nematic magnitude.
 
     Uses :py:meth:`local_patic <calc.orient_order.local_patic>` to compute
-    a local p-atic order parameter around each particle and maps its magnitude
+    a local nematic order parameter (:math:`S_2`) around each particle and maps its magnitude
     through a white->red (or grey->red) gradient.
 
     :param shape: particle geometry
@@ -40,13 +40,13 @@ class ColorByS2(ColorBase):
     :type dark: bool, optional
     :ivar ori: Complex director field (exp(i*theta)) computed from orientations
     :type ori: ndarray[complex]
-    :ivar nem_g: Global p-atic order (complex scalar) computed by :py:meth:`global_patic <calc.orient_order.global_patic>`.
+    :ivar nem_g: Global nematic order (complex scalar) computed by :py:meth:`global_patic <calc.orient_order.global_patic>`.
     :type nem_g: complex
-    :ivar nem_l: Local p-atic order per particle (complex array) computed by :py:meth:`local_patic <calc.orient_order.local_patic>`.
+    :ivar nem_l: Local nematic order per particle (complex array) computed by :py:meth:`local_patic <calc.orient_order.local_patic>`.
     :type nem_l: ndarray[complex]
     :ivar nei: Neighborhood boolean matrix used to compute local order.
     :type nei: ndarray
-    :ivar ci: Real-valued scalar field (:py:attr:`abs(nem_l)`) used by :py:meth:`ColorBase.local_colors`.
+    :ivar ci: Real-valued scalar field (:py:attr:`abs(nem_l)`) used by :py:meth:`ColorBase.local_colors <coloring.ColorBase.local_colors>`.
     :type ci: ndarray
     """
 
@@ -57,10 +57,10 @@ class ColorByS2(ColorBase):
         self._c = _white_red if dark else _grey_red
 
     def calc_state(self):
-        """Calculate global and local p-atic order parameters.
+        """Calculate global and local nematic order parameters.
 
-        This computes particle orientations, the global p-atic order via
-        :py:meth:`global_patic <calc.orient_order.global_patic>` and the local p-atic order via
+        This computes particle orientations, the global nematic order via
+        :py:meth:`global_patic <calc.orient_order.global_patic>` and the local nematic order via
         :py:meth:`local_patic <calc.orient_order.local_patic>`. It also determines neighbors
         using :py:meth:`neighbors <calc.locality.neighbors>` so callers can inspect :py:attr:`nei`.
         """
@@ -94,18 +94,18 @@ class ColorByS2(ColorBase):
 
 
 class ColorS2Phase(ColorByS2):
-    """Color particles by the phase angle of the local p-atic director using a rainbow wheel.
+    """Color particles by the phase angle of the local nematic director using a rainbow wheel.
 
-    This style converts the complex local p-atic order into a phase in [0,1]
+    This style converts the complex local nematic order into a phase in [0,1]
     (optionally shifted) and maps it to an HSV rainbow via the color mapper.
 
     :param shape: particle geometry
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
     :type dark: bool
-    :param shift: Phase offset in color mapping
+    :param shift: Phase offset (0-1) in color mapping
     :type shift: float
-    :ivar ci: Phase per particle in [0,1] used by :meth:`ColorBase.local_colors`.
+    :ivar ci: Phase per particle in [0,1] used by :meth:`ColorBase.local_colors <coloring.ColorBase.local_colors>`.
     :type ci: ndarray
     """
 
@@ -128,18 +128,18 @@ class ColorS2Phase(ColorByS2):
 
 
 class ColorByS2g(ColorByS2):
-    """Color all particles uniformly by global nematic order (S2).
+    """Color all particles uniformly by global nematic order.
 
-    This style computes the global p-atic magnitude and exposes a uniform
+    This style computes the global nematic magnitude (:math:`S_{2,g}`) and exposes a uniform
     scalar :py:attr:`ci` so all particles receive the same color.
 
     :param shape: particle geometry
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
     :type dark: bool, optional
-    :ivar nem_g: Global p-atic order (complex scalar)
+    :ivar nem_g: Global nematic order (complex scalar)
     :type nem_g: complex
-    :ivar ci: Length-N array filled with :py:attr:`abs(nem_g)` used by :py:meth:`ColorBase.local_colors`.
+    :ivar ci: Length-N array filled with :py:attr:`abs(nem_g)` used by :py:meth:`ColorBase.local_colors <coloring.ColorBase.local_colors>`.
     :type ci: ndarray
     """
 
@@ -160,7 +160,7 @@ class ColorByS2g(ColorByS2):
 
 
 class ColorByT4(ColorBase):
-    """Color particles by local tetratic magnitude (T4) using an orange gradient.
+    """Color particles by local tetratic magnitude (:math:`T_4`) using an orange gradient.
 
     :param shape: particle geometry
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
@@ -174,7 +174,7 @@ class ColorByT4(ColorBase):
     :type tet_l: ndarray[complex]
     :ivar nei: Neighborhood boolean matrix used to compute local order.
     :type nei: ndarray
-    :ivar ci: Real-valued scalar field (:py:attr:`abs(tet_l)`) used by :py:meth:`ColorBase.local_colors`.
+    :ivar ci: Real-valued scalar field (:py:attr:`abs(tet_l)`) used by :py:meth:`ColorBase.local_colors <coloring.ColorBase.local_colors>`.
     :type ci: ndarray
     """
 
@@ -217,7 +217,7 @@ class ColorByT4(ColorBase):
 
 
 class ColorByT4g(ColorByT4):
-    """Color all particles uniformly by global tetratic order (T4).
+    """Color all particles uniformly by global tetratic order (:math:`T_{4,g}`).
 
     :param shape: particle geometry
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
@@ -225,7 +225,7 @@ class ColorByT4g(ColorByT4):
     :type dark: bool, optional
     :ivar tet_g: Global tetratic order (complex scalar)
     :type tet_g: complex
-    :ivar ci: Length-N array filled with :py:attr:`abs(tet_g)` used by :py:meth:`ColorBase.local_colors`.
+    :ivar ci: Length-N array filled with :py:attr:`abs(tet_g)` used by :py:meth:`ColorBase.local_colors <coloring.ColorBase.local_colors>`.
     :type ci: ndarray
     """
 
@@ -320,7 +320,7 @@ if __name__ == "__main__":
 
     try:
         # Helper to render a rectangular trajectory with a given style
-        def _make_rect_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=500, iend=1500, istride=10, sphere=False):
+        def _make_rect_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=500, iend=1500, istride=10):
             try:
                 frames = gsd.hoomd.open(gsd_path, mode='r')
             except Exception as _e:
@@ -328,12 +328,13 @@ if __name__ == "__main__":
                 traceback.print_exc()
                 return
             sel = frames[istart:iend:istride]
-            if sphere:
-                L0 = frames[0].configuration.box[0]
-                figure_maker = lambda snap: render_sphere(snap, style=style, view_dir=None, view_dist=100, dark=True, figsize=4, dpi=300, L=L0)
-            else:
-                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=300)
-            animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+            figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=500)
+            
+            try:
+                animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+            except Exception as _e:
+                print(f"Could not create movie {outpath}: {_e}")
+                traceback.print_exc()
 
         # Create movies for the p-atic colorings
         for rect_gsd in ['../tests/test-rect1.gsd', '../tests/test-rect2.gsd']:

@@ -24,7 +24,7 @@ _gold = base_colors['gold']
 _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 
 class ColorS2Defects(ColorByS2):
-    """Color nematic defects :math:`(S_{2,l} < 0.5)` cyan.
+    """Color nematic defects cyan.
 
     Highlights particles that disagree with their local nematic director and
     paints them cyan while delegating non-defect coloring to an optional
@@ -36,7 +36,7 @@ class ColorS2Defects(ColorByS2):
     :type dark: bool, optional
     :param bgColor: optional ColorBase instance providing background colors
     :type bgColor: ColorBase | None, optional
-    :ivar defects: Boolean mask of defective particles set in :meth:`calc_state`.
+    :ivar defects: Boolean mask of defective particles.
     :type defects: ndarray
     """
 
@@ -49,9 +49,8 @@ class ColorS2Defects(ColorByS2):
             self._bg = bgColor
 
     def calc_state(self):
-        """Identify nematic defects.
-
-        Calls the parent :meth:`ColorByS2.calc_state <coloring.ColorByS2.calc_state>` to compute local nematic
+        """
+        Calls the parent :meth:`ColorByS2.calc_state <coloring.paticcolor.ColorByS2.calc_state>` to compute local nematic
         quantities, then marks particles as defects when their local
         orientation misaligns with the local director.
         """
@@ -113,7 +112,7 @@ class ColorC6Defects(ColorByConn):
     :type bgColor: ColorBase | None, optional
     :ivar defects: Boolean mask of defective particles.
     :type defects: ndarray
-    :ivar con: Per-particle connectivity values inherited from :py:class:`ColorByConn <coloring.defectcolor.ColorByConn>`
+    :ivar con: Per-particle connectivity values inherited from :py:class:`ColorByConn <coloring.bondcolor.ColorByConn>`
     :type con: ndarray
     """
 
@@ -130,8 +129,7 @@ class ColorC6Defects(ColorByConn):
             self._bg = bgColor
 
     def calc_state(self):
-        """Identify C6 defects.
-
+        """
         Runs the parent's connectivity calculation then marks particles as
         defective when connectivity falls below a heuristic threshold.
         """
@@ -198,10 +196,9 @@ class ColorC4Defects(ColorByConn):
             self._bg = bgColor
 
     def calc_state(self):
-        """Identify C4 defects.
-
-        Recomputes connectivity using :py:func:`calc.crystal_connectivity` with
-        ``norm=4`` and a tightened crystallinity threshold before marking
+        """
+        Recomputes connectivity using :py:meth:`crystal_connectivity <calc.bond_order.crystal_connectivity>` with
+        :code:`norm=4` and a tightened crystallinity threshold before marking
         defective sites.
         """
         super().calc_state()
@@ -258,22 +255,28 @@ if __name__ == "__main__":
             sel = frames[istart:iend:istride]
             if sphere:
                 L0 = frames[0].configuration.box[0]
-                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=4, dpi=300, L=L0)
+                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=4, dpi=500, L=L0)
             else:
-                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=300)
-            animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=500)
+            
+            try:
+                animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+            except Exception as _e:
+                print(f"Could not make movie {outpath}: {_e}")
+                traceback.print_exc()
+                return
 
-        # # C6 defects on q-pole control
-        # bg_style = ColorBase()
-        # style = ColorC6Defects(bgColor=bg_style)
-        # _make_movie('../tests/test-control.gsd', '../tests/c6d-qpole.mp4', style, istride=100)
-        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/c6d-qpole.webm', style, codec='libvpx', istride=100)
+        # C6 defects on q-pole control
+        bg_style = ColorBase()
+        style = ColorC6Defects(bgColor=bg_style)
+        _make_movie('../tests/test-control.gsd', '../tests/c6d-qpole.mp4', style, istride=100)
+        _make_movie('../tests/test-control.gsd', '../docs/source/_static/c6d-qpole.webm', style, codec='libvpx', istride=100)
 
-        # # C6 defects on sphere (small sample)
-        # bg_style = ColorByConn()
-        # style = ColorC6Defects(bgColor=bg_style)
-        # _make_movie('../tests/test-sphere.gsd', '../tests/c6d-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        # _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6d-sphere.webm', style, sphere=True, codec='libvpx', iend=100, istride=2)
+        # C6 defects on sphere (small sample)
+        bg_style = ColorByConn()
+        style = ColorC6Defects(bgColor=bg_style)
+        _make_movie('../tests/test-sphere.gsd', '../tests/c6d-sphere.mp4', style, sphere=True, iend=100, istride=2)
+        _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6d-sphere.webm', style, sphere=True, codec='libvpx', iend=100, istride=2)
 
         # C4 defects on rectangle (use tightened frame window)
         bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), order=4)

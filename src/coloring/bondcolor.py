@@ -35,15 +35,15 @@ _rainbow = lambda c: hsv_map(c).clip(0, 1)
 
 
 class ColorByPsi(ColorBase):
-    """Color particles by local b-fold bond-order :math:`\\psi_n`.
+    """Color particles by local n-fold bond-orientational order. .
 
-    This class computes per-particle bond-orientational order (complex
+    This class computes per-particle bond-orientational order :math:`\\psi_n` (complex
     numbers) and exposes both local and global statistics. It supports
     flat, projected and anisotropic (stretched) calculations and sets a
     canonical scalar :py:attr:`ci` (the magnitude of :math:`\\psi_n`) for the base
     color mapping.
 
-    :param shape: Particle geometry, defaults to a sphere with diameter 1.
+    :param shape: Particle geometry, defaults to a sphere with diameter 1.0
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`, optional
     :param surface_normal: Surface normal function for optional projected calculations, defaults to None
     :type surface_normal: callable, optional
@@ -104,18 +104,18 @@ class ColorByPsi(ColorBase):
         Compute bond-order and neighbor structures and store to self.
 
         Implementation notes:
+        
         - For spherical/disc particles this uses :py:meth:`flat_bond_order <calc.bond_order.flat_bond_order>`.
-        - For projected geometries it uses :py:meth:`projected_bond_order <calc.bond_order.projected_bond_order>` and
-            computes a tangent connection via :py:meth:`tangent_connection <calc.bond_order.tangent_connection>`.
-        - For anisotropic particles it uses the stretched variants
-            (:py:meth:`stretched_neighbors <calc.bond_order.stretched_neighbors>` and :py:meth:`stretched_bond_order <calc.bond_order.stretched_bond_order>`).
-        - If ``periodic`` is True, applies periodic boundary conditions during neighbor search. IMPORTANT: this means that the
-            instance variables have size N\' instead of size N. :py:attr:`ci` fields automatically adjust for this, but other
-            instance variables (like :py:attr:`psi`) may need to be indexed accordingly.
+        
+        - For projected geometries it uses :py:meth:`projected_bond_order <calc.bond_order.projected_bond_order>` and computes a tangent connection via :py:meth:`tangent_connection <calc.locality.tangent_connection>`.
+        
+        - For anisotropic particles it uses the stretched variants (:py:meth:`stretched_neighbors <calc.locality.stretched_neighbors>` and :py:meth:`stretched_bond_order <calc.bond_order.stretched_bond_order>`).
+        
+        - If ``periodic`` is True, applies periodic boundary conditions during neighbor search using :py:meth:`expand_around_pbc <calc.locality.expand_around_pbc>`. IMPORTANT: this means that the instance variables have size N\' instead of size N. :py:attr:`ci` fields automatically adjust for this, but other instance variables (like :py:attr:`psi`) may need to be indexed accordingly.
         
         After computing the complex :py:attr:`psi`, this method sets :py:attr:`ci`
         to the per-particle magnitude :py:attr:`abs(self.psi)` so the base mapping
-        (:py:meth:`ColorBase.local_colors`) can be used unchanged.
+        (:py:meth:`ColorBase.local_colors <coloring.ColorBase.local_colors>`) can be used unchanged.
         """
         pts = self.snap.particles.position
         cut = DEFAULT_CUTOFF * self.shape.ax * 2
@@ -160,12 +160,12 @@ class ColorByPsi(ColorBase):
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
-        :return: LaTeX-formatted summary string i.e. ":math:`|\\langle\\psi_n\\rangle|=0.00` ".
+        :return: LaTeX-formatted summary string i.e. ":math:`\\langle|\\psi_n|\\rangle=0.00` ".
         :rtype: str
         """
         if snap is not None: self.snap = snap
-        psi_g = np.abs(np.mean(self.psi[:self.num_pts]))
-        return f'$|\\langle\\psi_6\\rangle| = {psi_g:.2f}$'
+        psi_l = np.mean(np.abs(self.psi[:self.num_pts]))
+        return f'$\\langle|\\psi_6|\\rangle = {psi_l:.2f}$'
 
 class ColorByGlobalPsi(ColorByPsi):
     """Color all particles by the global bond-order magnitude: :math:`|\\langle\\psi_n\\rangle|`.
@@ -178,7 +178,7 @@ class ColorByGlobalPsi(ColorByPsi):
     :type dark: bool, optional
     :ivar psi_g: Global average bond-order magnitude
     :type psi_g: scalar
-    :ivar ci: Length-N array filled with :py:attr:`psi_g` used by :py:meth:`ColorBase.local_colors`.
+    :ivar ci: Length-N array filled with :py:attr:`psi_g` used by :py:meth:`ColorBase.local_colors <coloring.ColorBase.local_colors>`.
     :type ci: ndarray
     """
 
@@ -211,18 +211,19 @@ class ColorByPhase(ColorByPsi):
     :type surface_normal: callable, optional
     :param dark: whether to use the dark theme
     :type dark: bool, optional
-    :ivar ci: Per-particle normalized phase in [0,1] used by :py:meth:`ColorBase.local_colors`.
+    :ivar ci: Per-particle normalized phase in [0,1] used by :py:meth:`ColorBase.local_colors <coloring.ColorBase.local_colors>`.
     :type ci: ndarray
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere,
                  order: int = 6, shift: float = 0.6,
                  surface_normal: callable = None, dark: bool = True):
-                super().__init__(shape=shape, order=order, dark=dark, surface_normal=surface_normal)
-                # store shift for phase mapping and use rainbow as color function
-                self._shift = shift
-                self._c = lambda x: _rainbow(x)
-
+        """Constructor"""
+        super().__init__(shape=shape, order=order, dark=dark, surface_normal=surface_normal)
+        # store shift for phase mapping and use rainbow as color function
+        self._shift = shift
+        self._c = lambda x: _rainbow(x)
+    
     def calc_state(self):
         """Compute parent state then cache the per-particle phase into :py:attr:`ci`."""
         super().calc_state()
@@ -234,9 +235,9 @@ class ColorByPhase(ColorByPsi):
 
 
 class ColorByConn(ColorByPsi):
-    """Color particles by local crystal connectivity (i.e. C6) as defined in :py:meth:`crystal_connectivity <calc.crystal_connectivity>`.
+    """Color particles by local crystal connectivity (i.e. C6) as defined in :py:meth:`crystal_connectivity <calc.bond_order.crystal_connectivity>`.
 
-    Uses :py:meth:`crystal_connectivity <calc.crystal_connectivity>` applied to the previously computed
+    Uses :py:meth:`crystal_connectivity <calc.bond_order.crystal_connectivity>` applied to the previously computed
     :py:attr:`psi` and neighbor structure. The resulting connectivity is
     exposed as :py:attr:`ci` for the base color mapping.
 
@@ -288,8 +289,7 @@ class ColorByConn(ColorByPsi):
 class ColorByGlobalConn(ColorByConn):
     """Color all particles by global connectivity, which is just the average local connectivity
 
-    :see: :py:class:`ColorByPsi`
-    :see: :py:class:`ColorByConn`
+    :see: :py:class:`ColorByPsi`, :py:class:`ColorByConn`
     """
     
     def __init__(self, shape: SuperEllipse = _default_sphere,
@@ -304,45 +304,6 @@ class ColorByGlobalConn(ColorByConn):
         con_g = np.mean(self.con[:self.num_pts])
         self.ci = np.array([con_g]*self.num_pts)
     # Use ColorBase.local_colors by default (ci is set in calc_state)
-
-
-
-# class QpoleSuite(ColorByConn):
-#     """Two-parameter color mixing of global bond-order and crystalline connectivity.
-
-#     :return: RGB colors combining psi_g and connectivity
-#     :rtype: ndarray
-#     """
-    
-#     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
-#         super().__init__(shape=shape, order=6, dark=dark, surface_normal=None)
-#         # Use two-parameter color mixing
-#         self._c = _white_purp if dark else _grey_purp
-
-#     def local_colors(self, snap: gsd.hoomd.Frame = None):
-#         """Return RGB colors combining global bond order, :math:`|\\langle\\psi\\rangle|` magnitude and local connectivity.
-
-#         Two-parameter blending (white->purple/grey->purple) maps bond orientational order in red and connectivity in blue. Meaning grey/white states have no symmetry, blue states have high connectivity but a grain boundary, and purple states are perfect crystals with high connectivity and no grain boundaries.
-
-#         :return: (N,3) array
-#         :rtype: ndarray
-#         """
-#         if snap is not None: self.snap = snap
-#         # Combine global psi magnitude with local connectivity
-#         psi_g = np.abs(np.mean(self.psi)) * np.ones(self.snap.particles.N)
-#         return self._c(psi_g, self.con)
-
-#     def state_string(self, snap: gsd.hoomd.Frame = None):
-#         """
-#         :return: LaTeX-formatted summary string: i.e. :math:`|\\langle\\psi_n\\rangle|=0.00` / :math:`\\langle C_n\\rangle=0.00`
-#         :rtype: str
-#         """
-#         if snap is not None: self.snap = snap
-#         psi_g = np.abs(np.mean(self.psi))
-#         con_g = np.mean(self.con)
-#         return f'$|\\langle\\psi_6\\rangle| = {psi_g:.2f}$\n$\\langle C_6\\rangle = {con_g:.2f}$'
-
-
 
 
 
@@ -371,27 +332,33 @@ if __name__ == "__main__":
             sel = frames[istart:iend:istride]
             if sphere:
                 L0 = frames[0].configuration.box[0]
-                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=4, dpi=300, L=L0)
+                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=4, dpi=500, L=L0)
             else:
-                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=300)
-            animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=4, dpi=500)
 
-        # # Control / q-pole examples
-        # style = ColorByPhase()
-        # _make_movie('../tests/test-control.gsd', '../tests/phase-qpole.mp4', style, istride=100)
-        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/phase-qpole.webm', style, codec='libvpx', istride=100)
+            try:
+                animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+            except Exception as _e:
+                print(f"Could not make movie {outpath}: {_e}")
+                traceback.print_exc()
+                return
 
-        # style = ColorByGlobalPsi()
-        # _make_movie('../tests/test-control.gsd', '../tests/psig-qpole.mp4', style, istride=100)
-        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/psig-qpole.webm', style, codec='libvpx', istride=100)
+        # Control / q-pole examples
+        style = ColorByPhase()
+        _make_movie('../tests/test-control.gsd', '../tests/phase-qpole.mp4', style, istride=100)
+        _make_movie('../tests/test-control.gsd', '../docs/source/_static/phase-qpole.webm', style, codec='libvpx', istride=100)
 
-        # style = ColorByConn()
-        # _make_movie('../tests/test-control.gsd', '../tests/c6-qpole.mp4', style, istride=100)
-        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/c6-qpole.webm', style, codec='libvpx', istride=100)
+        style = ColorByGlobalPsi()
+        _make_movie('../tests/test-control.gsd', '../tests/psig-qpole.mp4', style, istride=100)
+        _make_movie('../tests/test-control.gsd', '../docs/source/_static/psig-qpole.webm', style, codec='libvpx', istride=100)
 
-        # style = QpoleSuite()
-        # _make_movie('../tests/test-control.gsd', '../tests/psi6c6-qpole.mp4', style, istride=100)
-        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/psi6c6-qpole.webm', style, codec='libvpx', istride=100)
+        style = ColorByConn()
+        _make_movie('../tests/test-control.gsd', '../tests/c6-qpole.mp4', style, istride=100)
+        _make_movie('../tests/test-control.gsd', '../docs/source/_static/c6-qpole.webm', style, codec='libvpx', istride=100)
+
+        style = ColorBlender(white_purp, ColorByGlobalPsi(), ColorByConn())
+        _make_movie('../tests/test-control.gsd', '../tests/psi6c6-qpole.mp4', style, istride=100)
+        _make_movie('../tests/test-control.gsd', '../docs/source/_static/psi6c6-qpole.webm', style, codec='libvpx', istride=100)
 
 
         # opole and sphere examples (reuse same style classes)
@@ -412,23 +379,23 @@ if __name__ == "__main__":
         _make_movie('../tests/test-opole2.gsd', '../docs/source/_static/psi6c6-opole2.webm', style, codec='libvpx', istride=25, iend=2500)
 
 
-        # style = ColorByPhase()
-        # _make_movie('../tests/test-sphere.gsd', '../tests/phase-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        # _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/phase-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
+        style = ColorByPhase()
+        _make_movie('../tests/test-sphere.gsd', '../tests/phase-sphere.mp4', style, sphere=True, iend=100, istride=2)
+        _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/phase-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
 
-        # style = ColorByConn()
-        # _make_movie('../tests/test-sphere.gsd', '../tests/c6-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        # _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
+        style = ColorByConn()
+        _make_movie('../tests/test-sphere.gsd', '../tests/c6-sphere.mp4', style, sphere=True, iend=100, istride=2)
+        _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
 
 
-        # # rect examples
-        # style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4)
-        # _make_movie('../tests/test-rect1.gsd', '../tests/c4-rect1.mp4', style)
-        # _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4-rect1.webm', style, codec='libvpx')
+        # rect examples
+        style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4)
+        _make_movie('../tests/test-rect1.gsd', '../tests/c4-rect1.mp4', style)
+        _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4-rect1.webm', style, codec='libvpx')
 
-        # style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4)
-        # _make_movie('../tests/test-rect2.gsd', '../tests/c4-rect2.mp4', style)
-        # _make_movie('../tests/test-rect2.gsd', '../docs/source/_static/c4-rect2.webm', style, codec='libvpx')
+        style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4)
+        _make_movie('../tests/test-rect2.gsd', '../tests/c4-rect2.mp4', style)
+        _make_movie('../tests/test-rect2.gsd', '../docs/source/_static/c4-rect2.webm', style, codec='libvpx')
 
     except Exception as e:
         # Print the exception and full traceback so the caller can see where the

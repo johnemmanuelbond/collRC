@@ -198,8 +198,8 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
 
 
 def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
-                  view_dir = np.array([0,0,1]), view_dist=100, show_text=True,
-                  dpi=600, figsize=3.5, dark=True, **kwargs):
+              view_dir = np.array([0,0,1]), view_dist=50, show_text=True,
+              dpi=600, figsize=3.5, dark=True, **kwargs):
     """
     Create a visualization of a single GSD frame with particles in a 3d space.
 

@@ -22,7 +22,7 @@ _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 
 
 class ColorByEta0(ColorBase):
-    """Color all particles by the central area fraction (:math:`\eta_0`).
+    """Color all particles by the central area fraction.
 
     This style computes a single scalar value for the central area
     fraction (:math:`\eta_0`) via :py:meth:`central_eta <calc.morphology.central_eta>` and applies a
@@ -36,7 +36,7 @@ class ColorByEta0(ColorBase):
     :type jac: str, optional
     :ivar eta0: The central area fraction computed from particle positions and box.
     :type eta0: scalar
-    :ivar ci: Length-N numpy array containing :py:attr:`eta0` repeated for every particle; used by :py:meth:`ColorBase.local_colors`.
+    :ivar ci: Length-N numpy array containing :py:attr:`eta0` repeated for every particle; used by :py:meth:`ColorBase.local_colors <coloring.ColorBase.local_colors>`.
     :type ci: ndarray
     """
 

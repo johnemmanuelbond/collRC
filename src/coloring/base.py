@@ -322,10 +322,10 @@ if __name__ == "__main__":
 
     # make example movies
     import traceback
-    from render import render_npole, render_sphere, animate
+    from render import render_npole, render_sphere, render_3d, animate
 
     try:
-        def _make_base_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=0, iend=-1, istride=10, sphere=False):
+        def _make_base_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=0, iend=-1, istride=10, sphere=False, clust=False):
             try:
                 frames = gsd.hoomd.open(gsd_path, mode='r')
             except Exception as _e:
@@ -335,23 +335,31 @@ if __name__ == "__main__":
             sel = frames[istart:iend:istride]
             if sphere:
                 L0 = frames[0].configuration.box[0]
-                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=5, dpi=300, L=L0)
+                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=5, dpi=500, L=L0)
+            elif clust:
+                L0 = frames[0].configuration.box[0]*2.5
+                figure_maker = lambda snap: render_3d(snap, style=style, dark=True, figsize=5, dpi=500, L=L0)
             else:
-                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=300)
-            animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=500)
+            
+            try:
+                animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
+            except Exception as _e:
+                print(f"Could not make movie {outpath}: {_e}")
+                traceback.print_exc()
 
         # simple base coloring on control and rectangle examples
-        # style = ColorBase()
-        # _make_base_movie('../tests/test-control.gsd', '../tests/base-qpole.mp4', style, istride=100)
-        # _make_base_movie('../tests/test-control.gsd', '../docs/source/_static/base-qpole.webm', style, codec='libvpx', istride=100)
+        style = ColorBase()
+        _make_base_movie('../tests/test-control.gsd', '../tests/base-qpole.mp4', style, istride=100)
+        _make_base_movie('../tests/test-control.gsd', '../docs/source/_static/base-qpole.webm', style, codec='libvpx', istride=100)
 
-        # style = ColorBase()
-        # _make_base_movie('../tests/test-opole1.gsd', '../tests/base-opole1.mp4', style, istride=25)
-        # _make_base_movie('../tests/test-opole1.gsd', '../docs/source/_static/base-opole1.webm', style, codec='libvpx', istride=25, iend=2500)
+        style = ColorBase()
+        _make_base_movie('../tests/test-opole1.gsd', '../tests/base-opole1.mp4', style, istride=25)
+        _make_base_movie('../tests/test-opole1.gsd', '../docs/source/_static/base-opole1.webm', style, codec='libvpx', istride=25, iend=2500)
 
-        # style = ColorBase()
-        # _make_base_movie('../tests/test-sphere.gsd', '../tests/base-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        # _make_base_movie('../tests/test-sphere.gsd', '../docs/source/_static/base-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
+        style = ColorBase()
+        _make_base_movie('../tests/test-sphere.gsd', '../tests/base-sphere.mp4', style, sphere=True, iend=100, istride=2)
+        _make_base_movie('../tests/test-sphere.gsd', '../docs/source/_static/base-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
 
         style = ColorBase(shape = SuperEllipse(ax=1.0, ay=0.5, n=20.0))
         _make_base_movie('../tests/test-rect1.gsd', '../tests/base-rect1.mp4', style, istart=500, iend=1500)
