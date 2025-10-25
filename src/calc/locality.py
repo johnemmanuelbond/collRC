@@ -4,7 +4,7 @@ Contains many helper methods to compute geometric properties of particle configu
 """
 
 import numpy as np
-from scipy.spatial.distance import pdist,squareform
+from scipy.spatial.distance import pdist,cdist,squareform
 
 #first coordination shell for discs at close-packing
 DEFAULT_CUTOFF = 0.5*(1+np.sqrt(3))
@@ -132,38 +132,63 @@ def box_to_matrix(box:list) -> np.ndarray:
     return np.array([[box[0],box[3]*box[1],box[4]*box[2]],[0,box[1],box[5]*box[2]],[0,0,box[2]]])
 
 
-def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8)->tuple[np.ndarray,np.ndarray]:
+def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8, max_dist:float = None)->tuple[np.ndarray,np.ndarray]:
     """
     given a frame and a box basis matrix, returns a larger frame which includes surrounding particles from the nearest images, as well as the index relating padded particles back to their original image. This will enable methods like scipy.voronoi to respect periodic boundary conditions.
 
     :param coords: a (N,d) array of particle coordinates in d-dimensions
     :type coords: ndarray
-    :param basis: a (d,d) matrix of basis vectors for the simulation box
+    :param basis: a (d,d) matrix of basis vectors for the simulation box. A 2D box should have basis[2,2]=0, otherwise the 3D case is assumed and the function prepares 27 periodic images (rather than only 9 in 2D).
     :type basis: ndarray
     :param padfrac: the number of extra particles, as a fraction of the total number, to include in the 'pad' of surrounding particles, defaults to 0.8
     :type padfrac: float, optional
-    :return: a ((N+N*padfrac), d) array of particle coordinates in d-dimensions which respect periodic boundary conditions around the central N particles, as well as a (N+N*padfrac,) array of indices relating padded particles back to their original image
+    :param max_dist: alternatively to padfrac, specify a maximum distance from original particles to include surrounding particles. defaults to None
+    :type max_dist: float, optional
+    :return: a ((N\', d) array of particle coordinates in d-dimensions which respect periodic boundary conditions around the central N particles, as well as a (N\',) array of indices relating padded particles back to their original image
     :rtype: np.ndarray, np.ndarray
     """    
 
     pnum = coords.shape[0]
-    if basis[2,2]==0: basis[2,2]=1
+    if basis[2,2]==0: 
+        basis[2,2]=1
+        e1 = np.array([1,0,0])
+        e2 = np.array([0,1,0])
+        frame_basis = (np.linalg.inv(basis) @ coords.T).T
+        expanded = np.array([
+            *(frame_basis+e1),*(frame_basis+e2),
+            *(frame_basis-e1),*(frame_basis-e2),
+            *(frame_basis+e1+e2),*(frame_basis+e1-e2),
+            *(frame_basis-e1+e2),*(frame_basis-e1-e2)
+            ])
+    else:
+        e1 = np.array([1,0,0])
+        e2 = np.array([0,1,0])
+        e3 = np.array([0,0,1])
+        frame_basis = (np.linalg.inv(basis) @ coords.T).T
+        expanded = np.array([
+            *(frame_basis+e1),*(frame_basis+e2),*(frame_basis+e3),
+            *(frame_basis-e1),*(frame_basis-e2),*(frame_basis-e3),
+            *(frame_basis+e1+e2),*(frame_basis+e1-e2),*(frame_basis-e1+e2),*(frame_basis-e1-e2),
+            *(frame_basis+e1+e3),*(frame_basis+e1-e3),*(frame_basis-e1+e3),*(frame_basis-e1-e3),
+            *(frame_basis+e2+e3),*(frame_basis+e2-e3),*(frame_basis-e2+e3),*(frame_basis-e2-e3),
+            *(frame_basis+e1+e2+e3),*(frame_basis+e1+e2-e3),*(frame_basis+e1-e2+e3),*(frame_basis+e1-e2-e3),
+            *(frame_basis-e1+e2+e3),*(frame_basis-e1+e2-e3),*(frame_basis-e1-e2+e3),*(frame_basis-e1-e2-e3)
+            ])
 
-    frame_basis = (np.linalg.inv(basis) @ coords.T).T
-    expanded = np.array([
-        *(frame_basis+np.array([ 1, 0, 0])),*(frame_basis+np.array([ 0, 1, 0])),
-        *(frame_basis+np.array([-1, 0, 0])),*(frame_basis+np.array([ 0,-1, 0])),
-        *(frame_basis+np.array([ 1, 1, 0])),*(frame_basis+np.array([ 1,-1, 0])),
-        *(frame_basis+np.array([-1, 1, 0])),*(frame_basis+np.array([-1,-1, 0]))
-        ])
-
-    pad_idx = np.argsort(np.max(np.abs(expanded),axis=-1))[:(int(padfrac*pnum))]
+    
+    if max_dist is not None:
+        dist_to_coords = cdist(expanded,frame_basis).min(axis=1)
+        pad_idx = np.where(dist_to_coords <= max_dist)[0]
+    else:
+        assert padfrac is not None, "Either max_dist or padfrac must be specified"
+        np.argsort(np.max(np.abs(expanded),axis=-1))
+        pad_idx = np.argsort(np.abs(expanded).max(axis=-1))[:(int(padfrac*pnum))]
     pad = (basis @ expanded[pad_idx].T).T
     
     return np.array([*coords,*pad]), np.array([*np.arange(pnum),*(pad_idx%pnum)])
 
 
-def padded_neighbors(pts:np.ndarray, basis:np.ndarray, neighbor_cutoff:float = DEFAULT_CUTOFF, padfrac:float = 0.8) -> np.ndarray:
+def padded_neighbors(pts:np.ndarray, basis:np.ndarray, neighbor_cutoff:float = DEFAULT_CUTOFF, padfrac:float=None) -> np.ndarray:
     """Determines neighbors in a configuration of particles based on a cutoff distance while respecting the periodic boundary condition using :py:meth:`expand_around_pbc`:
 
     .. math::
@@ -178,13 +203,15 @@ def padded_neighbors(pts:np.ndarray, basis:np.ndarray, neighbor_cutoff:float = D
     :type basis: ndarray
     :param neighbor_cutoff: specify the distance which defines neighbors. Defaults to halfway between the first coordination peaks for a perfect crystal.
     :type neighbor_cutoff: scalar, optional
-    :param padfrac: the number of extra particles, as a fraction of the total number, to include in the 'pad' of surrounding particles, defaults to 0.8
+    :param padfrac: the number of extra particles, as a fraction of the total number, to include in the 'pad' of surrounding particles, This may be computatinally faster than using :py:meth:`expand_around_pbc` with :code:`max_dist`. Defaults to None
     :return:  (N,N) boolean array indicating which particles are neighbors
     :rtype: ndarray
     """
 
     pnum = pts.shape[0]
-    pts_padded, idx_padded = expand_around_pbc(pts,basis,padfrac=padfrac)
+    if padfrac is not None: md = None
+    else: md = neighbor_cutoff*1.1
+    pts_padded, idx_padded = expand_around_pbc(pts,basis,max_dist=md,padfrac=padfrac)
 
     nei_padded = squareform(pdist(pts_padded)) <= neighbor_cutoff
     nei_padded[np.eye(pts_padded.shape[0])==1]=False

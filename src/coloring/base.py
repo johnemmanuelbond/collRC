@@ -108,10 +108,15 @@ class ColorBase():
 
     StateColor has a ``snap`` attribute that caches the last GSD frame used for coloring, to avoid redundant computations.
 
-    StateColor subclasses should implement the `local_colors` and `state_string` methods to provide specific coloring logic and state descriptions.
+    StateColor subclasses should implement the `calc_state`, `local_colors` and `state_string` methods to provide specific coloring logic and state descriptions.
     
+    :param shape: Particle geometry used for calculations, defaults to a sphere of radius 0.5
+    :type shape: SuperEllipse
+    :param shape: Particle geometry used for calculations
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: Whether to use a dark background theme, defaults to True
     :type dark: bool, optional
+    :ivar ci: Canonical scalar field (length N) that will be mapped to colors by ``self._c``. Subclasses should set this in ``calc_state``.
     """
     
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
@@ -120,9 +125,9 @@ class ColorBase():
         """
         # Choose base color based on background theme
         if dark:
-            self._c = base_colors['white']
+            self._c = lambda x: [base_colors['white']] * x.shape[0]
         else:
-            self._c = base_colors['grey']
+            self._c = lambda x: [base_colors['grey']] * x.shape[0]
         self._f = None
         self._shape = shape
 
@@ -131,16 +136,6 @@ class ColorBase():
         """Get the current GSD frame used for coloring."""
         return self._f
     
-    @property
-    def shape(self) -> SuperEllipse:
-        """Get the shape used for coloring."""
-        return self._shape
-
-    @shape.setter
-    def shape(self, shape: SuperEllipse):
-        """Set the shape used for coloring."""
-        self._shape = shape
-
     @snap.setter
     def snap(self, snap: gsd.hoomd.Frame):
         """Set the current GSD frame used for coloring."""
@@ -148,10 +143,36 @@ class ColorBase():
             self._f = snap
             try: self.calc_state()
             except AttributeError: pass
+    
+    @property
+    def num_pts(self) -> int:
+        """Get the number of particles in the current frame."""
+        try:
+            self._f.particles.N
+        except AttributeError:
+            return 0
+
+    @property
+    def shape(self) -> SuperEllipse:
+        """Get the shape used for coloring.
+
+        :return: The particle geometry used by this style
+        :rtype: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
+        """
+        return self._shape
+
+    @shape.setter
+    def shape(self, shape: SuperEllipse):
+        """Set the shape used for coloring.
+
+        :param shape: particle geometry
+        :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
+        """
+        self._shape = shape
 
     def calc_state(self):
-        """Calculate the state of the color mapping. Subclasses will overwrite by storing reaction coords."""
-        pass
+        """Calculate the state of the color mapping. Subclasses will overwrite by storing reaction coordinates."""
+        self.ci = np.zeros(self.num_pts)
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
         """
@@ -159,11 +180,11 @@ class ColorBase():
         
         :param snap: GSD frame containing particle data
         :type snap: gsd.hoomd.Frame
-        :return: Array of RGB colors for each particle
+        :return: Array of RGBA colors for each particle
         :rtype: ndarray
         """
         if snap is not None: self.snap = snap
-        return np.array([self._c] * self.snap.particles.N)
+        return self._c(self.ci)
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
@@ -176,6 +197,87 @@ class ColorBase():
         """
         if snap is not None: self.snap = snap
         return ""
+
+class ColorBlender():
+    """Blend two coloring styles using a two-argument color blending function.
+
+    This helper composes two :class:`ColorBase` instances and a blending
+    callable that accepts two scalar fields (the ``ci`` arrays of the two
+    styles) and returns an array of RGBA colors. The blender delegates
+    state computation to both styles and then applies ``c_func`` to their
+    computed scalar fields.
+
+    Constructor parameters
+    ----------------------
+    
+    :param c_func: Callable accepting two scalar fields ``(x, y)`` and returning RGBA colors.
+    :type c_func: callable
+    :param mainstyle: Primary coloring style whose scalar field will be used as the first blend axis.
+    :type mainstyle: ColorBase
+    :param otherstyle: Secondary coloring style whose scalar field will be used as the second blend axis.
+    :type otherstyle: ColorBase
+
+    Calculated attributes (set in ``calc_state``)
+    ---------------------------------------------
+
+    :ivar s1: The primary :class:`ColorBase` instance (same as ``mainstyle``).
+    :ivar s2: The secondary :class:`ColorBase` instance (same as ``otherstyle``).
+    :ivar c_func: The blending callable used to combine ``s1.ci`` and ``s2.ci`` into colors.
+    """
+
+    def __init__(self, c_func:callable, mainstyle:ColorBase, otherstyle:ColorBase):
+        self.s1 = mainstyle
+        self.s2 = otherstyle
+        self.c_func = c_func
+
+    def calc_state(self):
+        """Compute and cache the state for both constituent styles.
+
+        This delegates to the two composed :py:class:`ColorBase` instances
+        and ensures their ``ci`` fields are up-to-date. The blender does
+        not itself store additional state beyond the two styles.
+
+        :return: None
+        """
+        self.s1.calc_state()
+        self.s2.calc_state()
+    
+    def local_colors(self, snap: gsd.hoomd.Frame = None):
+        """Return blended RGBA colors for the provided (or cached) frame.
+
+        If ``snap`` is provided the underlying styles will be updated with
+        that frame before blending. The function ``self.c_func`` is expected
+        to accept two scalar fields (``s1.ci``, ``s2.ci``) and return an
+        (N,4) RGBA array.
+
+        :param snap: optional GSD frame to compute colors for
+        :type snap: gsd.hoomd.Frame, optional
+        :return: (N,4) array of RGBA colors produced by blending
+        :rtype: ndarray
+        """
+        if snap is not None:
+            self.s1.snap = snap
+            self.s2.snap = snap
+        return self.c_func(self.s1.ci, self.s2.ci)
+    
+    def state_string(self, snap: gsd.hoomd.Frame = None):
+        """Return a combined descriptive string from both styles.
+
+        If ``snap`` is provided the underlying styles will be updated with
+        that frame before the strings are requested. The returned string is
+        the primary style's state_string followed by the secondary's,
+        separated by a newline.
+
+        :param snap: optional GSD frame to compute state strings for
+        :type snap: gsd.hoomd.Frame, optional
+        :return: Combined human-readable state description
+        :rtype: str
+        """
+        if snap is not None:
+            self.s1.snap = snap
+            self.s2.snap = snap
+        return self.s1.state_string() + "\n" + self.s2.state_string()
+
 
 
 if __name__ == "__main__":

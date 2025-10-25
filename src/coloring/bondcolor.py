@@ -17,7 +17,7 @@ from coloring import base_colors, color_gradient, color_blender
 from coloring import ColorBase
 
 from calc.locality import DEFAULT_CUTOFF
-from calc import neighbors, stretched_neighbors, tangent_connection, quat_to_angle
+from calc import neighbors, stretched_neighbors, tangent_connection, quat_to_angle, expand_around_pbc, box_to_matrix
 from calc import flat_bond_order, stretched_bond_order, projected_bond_order, crystal_connectivity
 
 # Default sphere geometry for calculations
@@ -49,7 +49,7 @@ class ColorByPsi(ColorBase):
 
     def __init__(self, shape: SuperEllipse = _default_sphere,
                  surface_normal:callable = None,
-                 order: int = 6, dark: bool = True):
+                 order: int = 6, periodic=False, dark: bool = True):
         super().__init__(dark=dark)
         # Set color mapping function based on background
         self._c = _white_red if dark else _grey_red
@@ -60,6 +60,7 @@ class ColorByPsi(ColorBase):
 
         self._is_disc = (np.round(shape.aspect, 2) == 1 and np.round(shape.n, 2) == 2)
         self._is_proj = surface_normal is not None
+        self._per = periodic
         
 
     @property
@@ -97,17 +98,30 @@ class ColorByPsi(ColorBase):
         
         if self._is_disc and not self._is_proj:
             # For circular particles, use standard neighbor detection
+            if self._per:
+                basis = box_to_matrix(self.snap.configuration.box)
+                pts, _ = expand_around_pbc(pts, basis, max_dist=cut)
+
             nei = neighbors(pts, neighbor_cutoff=cut)
             rot = None
             psi = flat_bond_order(pts, nei_bool=nei, order=self._n)
         elif self._is_proj:
             # For particles on curved surfaces, use projected bond order
+            if self._per:
+                basis = box_to_matrix(self.snap.configuration.box)
+                pts, _ = expand_around_pbc(pts, basis, max_dist=cut)
             nei = neighbors(pts, neighbor_cutoff=cut)
             rot = tangent_connection(pts, self._grad)
             psi = projected_bond_order(pts, self._grad, nei_bool=nei, order=self._n)
         else:
             # For elliptical particles, account for orientation-dependent interactions
-            angles = quat_to_angle(self.snap.particles.orientation)
+            if not self._per:
+                angles = quat_to_angle(self.snap.particles.orientation)
+            else:
+                basis = box_to_matrix(self.snap.configuration.box)
+                pts, pad_idx = expand_around_pbc(pts, basis, max_dist=cut)
+                angles = quat_to_angle(self.snap.particles.orientation)[pad_idx]
+
             nei = stretched_neighbors(pts, angles, rx=self.shape.ax, ry=self.shape.ay, neighbor_cutoff=2.7)
             rot = None
             psi = stretched_bond_order(pts, angles, rx=self.shape.ax, ry=self.shape.ay, nei_bool=nei, order=self._n)
@@ -115,19 +129,10 @@ class ColorByPsi(ColorBase):
         self.nei     = nei
         self.rel_rot = rot
         self.psi     = psi
+        # Cache a canonical scalar field for the base class to map to colors
+        self.ci = np.abs(self.psi)[:self.num_pts]
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return per-particle RGB colors encoding local :math:`|\\psi_n|`.
-
-        Mapping: for dark backgrounds this uses a white->red gradient; for light backgrounds a grey->red gradient.
-
-        :param snap: gsd frame
-        :type snap: gsd.hoomd.Frame
-        :return: (N,3) array of RGB colors
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        return self._c(np.abs(self.psi))
+    # Use ColorBase.local_colors by default (ci is set in calc_state)
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
@@ -135,7 +140,7 @@ class ColorByPsi(ColorBase):
         :rtype: str
         """
         if snap is not None: self.snap = snap
-        psi_g = np.abs(np.mean(self.psi))
+        psi_g = np.abs(np.mean(self.psi[:self.num_pts]))
         return f'$|\\langle\\psi_6\\rangle| = {psi_g:.2f}$'
 
 class ColorByGlobalPsi(ColorByPsi):
@@ -148,18 +153,12 @@ class ColorByGlobalPsi(ColorByPsi):
                  order: int = 6, dark: bool = True):
         super().__init__(shape=shape, order=order, dark=dark)
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return uniform RGB colors derived from the global :math:`|\\langle\\psi_n\\rangle|` average.
-
-        Mapping follows the same white/grey -> red convention as :meth:`ColorByPsi.local_colors`, but applied to the global average :math:`|\\langle\\psi_n\\rangle|` so every particle is colored the same.
-
-        :return: (N,3) array of RGB colors
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        # Use global average for all particles
-        psi_g = np.abs(np.mean(self.psi)) * np.ones(self.snap.particles.N)
-        return self._c(psi_g)
+    def calc_state(self):
+        """Calculate both global and local bond-order parameters and expose a uniform scalar field (ci)."""
+        # Ensure parent calculations run first so self.psi is populated
+        super().calc_state()
+        self.psi_g = np.abs(np.mean(self.psi[:self.num_pts]))
+        self.ci = np.array([self.psi_g] * self.num_pts)
 
 
 class ColorByPhase(ColorByPsi):
@@ -173,9 +172,19 @@ class ColorByPhase(ColorByPsi):
     def __init__(self, shape: SuperEllipse = _default_sphere,
                  order: int = 6, shift: float = 0.6,
                  surface_normal: callable = None, dark: bool = True):
-        super().__init__(shape=shape, order=order, dark=dark, surface_normal=surface_normal)
-        # Override color function to use rainbow mapping of angles
-        self._c = lambda ang: _rainbow(((ang + np.pi) / (2 * np.pi) + shift) % 1.0)
+                super().__init__(shape=shape, order=order, dark=dark, surface_normal=surface_normal)
+                # store shift for phase mapping and use rainbow as color function
+                self._shift = shift
+                self._c = lambda x: _rainbow(x)
+
+    def calc_state(self):
+        """Compute parent state then cache the per-particle phase into ``self.ci``."""
+        super().calc_state()
+        if self._is_proj:
+            psi = self.psi * (self.rel_rot ** self._n)
+        else:
+            psi = self.psi
+        self.ci = ((np.angle(psi[:self.num_pts]) + np.pi) / (2 * np.pi) + self._shift) % 1.0
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return per-particle RGB colors encoding the phase (angle) of :math:`\\psi_n`.
@@ -186,11 +195,7 @@ class ColorByPhase(ColorByPsi):
         :rtype: ndarray
         """
         if snap is not None: self.snap = snap
-        if self._is_proj:
-            # Adjust phase for projected bond order
-            psi = self.psi * (self.rel_rot ** self._n)
-        else: psi = self.psi
-        return self._c(np.angle(psi))
+        return self._c(self.ci)
 
 
 class ColorByConn(ColorByPsi):
@@ -217,17 +222,7 @@ class ColorByConn(ColorByPsi):
             c6 = crystal_connectivity(self.psi, self.nei)
 
         self.con = c6
-
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return per-particle RGB colors that reflect local connectivity (i.e. C6).
-
-        Mapping: dark theme uses white->blue, light uses grey->blue. Higher connectivity maps to stronger blue tones indicating crystalline environments.
-
-        :return: (N,3) array
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        return self._c(self.con)
+        self.ci = c6[:self.num_pts]
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
@@ -235,7 +230,7 @@ class ColorByConn(ColorByPsi):
         :rtype: str
         """
         if snap is not None: self.snap = snap
-        return f'$\\langle C_6\\rangle = {np.mean(self.con):.2f}$'
+        return f'$\\langle C_6\\rangle = {np.mean(self.con[:self.num_pts]):.2f}$'
 
 
 class ColorByGlobalConn(ColorByConn):
@@ -250,55 +245,49 @@ class ColorByGlobalConn(ColorByConn):
                  dark: bool = True):
         super().__init__(shape=shape, order=order, dark=dark, surface_normal=surface_normal)
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return per-particle RGB colors that reflect global connectivity (i.e. mean C6).
-
-        Mapping: dark theme uses white->blue, light uses grey->blue. Higher connectivity maps to stronger blue tones indicating crystalline ensembles.
-
-        :return: (N,3) array
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        # Use global average for all particles (note: fixed bug with missing parentheses)
-        c6_g = np.mean(self.con) * np.ones(self.snap.particles.N)
-        return self._c(c6_g)
+    def calc_state(self):
+        """Calculate both global and local bond-order parameters."""
+        super().calc_state()
+        con_g = np.mean(self.con[:self.num_pts])
+        self.ci = np.array([con_g]*self.num_pts)
+    # Use ColorBase.local_colors by default (ci is set in calc_state)
 
 
 
-class QpoleSuite(ColorByConn):
-    """Two-parameter color mixing of global bond-order and crystalline connectivity.
+# class QpoleSuite(ColorByConn):
+#     """Two-parameter color mixing of global bond-order and crystalline connectivity.
 
-    :return: RGB colors combining psi_g and connectivity
-    :rtype: ndarray
-    """
+#     :return: RGB colors combining psi_g and connectivity
+#     :rtype: ndarray
+#     """
     
-    def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
-        super().__init__(shape=shape, order=6, dark=dark, surface_normal=None)
-        # Use two-parameter color mixing
-        self._c = _white_purp if dark else _grey_purp
+#     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
+#         super().__init__(shape=shape, order=6, dark=dark, surface_normal=None)
+#         # Use two-parameter color mixing
+#         self._c = _white_purp if dark else _grey_purp
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return RGB colors combining global bond order, :math:`|\\langle\\psi\\rangle|` magnitude and local connectivity.
+#     def local_colors(self, snap: gsd.hoomd.Frame = None):
+#         """Return RGB colors combining global bond order, :math:`|\\langle\\psi\\rangle|` magnitude and local connectivity.
 
-        Two-parameter blending (white->purple/grey->purple) maps bond orientational order in red and connectivity in blue. Meaning grey/white states have no symmetry, blue states have high connectivity but a grain boundary, and purple states are perfect crystals with high connectivity and no grain boundaries.
+#         Two-parameter blending (white->purple/grey->purple) maps bond orientational order in red and connectivity in blue. Meaning grey/white states have no symmetry, blue states have high connectivity but a grain boundary, and purple states are perfect crystals with high connectivity and no grain boundaries.
 
-        :return: (N,3) array
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        # Combine global psi magnitude with local connectivity
-        psi_g = np.abs(np.mean(self.psi)) * np.ones(self.snap.particles.N)
-        return self._c(psi_g, self.con)
+#         :return: (N,3) array
+#         :rtype: ndarray
+#         """
+#         if snap is not None: self.snap = snap
+#         # Combine global psi magnitude with local connectivity
+#         psi_g = np.abs(np.mean(self.psi)) * np.ones(self.snap.particles.N)
+#         return self._c(psi_g, self.con)
 
-    def state_string(self, snap: gsd.hoomd.Frame = None):
-        """
-        :return: LaTeX-formatted summary string: i.e. :math:`|\\langle\\psi_n\\rangle|=0.00` / :math:`\\langle C_n\\rangle=0.00`
-        :rtype: str
-        """
-        if snap is not None: self.snap = snap
-        psi_g = np.abs(np.mean(self.psi))
-        con_g = np.mean(self.con)
-        return f'$|\\langle\\psi_6\\rangle| = {psi_g:.2f}$\n$\\langle C_6\\rangle = {con_g:.2f}$'
+#     def state_string(self, snap: gsd.hoomd.Frame = None):
+#         """
+#         :return: LaTeX-formatted summary string: i.e. :math:`|\\langle\\psi_n\\rangle|=0.00` / :math:`\\langle C_n\\rangle=0.00`
+#         :rtype: str
+#         """
+#         if snap is not None: self.snap = snap
+#         psi_g = np.abs(np.mean(self.psi))
+#         con_g = np.mean(self.con)
+#         return f'$|\\langle\\psi_6\\rangle| = {psi_g:.2f}$\n$\\langle C_6\\rangle = {con_g:.2f}$'
 
 
 

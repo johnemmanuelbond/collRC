@@ -222,7 +222,7 @@ def steinhardt_bond_order(pts:np.ndarray, nei_bool:np.ndarray, l:int = 6, ret_gl
 
     .. math::
 
-        q_{lm,j} = \\big\{\\frac{1}{N_j}\\sum_kY_{lm}(\\theta_{jk},\\phi_{jk})\\big\\}_m
+        q_{lm,j} = \\big\\{\\frac{1}{N_j}\\sum_kY_{lm}(\\theta_{jk},\\phi_{jk})\\big\\}_m
 
     Where the sum is over all :math:`N_j` neighboring particles and :math:`\\theta_{jk}, \\phi_{jk}` are the angles (in spherical coordinates) between particles :math:`j` and :math:`k`.
     
@@ -258,9 +258,9 @@ def steinhardt_bond_order(pts:np.ndarray, nei_bool:np.ndarray, l:int = 6, ret_gl
 
     #assemble lists of vectors to evaluate angles between (us and vs)
     bonds = dr_vec[nei_bool]
+    rs = np.linalg.norm(bonds, axis=1)
     xs = bonds[:,0]
     ys = bonds[:,1]
-    rs = (xs**2+ys**2)**0.5
     zs = bonds[:,2]
     phis = np.arctan2(ys,xs)
     thetas = np.arccos(np.clip(zs/rs, -1, 1))
@@ -280,12 +280,13 @@ def steinhardt_bond_order(pts:np.ndarray, nei_bool:np.ndarray, l:int = 6, ret_gl
     c_idx = np.array([0,*csizes])
     qlm = qlm_csum[c_idx[1:]]-qlm_csum[c_idx[:-1]]
 
-    #return the neighbor-averaged psi
+    #return the neighbor-averaged qlm
     qlm[ssizes>0]*=1/ssizes[ssizes>0]
     qlm[ssizes==0]=0
 
     if ret_global:
-        return qlm, np.abs(qlm_ij.sum(axis=-1).mean())
+        Q6 = np.sqrt(4*np.pi/(2*6+1)*np.sum(np.abs(qlm.mean(axis=0))**2))
+        return qlm, Q6
     else:
         return qlm
 

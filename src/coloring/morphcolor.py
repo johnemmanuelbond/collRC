@@ -22,12 +22,25 @@ _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 
 
 class ColorByEta0(ColorBase):
-    """Color all particles by the central area fraction.
+    """Color all particles by the central area fraction (``eta0``).
 
+    This style computes a single scalar value for the central area
+    fraction (``eta0``) via :py:meth:`central_eta <calc.morphology.central_eta>` and applies a
+    single-parameter color gradient to every particle.
+
+    Constructor parameters
+    ----------------------
     :param shape: particle geometry
-    :type shape: SuperEllipse
+    :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
     :type dark: bool
+    :param jac: Jacobian mode passed to ``central_eta`` (see :py:meth:`central_eta <calc.morphology.central_eta>`)
+    :type jac: str, optional
+
+    Calculated attributes (set in ``calc_state``)
+    ---------------------------------------------
+    :ivar eta0: The central area fraction computed from particle positions and box.
+    :ivar ci: Length-N numpy array containing ``eta0`` repeated for every particle; used by :meth:`ColorBase.local_colors`.
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True, jac='x'):
@@ -38,19 +51,14 @@ class ColorByEta0(ColorBase):
         self._ap = shape.area
 
     def calc_state(self):
-        """Calculate both global and local nematic order parameters."""
+        """Caclulate the central area fraction using :py:meth:`central_eta <calc.morphology.central_eta>`."""
         pts = self.snap.particles.position
         box = self.snap.configuration.box
         self.eta0 = central_eta(pts, box, jac=self._jac, ptcl_area=self._ap)
+        # expose a numeric array for the base-class mapper
+        self.ci = np.array([self.eta0] * self.num_pts)
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return RGB colors mapping local S2 magnitude (white/grey -> red).
-
-        :return: (N,3) RGB array
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        return np.array([self._c(np.abs(self.eta0))]*self.snap.particles.N)
+    # Use ColorBase.local_colors by default (ci is set in calc_state)
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """

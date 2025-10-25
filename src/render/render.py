@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from moviepy.video.VideoClip import VideoClip
 
 from visuals import Field
-from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches
+from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches, parallax_patches
 from coloring import ColorBase
 
 def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
@@ -168,12 +168,6 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
     C = (rads/R)**2/2
     ax.pcolormesh(dr,dr,C,cmap='binary',vmin=0,vmax=1)
 
-    circle = xx**2 + yy**2 <= R**2
-    zz = np.zeros_like(xx)
-    zz[circle] = np.sqrt(R**2 - xx[circle]**2 - yy[circle]**2)
-    zz[~circle] = np.nan
-    ax.pcolormesh(xx, yy, zz, shading='auto', cmap='Greys', zorder=0)
-
     # Apply coloring and styling
     local_colors = style.local_colors()
     patches, to_render = projected_patches(pts, qts, shape = style.shape, view_dir=view_dir, view_dist=view_dist)
@@ -194,6 +188,82 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
         else:
             textbox = f"{r_string}\n{state_string}"
         ax.text(-1.0*Lx/2, 0.9*Ly/2, textbox,
+                backgroundcolor='white', fontsize='large', zorder=2, color='k')
+
+    # Clean up plot appearance
+    ax.axis('off')
+    fig.tight_layout()
+
+    return fig, ax
+
+
+def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
+                  view_dir = np.array([0,0,1]), view_dist=100, show_text=True,
+                  dpi=600, figsize=3.5, dark=True, **kwargs):
+    """
+    Create a visualization of a single GSD frame with particles in a 3d space.
+
+    :param snap: GSD frame object containing particle data and simulation state
+    :type snap: gsd.hoomd.Frame
+    :param style: :py:class:`ColorBase` object for coloring scheme
+    :type style: ColorBase
+    :param view_dir: Direction vector for viewing the sphere (default: [0,0,1])
+    :type view_dir: ndarray, optional
+    :param view_dist: Distance from the sphere center to the viewpoint (default: 100)
+    :type view_dist: float, optional
+    :param show_text: Whether to display text annotations (default: True)
+    :type show_text: bool, optional
+    :param dpi: Resolution for output image (default: 600)
+    :type dpi: int, optional
+    :param figsize: Base figure size in inches (default: 3.5)
+    :type figsize: float, optional
+    :param dark: Whether to use dark background theme (default: True)
+    :type dark: bool, optional
+    :param kwargs: Additional options for customizating action strings and other overlays. Can include 'Lx', 'Ly' or 'L' to specify static box dimensions. Defaults to box dimensions from GSD frame, but since these may change over the course of a trajectory, specifying fixed values can help maintain consistent aspect ratios across frames. 
+    :type kwargs: dict
+    :return: Matplotlib figure and axis objects
+    :rtype: Tuple[plt.Figure, plt.Axes]
+    """
+    
+    # Set matplotlib style based on background preference
+    if dark: plt.style.use('dark_background')
+    
+    pts = snap.particles.position
+    qts = snap.particles.orientation
+
+    # Update reaction coordinates inside coloring style
+    style.snap = snap
+    
+    # Setup figure with aspect ratio matching simulation box
+    if 'Lx' in kwargs and 'Ly' in kwargs:
+        Lx = kwargs['Lx']
+        Ly = kwargs['Ly']
+    elif 'L' in kwargs:
+        Lx = kwargs['L']
+        Ly = kwargs['L']
+    else:
+        Lx, Ly, _, _, _, _ = snap.configuration.box
+
+    fig, ax = plt.subplots(figsize=(figsize, figsize*Ly/Lx), dpi=dpi)
+    ax.set_xlim([-Lx/2, Lx/2])
+    ax.set_ylim([-Ly/2, Ly/2])
+    ax.set_aspect('equal')
+
+    # Apply coloring and styling
+    local_colors = style.local_colors()
+    patches = parallax_patches(pts, qts, shape = style.shape, view_dir=view_dir, view_dist=view_dist)
+    ptcls = ax.add_collection(patches, autolim=True)
+    ptcls.set_fc(local_colors)  # Face colors from coloring scheme
+    if dark:
+        ptcls.set_ec('grey')    # Edge color for dark background
+    else:
+        ptcls.set_ec('black')   # Edge color for light background
+    ptcls.set_lw(0.5)          # Edge line width
+
+    # Add text annotations in top-left corner
+    state_string = style.state_string()
+    if show_text:
+        ax.text(-1.0*Lx/2, 0.9*Ly/2, state_string,
                 backgroundcolor='white', fontsize='large', zorder=2, color='k')
 
     # Clean up plot appearance
@@ -267,11 +337,10 @@ if __name__ == "__main__":
     # f_select = frames[::10]
     # animate(f_select, outpath='../tests/test-rect.mp4', figure_maker=figure_maker, fps=10, codec='mpeg4')
 
-    aeff = SuperEllipse(ax=0.52, ay=0.52, n=2.0)
     sphere_grad = lambda r: r/np.linalg.norm(r, axis=-1, keepdims=True)
 
     from coloring import ColorByPsi
-    style = ColorByPsi(dark=True, shape = aeff, surface_normal=sphere_grad)
+    style = ColorByPsi(dark=True, surface_normal=sphere_grad)
 
     from coloring import ColorByConn, ColorC6Defects
     bg_style = ColorByConn(dark=True, order=6, surface_normal=sphere_grad)

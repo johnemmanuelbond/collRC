@@ -58,15 +58,9 @@ class ColorByS2(ColorBase):
         # self.nei = snei
 
         self.nem_l = local_patic(angles, self.nei, p=2)
+        self.ci = np.abs(self.nem_l)
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return RGB colors mapping local S2 magnitude (white/grey -> red).
-
-        :return: (N,3) RGB array
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        return self._c(np.abs(self.nem_l))
+    # Use ColorBase.local_colors by default (ci is set in calc_state)
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
@@ -90,16 +84,13 @@ class ColorS2Phase(ColorByS2):
         super().__init__(shape=shape, dark=dark)
         self._shift = shift
         # use rainbow mapping
-        self._c = lambda ang: _rainbow(((ang + np.pi) / (2 * np.pi) + self._shift) % 1.0)
+        self._c = lambda x: _rainbow(x)
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return RGB colors mapping local S2 phase angle.
-        
-        :return: (N,3) RGB array
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        return self._c(np.angle(self.nem_l))
+    def calc_state(self):
+        """Calculate both global and local nematic order parameters."""
+        super().calc_state()
+        self.ci = ((np.angle(self.nem_l) + np.pi) / (2 * np.pi) + self._shift) % 1.0
+    # Use ColorBase.local_colors by default (ci is set in calc_state)
 
 
 class ColorByS2g(ColorByS2):
@@ -108,14 +99,11 @@ class ColorByS2g(ColorByS2):
     :see: ColorByS2
     """
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return RGB colors mapping global S2 magnitude (white/grey -> red).
-
-        :return: (N,3) RGB array
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        return self._c(np.array([np.abs(self.nem_g)]*len(self.nem_l)))
+    def calc_state(self):
+        """Calculate both global and local nematic order parameters."""
+        super().calc_state()
+        self.ci = np.array([np.abs(self.nem_g)]*self.num_pts)
+    # Use ColorBase.local_colors by default (ci is set in calc_state)
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
@@ -154,16 +142,10 @@ class ColorByT4(ColorBase):
         self.nei = neighbors(pts, neighbor_cutoff=6*self._shape.ax)
 
         self.tet_l = local_patic(angles, self.nei, p=4)
+        self.ci = np.abs(self.tet_l)
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return RGB colors mapping local T4 magnitude (white/grey -> orange).
-
-        :return: (N,3) RGB array
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        return self._c(np.abs(self.tet_l))
-
+    # Use ColorBase.local_colors by default (ci is set in calc_state)
+    
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """
         :return: LaTeX-formatted summary string. i.e. ":math:`\\langle T_4\\rangle = 0.00`".
@@ -180,14 +162,11 @@ class ColorByT4g(ColorByT4):
     :see: ColorByT4
     """
 
-    def local_colors(self, snap: gsd.hoomd.Frame = None):
-        """Return RGB colors mapping global T4 magnitude (white/grey -> orange).
-
-        :return: (N,3) RGB array
-        :rtype: ndarray
-        """
-        if snap is not None: self.snap = snap
-        return self._c(np.array([np.abs(self.tet_g)]*len(self.tet_l)))
+    def calc_state(self):
+        """Calculate both global and local nematic order parameters."""
+        super().calc_state()
+        self.ci = np.array([np.abs(self.tet_g)]*self.num_pts)
+    # Use ColorBase.local_colors by default (ci is set in calc_state)
 
     def state_string(self, snap: gsd.hoomd.Frame = None):
         """

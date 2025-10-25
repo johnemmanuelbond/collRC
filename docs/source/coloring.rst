@@ -28,10 +28,10 @@ paticcolor submodule
     :undoc-members:
     :show-inheritance:
 
-psicolor submodule
-------------------
+bondcolor submodule
+-------------------
 
-.. automodule:: coloring.psicolor
+.. automodule:: coloring.bondcolor
     :members:
     :undoc-members:
     :show-inheritance:
