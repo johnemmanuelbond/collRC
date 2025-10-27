@@ -1,4 +1,4 @@
-Tutorial
+Examples
 ========
 
 
@@ -20,55 +20,31 @@ Ellipses in a coplanar electrode
 Rectangles in a coplanar electrode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. container:: row-assets
+
+   .. container:: asset
+
+      .. video:: _static/s2d-rect2.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+
+   .. container:: asset
+
+      .. video:: _static/c4d-rect2.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
 
 
 Spheres on a spherical surface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-
-Small clusters crystallizing in 3D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-
-Two assets side-by-side example
---------------------------------
-
-Sometimes you want two visual assets (images or videos) to sit exactly side-by-side on one row. Use the small helper class ``twocol-assets`` which is defined in ``_static/twocol.css``.
-
-.. raw:: html
-
-	 <div class="twocol-assets">
-		 <div>
-			 <video autoplay loop muted preload="auto" controls width="480">
-				 <source src="_static/base-sphere.webm" type="video/webm">
-				 <!-- fallback text -->
-				 Your browser does not support the video tag.
-			 </video>
-		 </div>
-		 <div>
-			 <video autoplay loop muted preload="auto" controls width="480">
-				 <source src="_static/c6d-sphere.webm" type="video/webm">
-				 Your browser does not support the video tag.
-			 </video>
-		 </div>
-	 </div>
-
-
-The helper ensures the two children share the row equally and scale to the available width; on narrow viewports the assets will gracefully stack.
-
-reST-only example (container-based)
------------------------------------
-
-The following demonstrates a pure reStructuredText approach that avoids
-raw HTML. It uses the ``.. container:: twocol-assets`` helper (from
-``_static/twocol.css``) and two nested containers, each containing a
-figure. Replace the image paths with your actual assets (PNG/JPG). If you
-need to show videos instead of images, use the raw-HTML example above or the
-``sphinxcontrib-video`` extension if available.
-
-.. container:: twocol-assets
+.. container:: row-assets
 
    .. container:: asset
       
@@ -87,6 +63,10 @@ need to show videos instead of images, use the raw-HTML example above or the
          :loop:
          :nocontrols:
          :muted:
+
+
+Small clusters crystallizing in 3D
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 

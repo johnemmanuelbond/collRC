@@ -25,7 +25,7 @@ class ColorEta0(ColorBase):
     """Color all particles by the central area fraction.
 
     This style computes a single scalar value for the central area
-    fraction (:math:`\eta_0`) via :py:meth:`central_eta <calc.morphology.central_eta>` and applies a
+    fraction (:math:`\\eta_0`) via :py:meth:`central_eta <calc.morphology.central_eta>` and applies a
     single-parameter color gradient to every particle.
 
     :param shape: particle geometry

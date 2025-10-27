@@ -1,180 +1,12 @@
-/* Two-column layout helpers for .twocol / .leftcol / .rightcol
+/* Helper for arranging a single row of two visual assets (images/videos)
+   side-by-side with equal heights. Keep this file minimal and focused on
+   the `row-assets` helper. */
 
-   Usage in reST/HTML:
-   .. raw:: html
-
-      <div class="twocol">
-        <div class="leftcol">... main content ...</div>
-        <div class="rightcol">... aside / figures / captions ...</div>
-      </div>
-
-   Notes:
-   - The layout is responsive and stacks on small screens.
-   - .rightcol uses `position: sticky` on wide screens so side content can stay visible while scrolling.
-*/
-
-.twocol {
-  display: flex;
-  /* keep columns tight together on wide screens (no visual gap) */
-  gap: 0;
-  align-items: flex-start;
-  box-sizing: border-box;
-  width: 100%;
+:root {
+  --row-asset-height: 320px; /* override as needed per page */
 }
 
-.leftcol {
-  /* main column grows to fill remaining space */
-  flex: 1 1 auto;
-  min-width: 0; /* allow children to shrink properly */
-  /* small internal spacing so text doesn't touch the aside */
-  padding-right: 0.5rem;
-}
-
-.rightcol {
-  /* aside column keeps a fixed-ish width and sits immediately beside the left column */
-  flex: 0 0 min(32%, 320px);
-  width: min(32%, 320px);
-  padding-left: 0; /* no gap so it appears flush next to the main column */
-  /* keep the aside visible while scrolling on wide screens */
-  position: sticky;
-  top: 1rem;
-  align-self: flex-start;
-  /* subtle separation can be handled by the leftcol's padding; remove left border for a flush appearance */
-  border-left: none;
-}
-
-/* make images and figures responsive inside either column */
-.twocol img,
-.twocol figure,
-.twocol video {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Responsive fallback: stack the columns on narrow viewports */
-@media (max-width: 900px) {
-  .twocol {
-    flex-direction: column;
-  }
-  .rightcol,
-  .leftcol {
-    flex-basis: auto;
-    max-width: 100%;
-    position: static; /* disable sticky on small screens */
-    padding: 0;
-    border-left: none;
-    /* each column takes full width when stacked */
-    width: 100%;
-  }
-}
-
-/* Respect dark mode for separator subtlety */
-@media (prefers-color-scheme: dark) {
-  .rightcol { border-left-color: rgba(255,255,255,0.06); }
-}
-
-/* Stronger theme-safe overrides: target common Sphinx theme wrappers and
-   increase specificity so the theme does not accidentally override the
-   two-column behavior. Use !important only where necessary. */
-.bd-content .twocol,
-.page .twocol,
-.document .twocol,
-.content .twocol,
-body .twocol {
-  display: flex !important;
-  gap: 0 !important;
-  align-items: flex-start !important;
-}
-
-.bd-content .twocol .leftcol,
-.page .twocol .leftcol,
-.document .twocol .leftcol,
-.content .twocol .leftcol,
-body .twocol .leftcol {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  padding-right: 0.5rem !important;
-}
-
-.bd-content .twocol .rightcol,
-.page .twocol .rightcol,
-.document .twocol .rightcol,
-.content .twocol .rightcol,
-body .twocol .rightcol {
-  flex: 0 0 min(32%, 320px) !important;
-  width: min(32%, 320px) !important;
-  padding-left: 0 !important;
-  position: sticky !important;
-  top: 1rem !important;
-  align-self: flex-start !important;
-  border-left: none !important;
-}
-
-@media (max-width: 900px) {
-  .bd-content .twocol,
-  .page .twocol,
-  .document .twocol,
-  .content .twocol,
-  body .twocol {
-    flex-direction: column !important;
-  }
-  .bd-content .twocol .rightcol,
-  .page .twocol .rightcol,
-  .document .twocol .rightcol,
-  .content .twocol .rightcol,
-  body .twocol .rightcol,
-  .bd-content .twocol .leftcol,
-  .page .twocol .leftcol,
-  .document .twocol .leftcol,
-  .content .twocol .leftcol,
-  body .twocol .leftcol {
-    flex-basis: auto !important;
-    max-width: 100% !important;
-    position: static !important;
-    padding: 0 !important;
-    border-left: none !important;
-    width: 100% !important;
-  }
-}
-
-/* Remove extra spacing and floats coming from Sphinx/docutils wrappers when
-   using the `.. container::` directive. These rules apply only inside the
-   two-column layout to avoid globally changing container behavior. */
-.bd-content .twocol > .docutils.container,
-.page .twocol > .docutils.container,
-.document .twocol > .docutils.container,
-.content .twocol > .docutils.container,
-body .twocol > .docutils.container {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.bd-content .twocol .sphinx-contrib-video-container,
-.page .twocol .sphinx-contrib-video-container,
-.document .twocol .sphinx-contrib-video-container,
-.content .twocol .sphinx-contrib-video-container,
-body .twocol .sphinx-contrib-video-container {
-  margin: 0 !important;
-  padding: 0 !important;
-  float: none !important; /* prevent alignment helpers from separating columns */
-  display: block !important;
-}
-
-.bd-content .twocol .docutils.container > *,
-.page .twocol .docutils.container > *,
-.document .twocol .docutils.container > *,
-.content .twocol .docutils.container > *,
-body .twocol .docutils.container > * {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* A tiny helper tuned specifically for placing two visual assets (images
-   or videos) side-by-side on a single row. This is intentionally narrow in
-   scope: it makes each direct child take 50% width, ensures media scale to
-   fill the column, and falls back to stacking on small screens. */
-.twocol-assets {
+.row-assets {
   display: flex;
   gap: 0.5rem;
   align-items: stretch;
@@ -182,58 +14,66 @@ body .twocol .docutils.container > * {
   box-sizing: border-box;
 }
 
-.twocol-assets > * {
-  /* Make children share the row equally */
+.row-assets > .asset {
   flex: 1 1 50%;
   max-width: 50%;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  /* fixed row height so both assets match vertically */
+  height: var(--row-asset-height);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.twocol-assets img,
-.twocol-assets video,
-.twocol-assets figure {
+.row-assets .asset > img,
+.row-assets .asset > video,
+.row-assets .asset > figure {
   width: 100% !important;
-  height: auto !important;
+  height: 100% !important;
+  object-fit: cover !important; /* preserve coverage while matching heights */
   display: block !important;
 }
 
-/* Stronger theme-safe selectors for Sphinx-wrapped content */
-.bd-content .twocol-assets,
-.page .twocol-assets,
-.document .twocol-assets,
-.content .twocol-assets,
-body .twocol-assets {
+/* Sphinx-safe stronger selectors */
+.bd-content .row-assets,
+.page .row-assets,
+.document .row-assets,
+.content .row-assets,
+body .row-assets {
   display: flex !important;
   gap: 0.5rem !important;
 }
 
-.bd-content .twocol-assets > *,
-.page .twocol-assets > *,
-.document .twocol-assets > *,
-.content .twocol-assets > *,
-body .twocol-assets > * {
+.bd-content .row-assets > .asset,
+.page .row-assets > .asset,
+.document .row-assets > .asset,
+.content .row-assets > .asset,
+body .row-assets > .asset {
   flex: 1 1 50% !important;
   max-width: 50% !important;
+  height: var(--row-asset-height) !important;
 }
 
 @media (max-width: 900px) {
-  .twocol-assets,
-  .bd-content .twocol-assets,
-  .page .twocol-assets,
-  .document .twocol-assets,
-  .content .twocol-assets,
-  body .twocol-assets {
+  .row-assets,
+  .bd-content .row-assets,
+  .page .row-assets,
+  .document .row-assets,
+  .content .row-assets,
+  body .row-assets {
     flex-direction: column !important;
   }
-  .twocol-assets > *,
-  .bd-content .twocol-assets > *,
-  .page .twocol-assets > *,
-  .document .twocol-assets > *,
-  .content .twocol-assets > *,
-  body .twocol-assets > * {
+  .row-assets > .asset,
+  .bd-content .row-assets > .asset,
+  .page .row-assets > .asset,
+  .document .row-assets > .asset,
+  .content .row-assets > .asset,
+  body .row-assets > .asset {
     max-width: 100% !important;
     width: 100% !important;
+    height: auto !important; /* let media determine height when stacked */
   }
 }
+

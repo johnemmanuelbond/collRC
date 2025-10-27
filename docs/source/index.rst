@@ -18,7 +18,7 @@ collRC docs
 
    intro
    modules
-   tutorials
+   example
    gallery
 
 
