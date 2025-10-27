@@ -219,7 +219,7 @@ def steinhardt_bond_order(pts:np.ndarray, nei_bool:np.ndarray, l:int = 6, ret_gl
 
     .. math::
 
-        \\big{q_{lm,j}\\big} = \\big\\{\\frac{1}{N_j}\\sum_kY_{lm}(\\theta_{jk},\\phi_{jk})\\big\\}
+        \\big\\{q_{lm,j}\\big\\} = \\big\\{\\frac{1}{N_j}\\sum_kY_{lm}(\\theta_{jk},\\phi_{jk})\\big\\}
 
     Where the sum is over all :math:`N_j` neighboring particles and :math:`\\theta_{jk}, \\phi_{jk}` are the angles (in spherical coordinates) between particles :math:`j` and :math:`k`. Each particle has a rotationally invariant local bond order magnitude given by:
 
@@ -301,7 +301,7 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
 
         C_{n,j} = \\frac{1}{N_C}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}\\psi_{n,k}^*\\big]}{|\\psi_{n,j}\\psi_{n,k}^*|} \\geq \\Theta_C \\bigg]
 
-    Where the :math:`\\psi`\'s are n-fold bond orientational order parameters for each particle, :math:`\\Theta_{C}` is a 'crystallinity threshold' used to determine whether two neighboring particles are part of the same crystalline domain, and :math:`N_C` is a factor used to simply normalize :math:`C_6^j` between zero and one.
+    Where the :math:`\\psi`\'s are n-fold bond orientational order parameters for each particle, :math:`\\Theta_{C}` is a 'crystallinity threshold' used to determine whether two neighboring particles are part of the same crystalline domain, and :math:`N_C` is a factor used to simply normalize :math:`C_{n,j}` between zero and one.
 
     On curved surfaces neighboring particles may have bond orientational order parameters defined in different local tangent planes. In this case the crystalline connectivity becomes:
 

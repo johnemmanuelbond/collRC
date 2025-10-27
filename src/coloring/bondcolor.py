@@ -45,7 +45,7 @@ class ColorBondOrder(ColorBase):
     :math:`q_{lm,j}` (complex arrays). In this case the canonica scalar :py:attr:`ci` is set to the
     rotationally invariant local bond-order parameter: :math:`q_{l,j} = \\sqrt{\\frac{4\\pi}{2l+1}\\sum_m|q_{lm,j}|^2}`.
 
-    The :py:attr:`ci` field is then mapped to white->red / gret->red color gradients.
+    The :py:attr:`ci` field is then mapped to white->red / grey->red color gradients.
 
     :param order: Bond-order symmetry, defaults to 6 (though 4 is also common)
     :type order: int, optional

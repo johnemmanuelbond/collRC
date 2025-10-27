@@ -346,7 +346,7 @@ if __name__ == "__main__":
             _make_rect_movie(rect_gsd, f'../docs/source/_static/s2-{out}.webm', style, codec='libvpx')
 
             # ColorByS2g
-            style = ColorS2g(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            style = ColorS2G(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
             _make_rect_movie(rect_gsd, f'../tests/s2g-{out}.mp4', style)
             _make_rect_movie(rect_gsd, f'../docs/source/_static/s2g-{out}.webm', style, codec='libvpx')
 

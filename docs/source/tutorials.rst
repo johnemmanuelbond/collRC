@@ -1,75 +1,39 @@
 Tutorial
 ========
 
-.. container:: twocol
 
-   .. container:: leftcol
-
-      .. video:: _static/base-qpole.webm
-         :width: 250
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
-      
-   .. container:: rightcol
-
-      .. video:: _static/base-opole1.webm
-         :width: 250
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
-
-.. video:: _static/base-sphere.webm
-   :width: 500
-   :autoplay:
-   :loop:
-   :nocontrols:
-   :muted:
-
-
-.. container:: twocol
-
-   .. container:: leftcol
-
-      .. video:: _static/phase-qpole.webm
-         :width: 250
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
-      
-   .. container:: rightcol
-
-      .. video:: _static/phase-opole1.webm
-         :width: 250
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
+Spheres in a quadrupolar electrode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 
-.. container:: twocol
+Spheres in an octopolar electrode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   .. container:: leftcol
-      
-      .. video:: _static/c6-sphere.webm
-         :width: 250
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
-      
-   .. container:: rightcol
 
-      .. video:: _static/c6d-sphere.webm
-         :width: 250
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
+
+Ellipses in a coplanar electrode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+Rectangles in a coplanar electrode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+Spheres on a spherical surface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+Small clusters crystallizing in 3D
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+
+
 
 .. The overarching goal of SMRL is to collect a variety of control problems in soft matter and express them in a common language so that reinforcement learning methods may be applied interchangably between problems. In this way, lessons learned from one system can translate to better controlling another.
 

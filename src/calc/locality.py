@@ -235,7 +235,7 @@ def padded_neighbors(pts:np.ndarray, basis:np.ndarray, neighbor_cutoff:float = D
 
     .. math::
 
-        n_{jk} = \\delta r_{jk} < r_{cut} \\bigg|\\bigg| \\delta r_{jk'} < r_{cut}
+        n_{jk} = \\delta r_{jk} < r_{cut} \\big|\\big| \\delta r_{jk'} < r_{cut}
     
     For particles :math:`k'` which are periodic images of particle :math:`k`.
 

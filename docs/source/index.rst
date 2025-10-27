@@ -17,8 +17,9 @@ collRC docs
    :caption: Contents:
 
    intro
-   tutorials
    modules
+   tutorials
+   gallery
 
 
 .. Indices and tables
