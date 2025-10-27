@@ -1,7 +1,10 @@
+Gallery
+=======
+
 Spheres in a quadrupolar electrode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Use :py:class:`ColorPsiG <coloring.boncolor.ColorPsiG>`, :py:class:`ColorConn <coloring.conn.ColorConn>`, and :py:class:`ColorBlender<coloring.blend.ColorBlender>` to reproduce the Ψ6 and C6 reaction coordinates from \_\_\_. Then pass them to :py:meth:`render_npole <render.render.render_npole>` to render particles in a quadrupolar electrode:
+Use :py:class:`ColorPsiG <coloring.bondcolor.ColorPsiG>`, :py:class:`ColorConn <coloring.bondcolor.ColorConn>`, and :py:class:`ColorBlender <coloring.base.ColorBlender>` to reproduce the Ψ6 and C6 reaction coordinates from \_\_\_. Then pass them to :py:meth:`render_npole <render.render.render_npole>` to render particles in a quadrupolar electrode:
 
 .. container:: twocol
 
@@ -14,7 +17,7 @@ Use :py:class:`ColorPsiG <coloring.boncolor.ColorPsiG>`, :py:class:`ColorConn <c
          :nocontrols:
          :muted:
       
-      .. video:: _static/psi6-qpole.webm
+      .. video:: _static/psig-qpole.webm
          :width: 300
          :autoplay:
          :loop:
@@ -245,7 +248,7 @@ Use :py:class:`ColorConn <coloring.bondcolor.ColorConn>` and :py:class:`ColorC6D
 Small clusters crystallizing in 3D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Use :py:class:`ColorPsiG <coloring.boncolor.ColorPsiG>`, :py:class:`ColorConn <coloring.conn.ColorConn>`, and :py:class:`ColorBlender<coloring.blend.ColorBlender>` to reproduce the Ψ6 and C6 reaction coordinates from \_\_\_. Then pass them to :py:meth:`render_3d <render.render.render_3d>` to render particles in a quadrupolar electrode:
+Use :py:class:`ColorPsiG <coloring.bondcolor.ColorPsiG>`, :py:class:`ColorConn <coloring.bondcolor.ColorConn>`, and :py:class:`ColorBlender<coloring.base.ColorBlender>` to calculate steinhardt parameters. Then pass them to :py:meth:`render_3d <render.render.render_3d>` to render particles in a quadrupolar electrode:
 
 .. container:: twocol
 

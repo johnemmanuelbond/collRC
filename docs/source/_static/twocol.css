@@ -169,3 +169,71 @@ body .twocol .docutils.container > * {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* A tiny helper tuned specifically for placing two visual assets (images
+   or videos) side-by-side on a single row. This is intentionally narrow in
+   scope: it makes each direct child take 50% width, ensures media scale to
+   fill the column, and falls back to stacking on small screens. */
+.twocol-assets {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.twocol-assets > * {
+  /* Make children share the row equally */
+  flex: 1 1 50%;
+  max-width: 50%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.twocol-assets img,
+.twocol-assets video,
+.twocol-assets figure {
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+}
+
+/* Stronger theme-safe selectors for Sphinx-wrapped content */
+.bd-content .twocol-assets,
+.page .twocol-assets,
+.document .twocol-assets,
+.content .twocol-assets,
+body .twocol-assets {
+  display: flex !important;
+  gap: 0.5rem !important;
+}
+
+.bd-content .twocol-assets > *,
+.page .twocol-assets > *,
+.document .twocol-assets > *,
+.content .twocol-assets > *,
+body .twocol-assets > * {
+  flex: 1 1 50% !important;
+  max-width: 50% !important;
+}
+
+@media (max-width: 900px) {
+  .twocol-assets,
+  .bd-content .twocol-assets,
+  .page .twocol-assets,
+  .document .twocol-assets,
+  .content .twocol-assets,
+  body .twocol-assets {
+    flex-direction: column !important;
+  }
+  .twocol-assets > *,
+  .bd-content .twocol-assets > *,
+  .page .twocol-assets > *,
+  .document .twocol-assets > *,
+  .content .twocol-assets > *,
+  body .twocol-assets > * {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
