@@ -4,6 +4,7 @@ Contains many helper methods to compute geometric properties of particle configu
 """
 
 import numpy as np
+import itertools
 from scipy.spatial.distance import pdist,cdist,squareform
 
 #first coordination shell for discs at close-packing
@@ -17,13 +18,13 @@ def neighbors(pts:np.ndarray, neighbor_cutoff:float|None = None, num_closest:int
 
         n_{jk} = \\delta r_{jk} < r_{cut}
 
-    :param pts: (N,d) array of particle positions in 'D' dimensions.
+    :param pts: :math:`[N,d]` array of particle positions in 'd' dimensions.
     :type pts: ndarray
-    :param neighbor_cutoff: specify the distance which defines neighbors. Defaults to halfway between the first coordination peaks for a perfect crystal.
+    :param neighbor_cutoff: specify the distance which defines neighbors. Defaults to halfway between the first coordination peaks for a perfect sixfold crystal.
     :type neighbor_cutoff: scalar, optional
     :param num_closest: specify the maximum number of neighbors (within the cutoff) per particle. a.k.a pick that many of the closest neighbors per particle.
     :type num_closest: int, optional
-    :return:  (N,N) boolean array indicating which particles are neighbors
+    :return: :math:`[N,N]` boolean array indicating which particles are neighbors
     :rtype: ndarray
     """
 
@@ -49,9 +50,9 @@ def quat_to_angle(quat:np.ndarray) -> np.ndarray:
 
     Finds the angle :math:`\\theta` about the z-axis from a quaternion representation in 2D: :math:`q = \\cos(\\theta/2) + \\sin(\\theta/2)\\mathbf{k}`
 
-    :param quat: an (N,4) array of quaterions encoding particle orientation
+    :param quat: an :math:`[N,4]` array of quaterions encoding particle orientation
     :type quat: ndarray
-    :return: an (N,) array of quadrant-corrected 2d angular orientations of the particles
+    :return: an :math:`[N,]` array of quadrant-corrected 2d angular orientations of the particles
     :rtype: ndarray
     """    
     angles = 2.0*np.arctan2(quat[:,-1],quat[:,0])
@@ -65,11 +66,11 @@ def stretched_neighbors(pts:np.ndarray, angles:np.ndarray, rx:float = 1.0, ry:fl
 
         n_{jk} = \\sqrt{\\big(\\mathbf{\\delta r_jk} \\cdot \\hat{\\mathbf{x_j}}/r_x\\big)^2 + \\big(\\mathbf{\\delta r_jk} \\cdot \\hat{\\mathbf{y_j}}/r_y\\big)^2} < n_{cut}
 
-    Where :math:`\\hat{\\mathbf{x_j}} = \\cos(\\theta_j)\\hat{\\mathbf{x}} + \\sin(\\theta_j)\\hat{\\mathbf{y}}` and :math:`\\hat{\\mathbf{y_j}} = -\\sin(\\theta_j)\\hat{\\mathbf{x}} + \\cos(\\theta_j)\\hat{\\mathbf{y}}` are the local unit vectors along the long (:math:`r_x`) and short (:math:`r_y`) axes of particle :math:`j`, respectively.
+    Where :math:`\\hat{\\mathbf{x_j}} = \\cos(\\theta_j)\\hat{\\mathbf{x}} + \\sin(\\theta_j)\\hat{\\mathbf{y}}` and :math:`\\hat{\\mathbf{y_j}} = -\\sin(\\theta_j)\\hat{\\mathbf{x}} + \\cos(\\theta_j)\\hat{\\mathbf{y}}` are the local unit vectors along the long (:math:`r_x`) and short (:math:`r_y`) axes of particle :math:`j` rotated to it's orientation :math:`\\theta_j`, respectively.
 
-    :param pts: an (N,d) array of the positions each anisotropic particle in the configuration
+    :param pts: an :math:`[N,d]` array of the positions each anisotropic particle in the configuration
     :type pts: ndarray
-    :param angles: an (N,) array of the orientation of each anisotropic particle in the configuration
+    :param angles: an :math:`[N,]` array of the orientation of each anisotropic particle in the configuration
     :type angles: ndarray
     :param rx: the radius of the long axis of the particle (insphere radius times aspect ratio), defaults to 1.0
     :type rx: scalar, optional
@@ -77,7 +78,7 @@ def stretched_neighbors(pts:np.ndarray, angles:np.ndarray, rx:float = 1.0, ry:fl
     :type ry: scalar, optional
     :param neighbor_cutoff: specify the dimemsionless stretched distance which defines neighbors. Defaults to 2.6.
     :type neighbor_cutoff: scalar, optional
-    :return: (N,N) boolean array indicating which particles are neighbors
+    :return: :math:`[N,N]` boolean array indicating which particles are neighbors
     :rtype: ndarray
     """    
 
@@ -134,57 +135,98 @@ def box_to_matrix(box:list) -> np.ndarray:
 
 def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8, max_dist:float = None)->tuple[np.ndarray,np.ndarray]:
     """
-    given a frame and a box basis matrix, returns a larger frame which includes surrounding particles from the nearest images, as well as the index relating padded particles back to their original image. This will enable methods like scipy.voronoi to respect periodic boundary conditions.
+    Given a frame and a box basis matrix, returns a larger frame which includes surrounding particles from the nearest images, as well as the index relating padded particles back to their original image. This will enable methods like :py:meth:`scipy.voronoi` to respect periodic boundary conditions.
 
-    :param coords: a (N,d) array of particle coordinates in d-dimensions
+    :param coords: a :math:`[N,d]` array of particle coordinates in d-dimensions
     :type coords: ndarray
-    :param basis: a (d,d) matrix of basis vectors for the simulation box. A 2D box should have basis[2,2]=0, otherwise the 3D case is assumed and the function prepares 27 periodic images (rather than only 9 in 2D).
+    :param basis: a :math:`[d,d]` matrix of basis vectors for the simulation box. A 2D box should have basis[2,2]=0, otherwise the 3D case is assumed and the function prepares 27 periodic images (rather than only 9 in 2D).
     :type basis: ndarray
     :param padfrac: the number of extra particles, as a fraction of the total number, to include in the 'pad' of surrounding particles, defaults to 0.8
     :type padfrac: float, optional
     :param max_dist: alternatively to padfrac, specify a maximum distance from original particles to include surrounding particles. defaults to None
     :type max_dist: float, optional
-    :return: a ((N\', d) array of particle coordinates in d-dimensions which respect periodic boundary conditions around the central N particles, as well as a (N\',) array of indices relating padded particles back to their original image
-    :rtype: np.ndarray, np.ndarray
+    :return: a :math:`[N', d]` array of particle coordinates in d-dimensions which respect periodic boundary conditions around the central N particles, as well as a :math:`[N',]` array of indices relating padded particles back to their original image
+    :rtype: ndarray, ndarray
     """    
 
     pnum = coords.shape[0]
-    if basis[2,2]==0: 
-        basis[2,2]=1
-        e1 = np.array([1,0,0])
-        e2 = np.array([0,1,0])
-        frame_basis = (np.linalg.inv(basis) @ coords.T).T
-        expanded = np.array([
-            *(frame_basis+e1),*(frame_basis+e2),
-            *(frame_basis-e1),*(frame_basis-e2),
-            *(frame_basis+e1+e2),*(frame_basis+e1-e2),
-            *(frame_basis-e1+e2),*(frame_basis-e1-e2)
-            ])
-    else:
-        e1 = np.array([1,0,0])
-        e2 = np.array([0,1,0])
-        e3 = np.array([0,0,1])
-        frame_basis = (np.linalg.inv(basis) @ coords.T).T
-        expanded = np.array([
-            *(frame_basis+e1),*(frame_basis+e2),*(frame_basis+e3),
-            *(frame_basis-e1),*(frame_basis-e2),*(frame_basis-e3),
-            *(frame_basis+e1+e2),*(frame_basis+e1-e2),*(frame_basis-e1+e2),*(frame_basis-e1-e2),
-            *(frame_basis+e1+e3),*(frame_basis+e1-e3),*(frame_basis-e1+e3),*(frame_basis-e1-e3),
-            *(frame_basis+e2+e3),*(frame_basis+e2-e3),*(frame_basis-e2+e3),*(frame_basis-e2-e3),
-            *(frame_basis+e1+e2+e3),*(frame_basis+e1+e2-e3),*(frame_basis+e1-e2+e3),*(frame_basis+e1-e2-e3),
-            *(frame_basis-e1+e2+e3),*(frame_basis-e1+e2-e3),*(frame_basis-e1-e2+e3),*(frame_basis-e1-e2-e3)
-            ])
+    e1,e2,e3 = np.eye(3)
+    is_2d = basis[2,2]==0
+    if is_2d: basis[2,2]=1
+    frame_basis = (np.linalg.inv(basis) @ coords.T).T
 
-    
-    if max_dist is not None:
-        dist_to_coords = cdist(expanded,frame_basis).min(axis=1)
-        pad_idx = np.where(dist_to_coords <= max_dist)[0]
-    else:
-        assert padfrac is not None, "Either max_dist or padfrac must be specified"
+    if max_dist is None:
+        if is_2d:
+            expanded = np.array([
+                *(frame_basis+e1),*(frame_basis+e2),
+                *(frame_basis-e1),*(frame_basis-e2),
+                *(frame_basis+e1+e2),*(frame_basis+e1-e2),
+                *(frame_basis-e1+e2),*(frame_basis-e1-e2)
+                ])
+        else:
+            expanded = np.array([
+                *(frame_basis+e1),*(frame_basis+e2),*(frame_basis+e3),
+                *(frame_basis-e1),*(frame_basis-e2),*(frame_basis-e3),
+                *(frame_basis+e1+e2),*(frame_basis+e1-e2),*(frame_basis-e1+e2),*(frame_basis-e1-e2),
+                *(frame_basis+e1+e3),*(frame_basis+e1-e3),*(frame_basis-e1+e3),*(frame_basis-e1-e3),
+                *(frame_basis+e2+e3),*(frame_basis+e2-e3),*(frame_basis-e2+e3),*(frame_basis-e2-e3),
+                *(frame_basis+e1+e2+e3),*(frame_basis+e1+e2-e3),*(frame_basis+e1-e2+e3),*(frame_basis+e1-e2-e3),
+                *(frame_basis-e1+e2+e3),*(frame_basis-e1+e2-e3),*(frame_basis-e1-e2+e3),*(frame_basis-e1-e2-e3)
+                ])
+        
         np.argsort(np.max(np.abs(expanded),axis=-1))
         pad_idx = np.argsort(np.abs(expanded).max(axis=-1))[:(int(padfrac*pnum))]
-    pad = (basis @ expanded[pad_idx].T).T
-    
+        pad = (basis @ expanded[pad_idx].T).T
+
+    else:
+        assert padfrac is not None, "Either max_dist or padfrac must be specified"
+        Lx,Ly,Lz = np.linalg.norm(basis,axis=1)
+        max_x,max_y,max_z = np.max(frame_basis,axis=0)
+        min_x,min_y,min_z = np.min(frame_basis,axis=0)
+        pad_xp = (max_x >= (Lx/2 - max_dist)/Lx)
+        pad_xm = (min_x <= -(Lx/2 + max_dist)/Lx)
+        pad_yp = (max_y >= (Ly/2 - max_dist)/Ly)
+        pad_ym = (min_y <= -(Ly/2 + max_dist)/Ly)
+        pad_zp = (max_z >= (Lz/2 - max_dist)/Lz) and (not is_2d)
+        pad_zm = (min_z <= -(Lz/2 + max_dist)/Lz) and (not is_2d)
+
+        if not np.any([pad_xp,pad_xm,pad_yp,pad_ym,pad_zp,pad_zm]):
+            return coords, np.arange(pnum)
+
+        expanded = []
+        if pad_xp: expanded = [*expanded, *(frame_basis+e1)]
+        if pad_xm: expanded = [*expanded, *(frame_basis - e1)]
+        if pad_yp: expanded = [*expanded, *(frame_basis + e2)]
+        if pad_ym: expanded = [*expanded, *(frame_basis - e2)]
+        if pad_xp and pad_yp: expanded = [*expanded, *(frame_basis + e1 + e2)]
+        if pad_xp and pad_ym: expanded = [*expanded, *(frame_basis + e1 - e2)]
+        if pad_xm and pad_yp: expanded = [*expanded, *(frame_basis - e1 + e2)]
+        if pad_xm and pad_ym: expanded = [*expanded, *(frame_basis - e1 - e2)]
+        if not is_2d:
+            if pad_zp: expanded = [*expanded, *(frame_basis + e3)]
+            if pad_zm: expanded = [*expanded, *(frame_basis - e3)]
+            if pad_xp and pad_zp: expanded = [*expanded, *(frame_basis + e1 + e3)]
+            if pad_xp and pad_zm: expanded = [*expanded, *(frame_basis + e1 - e3)]
+            if pad_xm and pad_zp: expanded = [*expanded, *(frame_basis - e1 + e3)]
+            if pad_xm and pad_zm: expanded = [*expanded, *(frame_basis - e1 - e3)]
+            if pad_yp and pad_zp: expanded = [*expanded, *(frame_basis + e2 + e3)]
+            if pad_yp and pad_zm: expanded = [*expanded, *(frame_basis + e2 - e3)]
+            if pad_ym and pad_zp: expanded = [*expanded, *(frame_basis - e2 + e3)]
+            if pad_ym and pad_zm: expanded = [*expanded, *(frame_basis - e2 - e3)]
+            if pad_xp and pad_yp and pad_zp: expanded = [*expanded, *(frame_basis + e1 + e2 + e3)]
+            if pad_xp and pad_yp and pad_zm: expanded = [*expanded, *(frame_basis + e1 + e2 - e3)]
+            if pad_xp and pad_ym and pad_zp: expanded = [*expanded, *(frame_basis + e1 - e2 + e3)]
+            if pad_xp and pad_ym and pad_zm: expanded = [*expanded, *(frame_basis + e1 - e2 - e3)]
+            if pad_xm and pad_yp and pad_zp: expanded = [*expanded, *(frame_basis - e1 + e2 + e3)]
+            if pad_xm and pad_yp and pad_zm: expanded = [*expanded, *(frame_basis - e1 + e2 - e3)]
+            if pad_xm and pad_ym and pad_zp: expanded = [*expanded, *(frame_basis - e1 - e2 + e3)]
+            if pad_xm and pad_ym and pad_zm: expanded = [*expanded, *(frame_basis - e1 - e2 - e3)]
+
+        expanded = np.array(expanded)
+        dist_to_coords = cdist(expanded,frame_basis).min(axis=1)
+        pad_idx = np.where(dist_to_coords <= max_dist)[0]
+        pad = (basis @ expanded[pad_idx].T).T
+
     return np.array([*coords,*pad]), np.array([*np.arange(pnum),*(pad_idx%pnum)])
 
 
@@ -193,18 +235,18 @@ def padded_neighbors(pts:np.ndarray, basis:np.ndarray, neighbor_cutoff:float = D
 
     .. math::
 
-        n_{jk} = \\delta r_{jk} < r_{cut} || \\delta r_{jk'} < r_{cut}
+        n_{jk} = \\delta r_{jk} < r_{cut} \\bigg|\\bigg| \\delta r_{jk'} < r_{cut}
     
     For particles :math:`k'` which are periodic images of particle :math:`k`.
 
-    :param pts: (N,d) array of particle positions in 'd' dimensions.
+    :param pts: :math:`[N,d]` array of particle positions in 'd' dimensions.
     :type pts: ndarray
-    :param basis: a (d,d) matrix of basis vectors for the simulation box
+    :param basis: a :math:`[d,d]` matrix of basis vectors for the simulation box
     :type basis: ndarray
-    :param neighbor_cutoff: specify the distance which defines neighbors. Defaults to halfway between the first coordination peaks for a perfect crystal.
+    :param neighbor_cutoff: specify the distance which defines neighbors. Defaults to halfway between the first coordination peaks for a perfect sixfold crystal.
     :type neighbor_cutoff: scalar, optional
     :param padfrac: the number of extra particles, as a fraction of the total number, to include in the 'pad' of surrounding particles, This may be computatinally faster than using :py:meth:`expand_around_pbc` with :code:`max_dist`. Defaults to None
-    :return:  (N,N) boolean array indicating which particles are neighbors
+    :return:  :math:`[N,N]` boolean array indicating which particles are neighbors
     :rtype: ndarray
     """
 
@@ -236,7 +278,7 @@ def _lvec(x,gradient,ref = np.array([0,-1,0])):
     return e1, e2
 
 def local_vectors(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,-1,0])):
-    """computes two orthogonal unit vectors tangent to the local surface at a point :math:`\\mathbf{r}_j`:
+    """Computes two orthogonal unit vectors tangent to the local surface at each point :math:`\\mathbf{r}_j`:
 
     .. math::
 
@@ -245,34 +287,35 @@ def local_vectors(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,
     
     Given the implicit function :math:`f(x,y,z)=0` defines the surface, its gradient :math:`\\nabla f` defines the normal vector, and :math:`\\hat{\\mathbf{\\gamma}}` is an arbitrary reference unit vector.
 
-    :param pts: an (N,3) array of positions at which to compute local tangent vectors
+    :param pts: an :math:`[N,3]` array of positions at which to compute local tangent vectors
     :type pts: ndarray
     :param gradient: a function which computes normal vector to a surface
     :type gradient: callable
-    :param ref: a reference vector to help define the local frame, defaults to (0,-1,0) (so that :math:`e_1=\\hat{x}` usually)
+    :param ref: a reference vector to help define the local frame, defaults to :math:`(0,-1,0)` (so that :math:`e_1=\\hat{x}` usually)
     :type ref: ndarray, optional
-    :return: an (N,2,3) array of two orthogonal unit vectors tangent to the local surface defined by the gradient at each x
+    :return: an :math:`[N,2,3]` array of two orthogonal unit vectors tangent to the local surface defined by the gradient at each x
     :rtype: ndarray
     """
     return np.array([_lvec(x,gradient,ref=ref) for x in pts])
 
 
 def tangent_connection(pts:np.ndarray,gradient:callable,ref:np.ndarray = np.array([0,-1,0])) -> np.ndarray:
-    """computes the complex connection between local tangent planes at each pair of points. This factor takes the form
+    """
+    Computes the complex connection between local tangent planes at each pair of points. This factor takes the form
 
     .. math::
 
         R_{jk} = e^{i \\theta_{jk}} = \\exp\\bigg[i\\tan^{-1}\\bigg(\\frac{e_{1,j} \\cdot e_{2,k}}{e_{1,j} \\cdot e_{1,k}}\\bigg)\\bigg]
 
-    where the local tangent vectors :math:`e_{1,j}` and :math:`e_{2,j}` are computed using :py:meth:`local_vectors`. :math:`R_{jk}` describes how to rotate complex numbers defined relative to :math:`e_{1,j}` into those defined relative to :math:`e_{1,k}`.
+    where the local tangent vectors :math:`e_{1,j}` and :math:`e_{2,j}` are computed using :py:meth:`local_vectors`. :math:`R_{jk}` describes how to rotate complex numbers defined relative to :math:`e_{1,j}` into those defined relative to :math:`e_{1,k}`. Due to parallel transport on curved surfaces, this factor is only really useful when :math:`j` and :math:`k` are nearby points on the surface, and is more and more approximate as the distance between points increases.
 
-    :param pts: an (N,3) array of positions at which to compute local tangent vectors
+    :param pts: an :math:`[N,3]` array of positions at which to compute local tangent vectors
     :type pts: ndarray
     :param gradient: a function which computes normal vector to a surface
     :type gradient: callable
     :param ref: a reference vector to help define the local frame, defaults to :math:`-\\hat{\\mathbf{y}}` so that :math:`e_1=\\hat{\\mathbf{x}}` usually
     :type ref: ndarray, optional
-    :return: an (N,N) complex representation of the connection between local tangent planes at each pair of points
+    :return: an :math:`[N,N]` complex representation of the connection between local tangent planes at each pair of points
     :rtype: ndarray[complex]
     """
 

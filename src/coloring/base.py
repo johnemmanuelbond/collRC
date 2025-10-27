@@ -124,9 +124,9 @@ class ColorBase():
         """
         # Choose base color based on background theme
         if dark:
-            self._c = lambda x: [base_colors['white']] * x.shape[0]
+            self._c = lambda x: np.array([base_colors['white']] * x.shape[0])
         else:
-            self._c = lambda x: [base_colors['grey']] * x.shape[0]
+            self._c = lambda x: np.array([base_colors['grey']] * x.shape[0])
         self._f = None
         self._shape = shape
 
@@ -237,6 +237,8 @@ class ColorBlender(ColorBase):
 
         :return: None
         """
+        self.s1.snap = self.snap
+        self.s2.snap = self.snap
         self.s1.calc_state()
         self.s2.calc_state()
     
@@ -368,6 +370,10 @@ if __name__ == "__main__":
         style = ColorBase(shape = SuperEllipse(ax=1.0, ay=0.5, n=20.0))
         _make_base_movie('../tests/test-rect2.gsd', '../tests/base-rect2.mp4', style, istart=500, iend=1500)
         _make_base_movie('../tests/test-rect2.gsd', '../docs/source/_static/base-rect2.webm', style, codec='libvpx', istart=500, iend=1500)
+
+        style = ColorBase()
+        _make_base_movie('../tests/test-32p.gsd', '../tests/base-clust.mp4', style, clust=True, istart=11000, iend=18000, istride=50)
+        _make_base_movie('../tests/test-32p.gsd', '../docs/source/_static/base-clust.webm', style, codec='libvpx', clust=True, istart=11000, iend=18000, istride=50)
 
 
     except Exception as e:

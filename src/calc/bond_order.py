@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Contains methods to calculate bond orientational order. First in flat space, then in stretched space for anisotropic particles, and finally projected onto curved surfaces.
+Contains methods to calculate bond orientational order. First in 2D cartesian space, then in 2D stretched space for anisotropic particles, then in 2D spaces projected onto curved surfaces, and finally 3D cartesian spaces using Steinhardt calculations.
 """
 
 import numpy as np
@@ -14,26 +14,24 @@ def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_glob
 
         \\psi_{n,j} = \\frac{1}{N_j}\\sum_k\\psi_{n,jk}=\\frac{1}{N_j}\\sum_ke^{in\\theta_{jk}}
 
-    Where the sum is over all :math:`N_j` neighboring particles and :math:`\\theta_{jk}` is the angle between particles :math:`j` and :math:`k`.
-    
-    The global n-fold bond orientational order is:
+    Where the sum is over all :math:`N_j` neighboring particles and :math:`\\theta_{jk}` is the angle between particles :math:`j` and :math:`k`. The global n-fold bond orientational order is:
 
     .. math::
 
-        \\psi_{n,g} = \\langle e^{in\\theta_{jk}} \\rangle_{jk}
+        \\psi_{n,g} = \\langle e^{in\\theta_{jk}} \\rangle_{jk} \\simeq \\langle \\psi_{n,j} \\rangle_{j}
 
-    Where the mean is over all unique bonds between particle pairs :math:`j` and :math:`k`.
+    Where the mean is over all unique bonds between particle pairs :math:`j` and :math:`k`, or approximately the mean over all particles' local bond order parameters.
 
-    :param pts: (N,d) array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
+    :param pts: :math:`[N,d]` array of particle positions in 'd' dimensions, though the calculation only accesses the first two dimensions.
     :type pts: ndarray
-    :param nei_bool: a (N,N) boolean array indicating neighboring particles.
+    :param nei_bool: a :math:`[N,N]` boolean array indicating neighboring particles.
     :type nei_bool: ndarray
     :param order: n-fold order defines the argument of the complex number used to calculate psi_n, defaults to 6
     :type order: int, optional
     :param ret_global: whether to return the global bond order parameter, defaults to False
     :type ret_global: bool, optional
-    :return: (N,) array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
-    :rtype: ndarray[complex] (, complex)
+    :return: :math:`[N,]` array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
+    :rtype: ndarray[complex] `(, complex)`
     """
 
     pnum = pts.shape[0]
@@ -71,7 +69,7 @@ def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_glob
 
 
 def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray, rx:float = 1.0, ry:float = 1.0, order:int = 6, ret_global=False) -> tuple[np.ndarray,np.complexfloating]:
-    """Computes the local and global stretched bond orientational order parameter. This calculation rotates coordinates into a frame of reference stretched according to the long and short axes of each particle according to equations given in `(Torrez-Diaz Soft Matter, 2022) <https://doi.org/10.1039/D1SM01523K>`_. In the stretched coordinate system, the angle between particles is given as:
+    """Computes the local and global stretched bond orientational order parameter. This calculation rotates coordinates into a frame of reference stretched according to the long and short axes of each particle according to equations given in `(Torrez-Diaz Soft Matter, 2022) <https://doi.org/10.1039/D1SM01523K>`_:
 
     .. math::
 
@@ -83,21 +81,19 @@ def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray,
 
         \\theta^s_{jk} = \\tan^{-1}\\bigg[\\frac{\\mathbf{\\delta r_{jk}} \\cdot \\hat{\\mathbf{y_j}}/r_y}{\\mathbf{\\delta r_{jk}} \\cdot \\hat{\\mathbf{x_j}}/r_x}\\bigg]
 
-    Where :math:`\\hat{\\mathbf{x_j}} = \\cos(\\theta_j)\\hat{\\mathbf{x}} + \\sin(\\theta_j)\\hat{\\mathbf{y}}` and :math:`\\hat{\\mathbf{y_j}} = -\\sin(\\theta_j)\\hat{\\mathbf{x}} + \\cos(\\theta_j)\\hat{\\mathbf{y}}` are the local unit vectors along the long (:math:`r_x`) and short (:math:`r_y`) axes of particle :math:`j`, respectively.
-
-    The global n-fold stretched bond orientational order is:
+    Where :math:`\\hat{\\mathbf{x_j}} = \\cos(\\theta_j)\\hat{\\mathbf{x}} + \\sin(\\theta_j)\\hat{\\mathbf{y}}` and :math:`\\hat{\\mathbf{y_j}} = -\\sin(\\theta_j)\\hat{\\mathbf{x}} + \\cos(\\theta_j)\\hat{\\mathbf{y}}` are the local unit vectors along the long (:math:`r_x`) and short (:math:`r_y`) axes of particle :math:`j`, respectively. The global n-fold stretched bond orientational order is:
 
     .. math::
 
-        \\psi_{n,g} = \\langle e^{in\\theta^s_{jk}}e^{in\\theta_j} \\rangle_{jk}
+        \\psi_{n,g} = \\langle e^{in\\theta^s_{jk}}e^{in\\theta_j} \\rangle_{jk} \\simeq \\langle \\psi_{n,j} \\rangle_j
 
-    Where the mean is over all unique bonds between particles :math:`j` and :math:`k`.
+    Where the mean is over all unique bonds between particles :math:`j` and :math:`k`, or approximately the mean over all particles' local bond order parameters.
 
-    :param pts: (N,d) array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
+    :param pts: :math:`[N,d]` array of particle positions in 'd' dimensions, though the calculation only access the first two dimensions.
     :type pts: ndarray
     :param angles: the orientation of each anisotropic particle in the configuration
     :type angles: ndarray
-    :param nei_bool: a (N,N) boolean array indicating neighboring particles.
+    :param nei_bool: a :math:`[N,N]` boolean array indicating neighboring particles.
     :type nei_bool: ndarray
     :param rx: the radius of the long axis of the particle (insphere radius times aspect ratio), defaults to 1.0
     :type rx: scalar, optional
@@ -107,8 +103,8 @@ def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray,
     :type order: int, optional
     :param ret_global: whether to return the global bond order parameter, defaults to False
     :type ret_global: bool, optional
-    :return: (N,) array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
-    :rtype: ndarray[complex] (, complex)
+    :return: :math:`[N,]` array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
+    :rtype: ndarray[complex] `(, complex)`
     """    
     pnum = pts.shape[0]
     i,j = np.mgrid[0:pnum,0:pnum]
@@ -149,7 +145,8 @@ def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray,
 from .locality import local_vectors
 
 def projected_bond_order(pts:np.ndarray, gradient:callable, nei_bool:np.ndarray, order:int = 6, ref:np.ndarray = np.array([0,-1,0])) -> tuple[np.ndarray,float]:
-    """Computes the local and global bond orientational order parameter of each particle in a 2D configuration projected onto the local tangent plane of a curved surface. The local n-fold bond orientaitonal order for a particle :math:`j` is:
+    """
+    Computes the local bond orientational order parameter of each particle in a 2D configuration projected onto the local tangent plane of a curved surface. The local n-fold bond orientaitonal order for a particle :math:`j` is:
 
     .. math::
 
@@ -163,17 +160,17 @@ def projected_bond_order(pts:np.ndarray, gradient:callable, nei_bool:np.ndarray,
     
     Due to parallel transport on curved surfaces, there is no well-defined global bond orientational order because of the lack of a common reference vector.
 
-    :param pts: (N,d) array of particle positions in 'd' dimensions.
+    :param pts: :math:`[N,d]` array of particle positions in 'd' dimensions.
     :type pts: ndarray
     :param gradient: a callable function that computes the local gradient at a given point
     :type gradient: callable
-    :param nei_bool: a (N,N) boolean array indicating neighboring particles.
+    :param nei_bool: a :math:`[N,N]` boolean array indicating neighboring particles.
     :type nei_bool: ndarray
     :param order: n-fold order defines the argument of the complex number used to calculate psi_n, defaults to 6
     :type order: int, optional
     :param ref: a reference vector to help define the local frame, defaults to np.array([0,-1,0])
     :type ref: ndarray, optional
-    :return: (N,) array of complex bond orientational order parameters, and the norm of their mean.
+    :return: :math:`[N,]` array of complex bond orientational order parameters, and the norm of their mean.
     :rtype: ndarray[complex]
     """    
 
@@ -218,32 +215,36 @@ def projected_bond_order(pts:np.ndarray, gradient:callable, nei_bool:np.ndarray,
 
 
 def steinhardt_bond_order(pts:np.ndarray, nei_bool:np.ndarray, l:int = 6, ret_global:bool=False) -> tuple[np.ndarray,np.complexfloating]:
-    """Calculates the local and global bond orientational Steinhardt order parameter of each particle in a 3D configuration using a superposition of complex spherical harmonics. The local l-fold bond orientaitonal order for a particle :math:`j` is:
+    """Calculates the local and global bond orientational Steinhardt order parameter of each particle in a 3D configuration using a superposition of complex spherical harmonics. The local l-fold bond orientaitonal order for a particle :math:`j` is a list of :math:`2l+1` complex-valued spherical harmonic coefficients:
 
     .. math::
 
-        q_{lm,j} = \\big\\{\\frac{1}{N_j}\\sum_kY_{lm}(\\theta_{jk},\\phi_{jk})\\big\\}_m
+        \\big{q_{lm,j}\\big} = \\big\\{\\frac{1}{N_j}\\sum_kY_{lm}(\\theta_{jk},\\phi_{jk})\\big\\}
 
-    Where the sum is over all :math:`N_j` neighboring particles and :math:`\\theta_{jk}, \\phi_{jk}` are the angles (in spherical coordinates) between particles :math:`j` and :math:`k`.
-    
-    The global l-fold bond orientational order is:
+    Where the sum is over all :math:`N_j` neighboring particles and :math:`\\theta_{jk}, \\phi_{jk}` are the angles (in spherical coordinates) between particles :math:`j` and :math:`k`. Each particle has a rotationally invariant local bond order magnitude given by:
 
     .. math::
 
-        q_l = \\langle \\sum_mY_{lm}(\\theta_{jk},\\phi_{jk}) \\rangle_{jk}
+        q_{l,j} = \\sqrt{\\frac{4\\pi}{2l+1} \\sum_m |q_{lm,j}|^2}
 
-    Where the mean is over all unique bonds between particle pairs :math:`j` and :math:`k`.
+    Which allows us to similarly define a rotationally-invariant global l-fold bond orientational order:
 
-    :param pts: (N,d) array of particle positions in 'd' dimensions, though the calculation only access the first three dimensions.
+    .. math::
+
+        q_{l} = \\sqrt{\\frac{4\\pi}{2l+1} \\sum_m |\\langle q_{lm,j}\\rangle_j|^2}
+
+    Where we average each particle's :math:`q_{lm}` `before` summing their magnitudes over :math:`m` to make it rotationally invariant.
+
+    :param pts: :math:`[N,d]` array of particle positions in 'd' dimensions, though the calculation only access the first three dimensions.
     :type pts: ndarray
-    :param nei_bool: a (N,N) boolean array indicating neighboring particles.
+    :param nei_bool: a :math:`[N,N]` boolean array indicating neighboring particles.
     :type nei_bool: ndarray
-    :param l: The degree of the spherical harmonics used to calculate l-fold bond order parameter, defaults to 6
+    :param l: The degree of the spherical harmonics used to calculate :math:`l`-fold bond order parameter, defaults to 6
     :type l: int, optional
     :param ret_global: whether to return the global bond order parameter, defaults to False
     :type ret_global: bool, optional
-    :return: (N,2l+1) array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
-    :rtype: ndarray[complex] (, complex)
+    :return: :math:`[N,2l+1]` array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
+    :rtype: ndarray[complex] `(, complex)`
     """
     
     pnum = pts.shape[0]
@@ -293,42 +294,42 @@ def steinhardt_bond_order(pts:np.ndarray, nei_bool:np.ndarray, l:int = 6, ret_gl
 
 
 def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_threshold:float = 0.32, norm:float|None=6, phase_rotate:np.ndarray|None=None, calc_3d = False) -> np.ndarray:
-    """Computes the crystal connectivity of each particle in a 2D configuration. The crystal connectivity measures the similarity of bond-orientational order parameter over all pairs of neighboring particles in order to determine which particles are part of a definite crystalline domain. The crystal connectivity of particle :math:`j` is given by:
+    """
+    Computes the crystal connectivity of each particle in a 2D cartesian, 2D stretched, 2D projected, or 3D system. The crystal connectivity measures the similarity of bond-orientational order parameter over all pairs of neighboring particles in order to determine which particles are part of a definitive crystalline domain. In flat 2D the crystal connectivity of particle :math:`j` is given by:
 
     .. math::
 
-        C_{n,j} = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}\\psi_{n,k}^*\\big]}{|\\psi_{n,j}\\psi_{n,k}^*|} \\geq \\Theta_C \\bigg]
+        C_{n,j} = \\frac{1}{N_C}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}\\psi_{n,k}^*\\big]}{|\\psi_{n,j}\\psi_{n,k}^*|} \\geq \\Theta_C \\bigg]
 
-    Where the :math:`\\psi`\'s are any-fold bond orientational order parameters for each particle, :math:`\\Theta_{C}` is a \'crystallinity threshold\' used to determine whether two neighboring particles are part of the same crystalline domain, and :math:`n` is a factor used to simply normalize :math:`C_6^j` between zero and one.
+    Where the :math:`\\psi`\'s are n-fold bond orientational order parameters for each particle, :math:`\\Theta_{C}` is a 'crystallinity threshold' used to determine whether two neighboring particles are part of the same crystalline domain, and :math:`N_C` is a factor used to simply normalize :math:`C_6^j` between zero and one.
 
     On curved surfaces neighboring particles may have bond orientational order parameters defined in different local tangent planes. In this case the crystalline connectivity becomes:
 
     .. math::
 
-        C_{n,j} = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}((R_{jk})^n\\psi_{n,k})^*\\big]}{|\\psi_{n,j}((R_{jk})^n\\psi_{n,k})^*|} \\geq \\Theta_C \\bigg]
+        C_{n,j} = \\frac{1}{N_C}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\psi_{n,j}((R_{jk})^n\\psi_{n,k})^*\\big]}{|\\psi_{n,j}((R_{jk})^n\\psi_{n,k})^*|} \\geq \\Theta_C \\bigg]
 
     Where :math:`R_{jk}` encodes the rotation between neighboring tangent planes, i.e. the output of :py:meth:`tangent_connection() <calc.locality.tangent_connection>`. :math:`(R_{jk})^n` is then used to rotate the n-fold bond orientational order of neighboring particles.
 
-    Optionally, users may pass in an (N,2l+1) array of complex spherical harmonic Steinhardt order parameters for use in 3D systems. In this case, the inner product is computed over all (2l+1) components of the Steinhardt order parameter rather than a single complex bond-OP:
+    Optionally, users may pass in an :math:`[N,2l+1]` array of complex spherical harmonic Steinhardt order parameters (and pass ``calc_3d=True``) for use in 3D systems. In this case, the inner product is computed over all :math:`2l+1` components of the Steinhardt order parameter rather than a single complex bond-OP:
 
     .. math::
 
-        C_{l,j} = \\frac{1}{n}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\sum_{m=-l}^{l}q_{lm,j}q_{lm,k}^*\\big]}{\\sqrt{\\sum_{m=-l}^{l}|q_{lm,j}|^2} \\sqrt{\\sum_{m=-l}^{l}|q_{lm,k}|^2}} \\geq \\Theta_C \\bigg]
+        C_{l,j} = \\frac{1}{N_C}\\sum_k^{\\text{nei}}\\bigg[ \\frac{\\text{Re}\\big[\\sum_{m=-l}^{l}q_{lm,j}q_{lm,k}^*\\big]}{\\sqrt{\\sum_m|q_{lm,j}|^2} \\sqrt{\\sum_m|q_{lm,k}|^2}} \\geq \\Theta_C \\bigg]
 
-
-    :param psis: (N,) array of complex bond orientational order parameters. Optionally, an (N,2l+1) array of complex spherical harmonic Steinhardt order parameters for use in 3D systems.
+    :param psis: :math:`[N,]` array of complex bond orientational order parameters. Optionally, an :math:`[N,2l+1]` array of complex spherical harmonic Steinhardt order parameters for use in 3D systems.
     :type psis: ndarray
-    :param nei_bool: a (N,N) array indicating neighboring particles.
+    :param nei_bool: a :math:`[N,N]` array indicating neighboring particles.
     :type nei_bool: ndarray
     :param crystallinity_threshold: the minimum inner product of adjacent complex bond-OPs needed in order to consider adjacent particles 'connected', defaults to 0.32
     :type crystallinity_threshold: float, optional
     :param norm: an optional factor to normalize the result, defaults to 6, but passing ``None`` will reference the connectivity value for a perfectly crystalline hexagon (i.e. equations 8 and 10 in the SI from `(Juarez, Lab on a Chip 2012) <https://doi.org/10.1039/C2LC40692F>`_)
     :type norm: float | None, optional
-    :param phase_rotate: an optional (N,N) array of complex phase factors (:math:`R_{jk}^n`) to include a rotation between neighboring particles' bond-OPs, defaults to None
+    :param phase_rotate: an optional :math:`[N,N]` array of complex phase factors (:math:`(R_{jk})^n`) to include a rotation between neighboring particles' :math:`\\psi_{n,j}`, defaults to None
     :type phase_rotate: ndarray | None, optional
     :param calc_3d: whether to compute the 3D version of the crystal connectivity using spherical harmonic Steinhardt order parameters, defaults to False
     :type calc_3d: bool, optional
-    :return: (N,) array of real crystal connectivities
+    :return: :math:`[N,]` array of real crystal connectivities
     :rtype: ndarray
     """    
 

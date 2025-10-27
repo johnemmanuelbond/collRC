@@ -27,7 +27,7 @@ _rainbow = lambda a: hsv_map(a).clip(0, 1)
 _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 
 
-class ColorByS2(ColorBase):
+class ColorS2(ColorBase):
     """Color particles by local nematic magnitude.
 
     Uses :py:meth:`local_patic <calc.orient_order.local_patic>` to compute
@@ -93,7 +93,7 @@ class ColorByS2(ColorBase):
         return f'$\\langle S_2\\rangle = {nem_l:.2f}$'
 
 
-class ColorS2Phase(ColorByS2):
+class ColorS2Phase(ColorS2):
     """Color particles by the phase angle of the local nematic director using a rainbow wheel.
 
     This style converts the complex local nematic order into a phase in [0,1]
@@ -127,7 +127,7 @@ class ColorS2Phase(ColorByS2):
     # Use ColorBase.local_colors by default (ci is set in calc_state)
 
 
-class ColorByS2g(ColorByS2):
+class ColorS2G(ColorS2):
     """Color all particles uniformly by global nematic order.
 
     This style computes the global nematic magnitude (:math:`S_{2,g}`) and exposes a uniform
@@ -159,7 +159,7 @@ class ColorByS2g(ColorByS2):
 
 
 
-class ColorByT4(ColorBase):
+class ColorT4(ColorBase):
     """Color particles by local tetratic magnitude (:math:`T_4`) using an orange gradient.
 
     :param shape: particle geometry
@@ -216,7 +216,7 @@ class ColorByT4(ColorBase):
         return f'$\\langle T_4\\rangle = {tet_l:.2f}$'
 
 
-class ColorByT4g(ColorByT4):
+class ColorT4G(ColorT4):
     """Color all particles uniformly by global tetratic order (:math:`T_{4,g}`).
 
     :param shape: particle geometry
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     
     from calc import stretched_neighbors
 
-    class neicolor(ColorByS2):
+    class neicolor(ColorS2):
         def __init__(self, shape = _default_sphere, dark = True, ptcl = 10):
             super().__init__(shape, dark)
             self._c = lambda n: _rainbow(n)
@@ -341,12 +341,12 @@ if __name__ == "__main__":
             if 'rect1' in rect_gsd: out = 'rect1'
             elif 'rect2' in rect_gsd: out = 'rect2'
             # ColorByS2
-            style = ColorByS2(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            style = ColorS2(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
             _make_rect_movie(rect_gsd, f'../tests/s2-{out}.mp4', style)
             _make_rect_movie(rect_gsd, f'../docs/source/_static/s2-{out}.webm', style, codec='libvpx')
 
             # ColorByS2g
-            style = ColorByS2g(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            style = ColorS2g(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
             _make_rect_movie(rect_gsd, f'../tests/s2g-{out}.mp4', style)
             _make_rect_movie(rect_gsd, f'../docs/source/_static/s2g-{out}.webm', style, codec='libvpx')
 
@@ -356,12 +356,12 @@ if __name__ == "__main__":
             _make_rect_movie(rect_gsd, f'../docs/source/_static/s2p-{out}.webm', style, codec='libvpx')
 
             # ColorByT4
-            style = ColorByT4(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            style = ColorT4(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
             _make_rect_movie(rect_gsd, f'../tests/t4-{out}.mp4', style)
             _make_rect_movie(rect_gsd, f'../docs/source/_static/t4-{out}.webm', style, codec='libvpx')
 
             # ColorByT4g
-            style = ColorByT4g(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+            style = ColorT4G(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
             _make_rect_movie(rect_gsd, f'../tests/t4g-{out}.mp4', style)
             _make_rect_movie(rect_gsd, f'../docs/source/_static/t4g-{out}.webm', style, codec='libvpx')
 

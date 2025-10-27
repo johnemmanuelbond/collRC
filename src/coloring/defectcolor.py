@@ -11,7 +11,7 @@ import gsd.hoomd
 from calc import crystal_connectivity
 from visuals import SuperEllipse
 from coloring import base_colors, color_gradient, ColorBase
-from coloring import ColorByS2, ColorByConn
+from coloring import ColorS2, ColorConn
 
 
 # base color functions
@@ -23,7 +23,7 @@ _gold = base_colors['gold']
 # default geometry
 _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 
-class ColorS2Defects(ColorByS2):
+class ColorS2Defects(ColorS2):
     """Color nematic defects cyan.
 
     Highlights particles that disagree with their local nematic director and
@@ -50,7 +50,7 @@ class ColorS2Defects(ColorByS2):
 
     def calc_state(self):
         """
-        Calls the parent :meth:`ColorByS2.calc_state <coloring.paticcolor.ColorByS2.calc_state>` to compute local nematic
+        Calls the parent :meth:`ColorS2.calc_state <coloring.paticcolor.ColorS2.calc_state>` to compute local nematic
         quantities, then marks particles as defects when their local
         orientation misaligns with the local director.
         """
@@ -66,8 +66,6 @@ class ColorS2Defects(ColorByS2):
         # self.defects = np.logical_and(is_nem, misorient)
 
         # self.defects = np.real(self.ori*self.ori*np.conjugate(self.nem_g))/np.abs(self.nem_g) < 0.5
-
-
 
     def local_colors(self, snap: gsd.hoomd.Frame = None):
         """Return RGBA colors mapping the background colorbase with defects in cyan.
@@ -93,7 +91,7 @@ class ColorS2Defects(ColorByS2):
         return f'{old_str}\n{new_str}'
 
 
-class ColorC6Defects(ColorByConn):
+class ColorC6Defects(ColorConn):
     """Color sixfold defects :math:`(C_{6} < 1)` to highlight defects.
 
     This class wraps a connectivity-based color style and overrides the
@@ -120,7 +118,7 @@ class ColorC6Defects(ColorByConn):
                  surface_normal: callable = None,
                  periodic: bool = False, dark: bool = True, 
                  bgColor:ColorBase=None):
-        super().__init__(shape=shape, order=6, dark=dark, surface_normal=surface_normal, periodic=periodic)
+        super().__init__(shape=shape, order=6, dark=dark, surface_normal=surface_normal, periodic=periodic, calc_3d=False)
         # Set color mapping function based on background
         self._c = _white_red if dark else _grey_red
         if bgColor is None:
@@ -163,7 +161,7 @@ class ColorC6Defects(ColorByConn):
         return f'{old_str}\n{new_str}'
     
 
-class ColorC4Defects(ColorByConn):
+class ColorC4Defects(ColorConn):
     """Color fourfold defects :math:`(C_{4} < 1)` to highlight defects.
 
     This variant recalculates connectivity with a tetratic (p=4) normalization
@@ -187,7 +185,7 @@ class ColorC4Defects(ColorByConn):
                  surface_normal: callable = None,
                  periodic: bool = False, dark: bool = True,
                  bgColor:ColorBase=None):
-        super().__init__(shape=shape, order=4, dark=dark, surface_normal=surface_normal, periodic=periodic)
+        super().__init__(shape=shape, order=4, dark=dark, surface_normal=surface_normal, periodic=periodic, calc_3d=False)
         # Set color mapping function based on background
         self._c = _gold
         if bgColor is None:
@@ -272,34 +270,34 @@ if __name__ == "__main__":
         _make_movie('../tests/test-control.gsd', '../tests/c6d-qpole.mp4', style, istride=100)
         _make_movie('../tests/test-control.gsd', '../docs/source/_static/c6d-qpole.webm', style, codec='libvpx', istride=100)
 
-        # C6 defects on sphere (small sample)
-        bg_style = ColorByConn()
-        style = ColorC6Defects(bgColor=bg_style)
-        _make_movie('../tests/test-sphere.gsd', '../tests/c6d-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6d-sphere.webm', style, sphere=True, codec='libvpx', iend=100, istride=2)
+        # # C6 defects on sphere (small sample)
+        # bg_style = ColorByConn()
+        # style = ColorC6Defects(bgColor=bg_style)
+        # _make_movie('../tests/test-sphere.gsd', '../tests/c6d-sphere.mp4', style, sphere=True, iend=100, istride=2)
+        # _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6d-sphere.webm', style, sphere=True, codec='libvpx', iend=100, istride=2)
 
-        # C4 defects on rectangle (use tightened frame window)
-        bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), order=4)
-        style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
-        _make_movie('../tests/test-rect1.gsd', '../tests/c4d-rect1.mp4', style, istart=500, iend=1500)
-        _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
+        # # C4 defects on rectangle (use tightened frame window)
+        # bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), order=4)
+        # style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
+        # _make_movie('../tests/test-rect1.gsd', '../tests/c4d-rect1.mp4', style, istart=500, iend=1500)
+        # _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
 
-        # S2 defects on rectangle
-        bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
-        style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
-        _make_movie('../tests/test-rect1.gsd', '../tests/s2d-rect1.mp4', style, istart=500, iend=1500)
-        _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/s2d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
+        # # S2 defects on rectangle
+        # bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+        # style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
+        # _make_movie('../tests/test-rect1.gsd', '../tests/s2d-rect1.mp4', style, istart=500, iend=1500)
+        # _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/s2d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
 
-        # Additional rectangle movie variants (new test rect1/rect2)
-        bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), order=4)
-        style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
-        _make_movie('../tests/test-rect1.gsd', '../tests/c4d-rect1.mp4', style, istart=500, iend=1500)
-        _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
+        # # Additional rectangle movie variants (new test rect1/rect2)
+        # bg_style = ColorByConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), order=4)
+        # style = ColorC4Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
+        # _make_movie('../tests/test-rect1.gsd', '../tests/c4d-rect1.mp4', style, istart=500, iend=1500)
+        # _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4d-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
 
-        bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
-        style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
-        _make_movie('../tests/test-rect2.gsd', '../tests/s2d-rect2.mp4', style, istart=500, iend=1500)
-        _make_movie('../tests/test-rect2.gsd', '../docs/source/_static/s2d-rect2.webm', style, codec='libvpx', istart=500, iend=1500)
+        # bg_style = ColorByEta0(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0))
+        # style = ColorS2Defects(shape=SuperEllipse(ax=1.0, ay=0.5, n=20.0), bgColor=bg_style)
+        # _make_movie('../tests/test-rect2.gsd', '../tests/s2d-rect2.mp4', style, istart=500, iend=1500)
+        # _make_movie('../tests/test-rect2.gsd', '../docs/source/_static/s2d-rect2.webm', style, codec='libvpx', istart=500, iend=1500)
 
     except Exception as e:
         print('Agent movie creation skipped due to error:', e)

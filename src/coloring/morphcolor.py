@@ -21,7 +21,7 @@ _rainbow = lambda a: hsv_map(a).clip(0, 1)
 _default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
 
 
-class ColorByEta0(ColorBase):
+class ColorEta0(ColorBase):
     """Color all particles by the central area fraction.
 
     This style computes a single scalar value for the central area

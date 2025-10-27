@@ -48,6 +48,7 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
 
     # Update reaction coordinates inside coloring style
     style.snap = snap
+    style.calc_state()
 
     # Setup figure with aspect ratio matching simulation box
     Lx, Ly, _, _, _, _ = snap.configuration.box
@@ -145,6 +146,7 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
 
     # Update reaction coordinates inside coloring style
     style.snap = snap
+    style.calc_state()
     
     # Setup figure with aspect ratio matching simulation box
     if 'Lx' in kwargs and 'Ly' in kwargs:
@@ -233,6 +235,7 @@ def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
 
     # Update reaction coordinates inside coloring style
     style.snap = snap
+    style.calc_state()
     
     # Setup figure with aspect ratio matching simulation box
     if 'Lx' in kwargs and 'Ly' in kwargs:
