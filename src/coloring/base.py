@@ -282,104 +282,31 @@ class ColorBlender(ColorBase):
 
 if __name__ == "__main__":
 
+    X, Y = np.meshgrid(np.linspace(0, 1, 256), np.linspace(0, 1, 256))
+
     # Simple demo of color_gradient and color_blender
+    
     # Create a 1D gradient and show as an image
-    grad = color_gradient(base_colors['white'], base_colors['red'])
-    x = np.linspace(0, 1, 256)
-    img1 = grad(x)
+    img1 = color_gradient(base_colors['white'], base_colors['red'])(X)
+    
+    # Create a 2D blend using two scalar fields
+    img2 = color_blender(base_colors['white'], base_colors['red'], base_colors['blue'], base_colors['purple'])(X,Y)
 
     # Create a 2D blend using two scalar fields
-    blender = color_blender(base_colors['white'], base_colors['red'], base_colors['blue'], base_colors['purple'])
-    nx = 128
-    ny = 128
-    X, Y = np.meshgrid(np.linspace(0, 1, nx), np.linspace(0, 1, ny))
-    img2 = blender(X, Y)
-
-    # Create a 2D blend using two scalar fields
-    blender = color_blender(base_colors['white'], base_colors['blue'], base_colors['gold'], base_colors['green'])
-    nx = 128
-    ny = 128
-    X, Y = np.meshgrid(np.linspace(0, 1, nx), np.linspace(0, 1, ny))
-    img3 = blender(X, Y)
-
-    print("Demo: gradient shape:", img1.shape)
-    print("Demo: blender shape:", img2.shape)
-    print("Demo: blender shape:", img3.shape)
+    img3 = color_blender(base_colors['white'], base_colors['blue'], base_colors['gold'], base_colors['green'])(X,Y)
 
     # Display the results
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
     axes[0].imshow(img1.reshape(1, -1, 4), aspect='auto')
-    axes[0].set_title('color_gradient')
+    axes[0].set_title('white->red')
     axes[0].axis('off')
 
     axes[1].imshow(img2, origin='lower')
-    axes[1].set_title('color_blender')
+    axes[1].set_title('white->purple')
     axes[1].axis('off')
 
     axes[2].imshow(img3, origin='lower')
-    axes[2].set_title('color_blender 2')
+    axes[2].set_title('white->green')
     axes[2].axis('off')
 
     fig.savefig("color_demo.png", dpi=600, bbox_inches='tight')
-
-    # make example movies
-    import traceback
-    from render import render_npole, render_sphere, render_3d, animate
-
-    try:
-        def _make_base_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=0, iend=-1, istride=10, sphere=False, clust=False):
-            try:
-                frames = gsd.hoomd.open(gsd_path, mode='r')
-            except Exception as _e:
-                print(f"Could not open {gsd_path}: {_e}")
-                traceback.print_exc()
-                return
-            sel = frames[istart:iend:istride]
-            if sphere:
-                L0 = frames[0].configuration.box[0]
-                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=5, dpi=500, L=L0)
-            elif clust:
-                L0 = frames[0].configuration.box[0]*2.5
-                figure_maker = lambda snap: render_3d(snap, style=style, dark=True, figsize=5, dpi=500, L=L0)
-            else:
-                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=500)
-            
-            try:
-                animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
-            except Exception as _e:
-                print(f"Could not make movie {outpath}: {_e}")
-                traceback.print_exc()
-
-        # simple base coloring on control and rectangle examples
-        style = ColorBase()
-        _make_base_movie('../tests/test-control.gsd', '../tests/base-qpole.mp4', style, istride=100)
-        _make_base_movie('../tests/test-control.gsd', '../docs/source/_static/base-qpole.webm', style, codec='libvpx', istride=100)
-
-        style = ColorBase()
-        _make_base_movie('../tests/test-opole1.gsd', '../tests/base-opole1.mp4', style, istride=25)
-        _make_base_movie('../tests/test-opole1.gsd', '../docs/source/_static/base-opole1.webm', style, codec='libvpx', istride=25, iend=2500)
-
-        style = ColorBase()
-        _make_base_movie('../tests/test-sphere.gsd', '../tests/base-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        _make_base_movie('../tests/test-sphere.gsd', '../docs/source/_static/base-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
-
-        style = ColorBase(shape = SuperEllipse(ax=1.0, ay=0.5, n=20.0))
-        _make_base_movie('../tests/test-rect1.gsd', '../tests/base-rect1.mp4', style, istart=500, iend=1500)
-        _make_base_movie('../tests/test-rect1.gsd', '../docs/source/_static/base-rect1.webm', style, codec='libvpx', istart=500, iend=1500)
-
-        style = ColorBase(shape = SuperEllipse(ax=1.0, ay=0.5, n=20.0))
-        _make_base_movie('../tests/test-rect2.gsd', '../tests/base-rect2.mp4', style, istart=500, iend=1500)
-        _make_base_movie('../tests/test-rect2.gsd', '../docs/source/_static/base-rect2.webm', style, codec='libvpx', istart=500, iend=1500)
-
-        style = ColorBase()
-        _make_base_movie('../tests/test-32p.gsd', '../tests/base-clust.mp4', style, clust=True, istart=11000, iend=18000, istride=50)
-        _make_base_movie('../tests/test-32p.gsd', '../docs/source/_static/base-clust.webm', style, codec='libvpx', clust=True, istart=11000, iend=18000, istride=50)
-
-
-    except Exception as e:
-        # Print the exception and full traceback so the caller can see where the
-        # error originated (file name and line number). This makes debugging
-        # failures in the demo code much easier than a single-line message.
-        print('Agent movie creation skipped due to error:', e)
-        traceback.print_exc()
-

@@ -78,8 +78,8 @@ class ColorBondOrder(ColorBase):
     def __init__(self, order: int = 6,
                  shape: SuperEllipse = None,
                  surface_normal:callable = None,
-                 nei_cutoff = DEFAULT_CUTOFF, periodic=False,
-                 calc_3d=False, dark: bool = True):
+                 nei_cutoff: float = DEFAULT_CUTOFF, periodic: bool =False,
+                 calc_3d: bool = False, dark: bool = True):
         """Constructor"""
         super().__init__(dark=dark)
         # Set color mapping function based on background
@@ -135,7 +135,7 @@ class ColorBondOrder(ColorBase):
         """calc flat bond order"""
         cut = self._cut * self.shape.ax * 2
         self.nei = neighbors(pts, neighbor_cutoff=cut)
-        self.rot = None
+        self.rel_rot = None
         self.qlm = None
         self.psi = flat_bond_order(pts, nei_bool=self.nei, order=self._n)
         # Cache a canonical scalar field for the base class to map to colors
@@ -145,7 +145,7 @@ class ColorBondOrder(ColorBase):
         """calc stretched bond order"""
         cut = self._cut # cutoff is dimensionles in stretched coordinates
         self.nei = stretched_neighbors(pts, angles, rx=self.shape.ax, ry=self.shape.ay, neighbor_cutoff=cut)
-        self.rot = None
+        self.rel_rot = None
         self.qlm = None
         self.psi = stretched_bond_order(pts, angles, rx=self.shape.ax, ry=self.shape.ay, nei_bool=self.nei, order=self._n)
         # Cache a canonical scalar field for the base class to map to colors
@@ -155,7 +155,7 @@ class ColorBondOrder(ColorBase):
         """calc projected bond order"""
         cut = self._cut * self.shape.ax * 2
         self.nei = neighbors(pts, neighbor_cutoff=cut)
-        self.rot = tangent_connection(pts, self._grad)
+        self.rel_rot = tangent_connection(pts, self._grad)
         self.qlm = None
         self.psi = projected_bond_order(pts, self._grad, nei_bool=self.nei, order=self._n)
         # Cache a canonical scalar field for the base class to map to colors
@@ -165,7 +165,7 @@ class ColorBondOrder(ColorBase):
         """calc steinhardt bond order"""
         cut = self._cut * self.shape.ax * 2
         self.nei = neighbors(pts, neighbor_cutoff=cut)
-        self.rot = None
+        self.rel_rot = None
         self.qlm = steinhardt_bond_order(pts, nei_bool=self.nei, l=self._n)
         self.psi = None 
         # Cache a canonical scalar field for the base class to map to colors
@@ -485,110 +485,5 @@ class ColorConnG(ColorConn):
 
 if __name__ == "__main__":
     
-    # make example movies
-    from render import render_npole, render_sphere, render_3d, animate
-    from coloring import ColorBlender, base_colors, color_blender
-    import traceback
-
-    white_purp = color_blender(c00=base_colors['white'], c01=base_colors['red'], c10=base_colors['blue'], c11=base_colors['purple'])
-
-    try:
-        def _make_movie(gsd_path, outpath, style, fps=10, codec='mpeg4', istart=0, iend=-1, istride=10, sphere=False,clust=False):
-            try:
-                frames = gsd.hoomd.open(gsd_path, mode='r')
-            except Exception as _e:
-                print(f"Could not open {gsd_path}: {_e}")
-                traceback.print_exc()
-                return
-            sel = frames[istart:iend:istride]
-            if sphere:
-                L0 = frames[0].configuration.box[0]
-                figure_maker = lambda snap: render_sphere(snap, style=style, dark=True, figsize=5, dpi=500, L=L0)
-            elif clust:
-                L0 = frames[0].configuration.box[0]*2.5
-                figure_maker = lambda snap: render_3d(snap, style=style, dark=True, figsize=5, dpi=500, L=L0)
-            else:
-                figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=500)
-
-            try:
-                animate(sel, outpath=outpath, figure_maker=figure_maker, fps=fps, codec=codec)
-            except Exception as _e:
-                print(f"Could not make movie {outpath}: {_e}")
-                traceback.print_exc()
-                return
-
-        # # Control / q-pole examples
-        # style = ColorPsiPhase()
-        # _make_movie('../tests/test-control.gsd', '../tests/phase-qpole.mp4', style, istride=100)
-        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/phase-qpole.webm', style, codec='libvpx', istride=100)
-
-        # style = ColorPsiG()
-        # _make_movie('../tests/test-control.gsd', '../tests/psig-qpole.mp4', style, istride=100)
-        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/psig-qpole.webm', style, codec='libvpx', istride=100)
-
-        # style = ColorConn()
-        # _make_movie('../tests/test-control.gsd', '../tests/c6-qpole.mp4', style, istride=100)
-        # _make_movie('../tests/test-control.gsd', '../docs/source/_static/c6-qpole.webm', style, codec='libvpx', istride=100)
-
-        style = ColorBlender(white_purp, ColorPsiG(), ColorConn())
-        _make_movie('../tests/test-control.gsd', '../tests/psi6c6-qpole.mp4', style, istride=100)
-        _make_movie('../tests/test-control.gsd', '../docs/source/_static/psi6c6-qpole.webm', style, codec='libvpx', istride=100)
-
-
-        # # opole examples
-        # style = ColorPsiPhase()
-        # _make_movie('../tests/test-opole1.gsd', '../tests/phase-opole1.mp4', style, istride=25)
-        # _make_movie('../tests/test-opole1.gsd', '../docs/source/_static/phase-opole1.webm', style, codec='libvpx', istride=25, iend=2500)
-
-        # style = ColorPsiPhase()
-        # _make_movie('../tests/test-opole2.gsd', '../tests/phase-opole2.mp4', style, istride=25)
-        # _make_movie('../tests/test-opole2.gsd', '../docs/source/_static/phase-opole2.webm', style, codec='libvpx', istride=25, iend=2500)
-
-        style = ColorBlender(white_purp, ColorPsiG(), ColorConn())
-        _make_movie('../tests/test-opole1.gsd', '../tests/psi6c6-opole1.mp4', style, istride=25)
-        _make_movie('../tests/test-opole1.gsd', '../docs/source/_static/psi6c6-opole1.webm', style, codec='libvpx', istride=25, iend=2500)
-
-        style = ColorBlender(white_purp, ColorPsiG(), ColorConn())
-        _make_movie('../tests/test-opole2.gsd', '../tests/psi6c6-opole2.mp4', style, istride=25)
-        _make_movie('../tests/test-opole2.gsd', '../docs/source/_static/psi6c6-opole2.webm', style, codec='libvpx', istride=25, iend=2500)
-
-
-        # # spherical surface examples
-        # style = ColorPsiPhase()
-        # _make_movie('../tests/test-sphere.gsd', '../tests/phase-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        # _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/phase-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
-
-        # style = ColorConn()
-        # _make_movie('../tests/test-sphere.gsd', '../tests/c6-sphere.mp4', style, sphere=True, iend=100, istride=2)
-        # _make_movie('../tests/test-sphere.gsd', '../docs/source/_static/c6-sphere.webm', style, codec='libvpx', sphere=True, iend=100, istride=2)
-
-
-        # # rect examples
-        # style = ColorConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4, periodic=True, nei_cutoff=2.6)
-        # _make_movie('../tests/test-rect1.gsd', '../tests/c4-rect1.mp4', style)
-        # _make_movie('../tests/test-rect1.gsd', '../docs/source/_static/c4-rect1.webm', style, codec='libvpx')
-
-        # style = ColorConn(shape=SuperEllipse(ax=1.0, ay=0.5, n=20), order=4, periodic=True, nei_cutoff=2.6)
-        # _make_movie('../tests/test-rect2.gsd', '../tests/c4-rect2.mp4', style)
-        # _make_movie('../tests/test-rect2.gsd', '../docs/source/_static/c4-rect2.webm', style, codec='libvpx')
-
-
-        # # clust examples
-        # style = ColorQG(periodic=True)
-        # _make_movie('../tests/test-32p.gsd', '../tests/Q6-clust.mp4', style, clust=True, istart=11000, iend=18000, istride=50)
-        # _make_movie('../tests/test-32p.gsd', '../docs/source/_static/Q6-clust.webm', style, codec='libvpx', clust=True, istart=11000, iend=18000, istride=50)
-
-        # style = ColorConn(periodic=True, calc_3d=True)
-        # _make_movie('../tests/test-32p.gsd', '../tests/C6-clust.mp4', style, clust=True, istart=11000, iend=18000, istride=50)
-        # _make_movie('../tests/test-32p.gsd', '../docs/source/_static/C6-clust.webm', style, codec='libvpx', clust=True, istart=11000, iend=18000, istride=50)
-
-        style = ColorBlender(white_purp, ColorQG(periodic=True), ColorConn(periodic=True, calc_3d=True))
-        _make_movie('../tests/test-32p.gsd', '../tests/Q6C6-clust.mp4', style, clust=True, istart=11000, iend=18000, istride=50)
-        _make_movie('../tests/test-32p.gsd', '../docs/source/_static/Q6C6-clust.webm', style, codec='libvpx', clust=True, istart=11000, iend=18000, istride=50)
-
-    except Exception as e:
-        # Print the exception and full traceback so the caller can see where the
-        # error originated (file name and line number). This makes debugging
-        # failures in the demo code much easier than a single-line message.
-        print('Agent movie creation skipped due to error:', e)
-        traceback.print_exc()
+    # for testing
+    pass

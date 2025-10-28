@@ -229,8 +229,8 @@ Use :py:class:`ColorT4 <coloring.paticcolor.ColorT4>`, :py:class:`ColorConn <col
          :muted:
 
 
-Spheres on a spherical surface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Discs on a spherical surface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Use :py:class:`ColorBase <coloring.base.ColorBase>` and :py:meth:`render_sphere <render.render.render_sphere>` to render particles on a spherical surface.
 

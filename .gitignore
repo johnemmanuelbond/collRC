@@ -207,7 +207,7 @@ marimo/_lsp/
 __marimo__/
 
 # test gsd and mp4 data
-**/*.gsd
+# **/*.gsd
 **/*.mp4
 
 tools/
