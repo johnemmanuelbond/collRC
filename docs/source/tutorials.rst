@@ -181,7 +181,7 @@ The following code demonstrates how to blend two defect-driven color schemes, us
 
 Which produces this movie (and accompanying colormap):
 
-.. row-assets::
+.. container:: row-assets
 
    .. container:: asset
 
