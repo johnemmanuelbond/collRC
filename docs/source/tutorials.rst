@@ -50,12 +50,6 @@ Custom reaction coordinate renders
 Inheriting ColorBase
 ^^^^^^^^^^^^^^^^^^^^
 
-
-
-
-Inheriting ColorBase subclasses
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 .. code-block:: python
 
    import numpy as np
@@ -66,10 +60,8 @@ Inheriting ColorBase subclasses
    from calc import stretched_neighbors
 
    default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
-   
-   
 
-   class neicolor(ColorS2):
+   class neicolor(ColorBase):
       def __init__(self, shape = default_sphere, dark = True, ptcl = 10):
          super().__init__(shape, dark)
          self._c = lambda n: rainbow(n)
@@ -81,7 +73,6 @@ Inheriting ColorBase subclasses
          ang = quat_to_angle(self.snap.particles.orientation)
          nei = stretched_neighbors(pts, ang, rx=self._shape.ax, ry=self._shape.ay, neighbor_cutoff=2.8)
          self.nei = nei
-
 
       def local_colors(self, snap: gsd.hoomd.Frame = None):
          if snap is not None: self.snap = snap
@@ -108,12 +99,18 @@ Inheriting ColorBase subclasses
          return n_nei
 
 
+Inheriting ColorBase subclasses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+
 
 Examples
 ========
 
 Rectangles in a coplanar electrode
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------
 
 The following code demonstrates how to use the defect-driven color schemes to render movies which highlight defects in systems of self-assembling rectangles. Both :py:class:`ColorS2Defects <coloring.defectcolor.ColorS2Defects>` and :py:class:`ColorC4Defects <coloring.defectcolor.ColorC4Defects>` have functionality which lets us set a background color scheme for the nondefective particles (:py:class:`ColorEta0 <coloring.morphcolor.ColorEta0>` and :py:class:`ColorConn <coloring.bondcolor.ColorConn>` respectively).
 
@@ -144,19 +141,21 @@ Below we've included the movies for ``rect2.gsd`` in the ``tutorials/`` folder o
 
 
 Discs on a spherical surface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
-We can use :py:class:`ColorC6Defects <coloring.defectcolor.ColorC6Defects>` to highlight defects in crystalline domains on curved surfaces. Correctly comparing bond orientational order on curved surfaces requires using the gradient of the implicit function to compute local tangent planes and the rotations between them. Without providing this function (`left`), we see many artificial c6 defects whereas including this correction (`right`) reveals a more coherent defect structure:
+
+We can use :py:class:`ColorC6Defects <coloring.defectcolor.ColorC6Defects>` to highlight defects in crystalline domains on curved surfaces. 
 
 .. literalinclude:: ../../tutorials/ex_sphere.py
    :language: python
 
+Correctly comparing bond orientational order on curved surfaces requires using the gradient of the implicit function to compute local tangent planes and the rotations between them. Without providing this function (`left`), we see many artificial c6 defects whereas including this correction (`right`) reveals a more coherent defect structure:
 
 .. container:: row-assets
 
    .. container:: asset
       
-      .. video:: _static/base-sphere.webm
+      .. video:: _static/c6d-sphere-incorrect.webm
          :width: 300
          :autoplay:
          :loop:
@@ -165,7 +164,7 @@ We can use :py:class:`ColorC6Defects <coloring.defectcolor.ColorC6Defects>` to h
       
    .. container:: asset
 
-      .. video:: _static/c6d-sphere.webm
+      .. video:: _static/c6d-sphere-correct.webm
          :width: 300
          :autoplay:
          :loop:
@@ -173,7 +172,7 @@ We can use :py:class:`ColorC6Defects <coloring.defectcolor.ColorC6Defects>` to h
          :muted:
 
 Small clusters crystallizing in 3D
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------
 
 The following code demonstrates how to blend two defect-driven color schemes, using :py:class:`ColorBlender <coloring.base.ColorBlender>`, to show the emergence of local, then global, bond orientational order in small clusters which crystallize at a specific osmotic pressure of deplentants. By instantiating a :py:class:`ColorQG <coloring.bondcolor.ColorQG>` style and a :py:class:`ColorConn <coloring.bondcolor.ColorConn>` style, we can blend them together with a custom colormap to render both at once.
 
@@ -186,7 +185,7 @@ Which produces this movie (and accompanying colormap):
 
    .. container:: asset
       .. video:: _static/Q6C6-clust.webm
-         :height: 300
+         :width: 300
          :autoplay:
          :loop:
          :nocontrols:
