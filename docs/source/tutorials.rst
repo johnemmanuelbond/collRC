@@ -184,6 +184,7 @@ Which produces this movie (and accompanying colormap):
 .. row-assets::
 
    .. container:: asset
+
       .. video:: _static/Q6C6-clust.webm
          :width: 300
          :autoplay:
@@ -192,6 +193,7 @@ Which produces this movie (and accompanying colormap):
          :muted:
 
    .. container:: asset
+      
       .. image:: _static/white-purp.png
          :height: 300
          :alt: white-purp.png
