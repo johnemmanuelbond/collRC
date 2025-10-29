@@ -30,13 +30,13 @@ Once you've made a style using one of the built-in color schemes, rendering and 
    figure_maker = lambda snap: render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=500)
 
    fps = 10
-   with  gsd.hoomd.open('./qpole.gsd', 'r') as traj:
+   with  gsd.hoomd.open('./qpole1.gsd', 'r') as traj:
       # here you might index the trajectory to select fewer frames, i.e. traj[::10].
       print(f'Animating trajectory with {len(traj)} frames will have duration {len(traj)/fps} seconds at {fps} fps.')
-      animate(traj, figure_maker=figure_maker, outpath='./base-qpole.mp4', fps=fps)
+      animate(traj, figure_maker=figure_maker, outpath='./base-qpole1.mp4', fps=fps)
 
 
-.. video:: _static/base-qpole.webm
+.. video:: _static/base-qpole1.webm
    :width: 300
    :autoplay:
    :loop:
@@ -50,61 +50,48 @@ Custom reaction coordinate renders
 Inheriting ColorBase
 ^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: python
+You may want to define your own color schemes by inheriting from :py:class:`ColorBase <coloring.base.ColorBase>`. The basic items to be aware of are the :py:meth:`calc_state <coloring.base.ColorBase.calc_state>`, :py:meth:`local_colors <coloring.base.ColorBase.local_colors>`, and :py:meth:`color_mapper <coloring.base.ColorBase.state_string>` methods which get called in the :py:mod:`render <render.render>` module.
 
-   import numpy as np
-   from matplotlib.cm import hsv as hsv_map
-   rainbow = lambda a: hsv_map(a).clip(0, 1)
+Below we demonstrate how to create a custom color scheme which colors particles based on their nth nearest neighbor distance. We overwrite ``calc_state`` (using a ``@classmethod``) to perform the necessary neighbor calculations. We overwrite local_colors to explicitly map those distances to colors using a colormap. In this example we ignore ``state_string``.
 
-   from visuals import SuperEllipse
-   from calc import stretched_neighbors
+.. literalinclude:: ../../tutorials/tut_nnfigs.py
+   :language: python
 
-   default_sphere = SuperEllipse(ax=0.5, ay=0.5, n=2.0)
+At the end of this example we demonstrate a little bit of what goes on in the :py:mod:`render <render.render>` module by grabbing the output image from matplotlib as an RBGA array and sticking it on one of several subplot axes:
 
-   class neicolor(ColorBase):
-      def __init__(self, shape = default_sphere, dark = True, ptcl = 10):
-         super().__init__(shape, dark)
-         self._c = lambda n: rainbow(n)
-         self._i = ptcl
-
-      def calc_state(self):
-         super().calc_state()
-         pts = self.snap.particles.position
-         ang = quat_to_angle(self.snap.particles.orientation)
-         nei = stretched_neighbors(pts, ang, rx=self._shape.ax, ry=self._shape.ay, neighbor_cutoff=2.8)
-         self.nei = nei
-
-      def local_colors(self, snap: gsd.hoomd.Frame = None):
-         if snap is not None: self.snap = snap
-         col = np.array([white]*self.snap.particles.N)
-         col[self._i] = self._c(np.zeros(1))
-         for n in range(1, 6):
-               nn = self.nth_neighbors(self.nei, n=n)
-               col[nn[self._i]] = self._c(np.array([(n+1)/10]))
-         return col
-
-      @classmethod
-      def nth_neighbors(cls, nei, n=1):
-         
-         n_nei = nei
-         old_nei = np.logical_or(nei, np.eye(nei.shape[0], dtype=bool))
-         for _ in range(n-1):
-               new_nei = (nei@n_nei)
-
-               new_nei[old_nei] = False
-               old_nei[new_nei] = True                
-
-               n_nei = new_nei
-
-         return n_nei
+.. img:: _static/nth-nearest-neighbors.png
+   :width: 600
 
 
 Inheriting ColorBase subclasses
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+collRC already has a lot of reaction coordinates built-in, so often it's more useful to inherit from an existing subclass of :py:class:`ColorBase <coloring.base.ColorBase>` so you can focus on adding in your own functionality rather than rewriting existing physics. For example, we can inherit from :py:class:`ColorConn <coloring.bondcolor.ColorConn>` to create a color scheme based on the existing :math:`(\psi_6,C_6)` fomalism which highlights particles in only in the most prevalent crystalline domains, which helps for exerting control over the morphology and overall crystallinity of a colloidal system.
 
+.. literalinclude:: ../../tutorials/tut_bicrystal.py
+   :language: python
 
+At the end of the file we demonstrate how to write an extended figure making method, using tools in this module, to animate the principal moments of that most prevalent crystal cluster:
 
+.. container:: row-assets
+
+   .. container:: asset
+
+      .. video:: _static/xtal-domains-qpole2.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+
+   .. container:: asset
+
+      .. video:: _static/xtal-domains-opole1.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
 
 Examples
 ========

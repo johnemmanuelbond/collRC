@@ -5,8 +5,10 @@ Contains a few helper methods representing colloidal shapes in matplotlib. Inclu
 
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 from matplotlib import collections, transforms, patches
 from calc import quat_to_angle
+
 
 class SuperEllipse():
     """A class to contain helpful methods for characterizing the superellipses used in this module. Superellipses follow the equation:
@@ -83,13 +85,13 @@ _default_sphere = SuperEllipse(ax=0.5,ay=0.5,n=2.0)
 def flat_patches(pts, orient, shape=_default_sphere,n_resolve=101):
     """Generates a PatchCollection of SuperEllipse shapes in 2D at specified positions and orientations.
 
-    :param pts: an [N x 2+] array of points where each shape should be centered. Only the x- and y-coordinates are used.
+    :param pts: an :math:`[N, 2+]` array of points where each shape should be centered. Only the x- and y-coordinates are used.
     :type pts: ndarray
-    :param orient: an [N x 4] array of quaternions specifying the orientation of each shape
+    :param orient: an :math:`[N, 4]` array of quaternions specifying the orientation of each shape
     :type orient: ndarray
-    :param shape: the shape to be drawn at each point, defaults to a circle of radius 0.5
+    :param shape: the shape to be drawn at each point, defaults to a circle of diameter 1.0
     :type shape: SuperEllipse, optional
-    :param n_resolve: the number of points to use to resolve the perimeter of each shape, defaults to 251
+    :param n_resolve: the number of points to use to resolve the perimeter of each shape, defaults to 101
     :type n_resolve: int, optional
     :return: a PatchCollection of the specified shapes at the specified points and orientations
     :rtype: PatchCollection
@@ -110,15 +112,15 @@ def projected_patches(pts, orient, shape=_default_sphere, n_resolve=101, view_di
 
     *WIP: only works for spherical particles on spherical surfaces right now.*
 
-    :param pts: an [N x 3] array of points of each shape in real space
+    :param pts: an :math:`[N, 3]` array of points of each shape in real space
     :type pts: ndarray
-    :param orient: an [N x 4] array of quaternions specifying the orientation of each shape
+    :param orient: an :math:`[N, 4]` array of quaternions specifying the orientation of each shape
     :type orient: ndarray
     :param shape: the shape to be drawn at each point, defaults to a sphere of radius 0.5
     :type shape: SuperEllipse, optional
     :param n_resolve: the number of points to use to resolve the perimeter of each shape, defaults to 251
     :type n_resolve: int, optional
-    :param view_dir: a 3-element array specifying the viewing direction, defaults to looking down the z-axis
+    :param view_dir: a :math:`[3,]` vector specifying the viewing direction, defaults to looking down the z-axis
     :type view_dir: ndarray, optional
     :param view_dist: the distance from the viewer to the origin, defaults to 100.0
     :type view_dist: float, optional
@@ -152,18 +154,19 @@ def projected_patches(pts, orient, shape=_default_sphere, n_resolve=101, view_di
 
     return collections.PatchCollection(all_patches), to_render
 
+
 def parallax_patches(pts, orient, shape=_default_sphere, n_resolve=101, view_dir = np.array([0,0,1]), view_dist=100.0):
     """Generates a PatchCollection of SuperEllipse shapes in 3D projected along the view direction at specified positions and orientations.
 
-    :param pts: an [N x 3] array of points of each shape in real space
+    :param pts: an :math:`[N, 3]` array of points of each shape in real space
     :type pts: ndarray
-    :param orient: an [N x 4] array of quaternions specifying the orientation of each shape
+    :param orient: an :math:`[N, 4]` array of quaternions specifying the orientation of each shape
     :type orient: ndarray
     :param shape: the shape to be drawn at each point, defaults to a sphere of radius 0.5
     :type shape: SuperEllipse, optional
     :param n_resolve: the number of points to use to resolve the perimeter of each shape, defaults to 251
     :type n_resolve: int, optional
-    :param view_dir: a 3-element array specifying the viewing direction, defaults to looking down the z-axis
+    :param view_dir: a :math:`[3,]` vector specifying the viewing direction, defaults to looking down the z-axis
     :type view_dir: ndarray, optional
     :param view_dist: the distance from the viewer to the origin, defaults to 100.0
     :type view_dist: float, optional
@@ -196,6 +199,50 @@ def parallax_patches(pts, orient, shape=_default_sphere, n_resolve=101, view_dir
 
     return collections.PatchCollection(all_patches)
 
+
+def plot_principal_axes(com:np.ndarray, gyr:np.ndarray, ax=None, view_dir = np.array([0,0,1]), **plt_kwargs):
+    """
+    Plot the principal axes of the gyration tensor using quiver on the provided matplotlib ``Axes``.
+
+    :param com: A :math:`[3,]` center of mass position a in 3D.
+    :type com: ndarray
+    :param gyr: The :math:`[3,3]` gyration tensor in 3D.
+    :type gyr: ndarray
+    :param ax: Axis to draw the contours on. If None, a new figure and axis will be created.
+    :type ax: matplotlib.axes.Axes, optional
+    :param view_dir: a :math:`[3,]` vector specifying the viewing direction in 3D, defaults to looking down the z-axis
+    :type view_dir: ndarray, optional
+    :param plt_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.plot` (color, scale, etc)
+    :type plt_kwargs: dict
+    :return: The Axes object after plotting
+    :rtype: matplotlib.pyplot.Axes
+    """
+
+    # create axis if none provided
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    gyr_eigvals, gyr_eigvecs = np.linalg.eigh(gyr) # ascending order
+
+    e3 = view_dir/np.linalg.norm(view_dir)
+    e1 = np.cross(e3,np.array([0,-1,0]))
+    e1 = e1/np.linalg.norm(e1,axis=-1)
+    e2 = np.cross(e3,e1)
+    e2 = e2/np.linalg.norm(e2,axis=-1)
+
+    if 'lw' not in plt_kwargs:    plt_kwargs['lw'] = 2.0
+    if 'color' not in plt_kwargs: plt_kwargs['color'] = 'orange'
+    if 'alpha' not in plt_kwargs: plt_kwargs['alpha'] = 0.75
+
+    proj_x0, proj_y0 = com @ e1, com @ e2
+    for li, vi in zip(np.sqrt(gyr_eigvals[1:]), gyr_eigvecs.T[1:]):
+        proj_x = vi @ e1
+        proj_y = vi @ e2
+        ax.plot([proj_x0 - proj_x * li, proj_x0 + proj_x * li],
+                [proj_y0 - proj_y * li, proj_y0 + proj_y * li],
+                **plt_kwargs)
+
+    return ax
 
 
 if __name__ == "__main__":

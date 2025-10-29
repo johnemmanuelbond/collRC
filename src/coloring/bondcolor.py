@@ -81,12 +81,11 @@ class ColorBondOrder(ColorBase):
                  nei_cutoff: float = DEFAULT_CUTOFF, periodic: bool =False,
                  calc_3d: bool = False, dark: bool = True):
         """Constructor"""
-        super().__init__(dark=dark)
+        super().__init__(shape=shape)
         # Set color mapping function based on background
         self._c = _white_red if dark else _grey_red
             
         self._n = order
-        self._shape = _default_sphere if shape is None else shape
         self._grad = surface_normal
         self._cut = nei_cutoff
 

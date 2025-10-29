@@ -21,6 +21,8 @@ base_colors = dict(
     red = np.array(mcol.to_rgba('red')),
     blue = np.array(mcol.to_rgba('blue')),
     green = np.array(mcol.to_rgba('green')),
+    lime = np.array(mcol.to_rgba('lime')),
+    yellow = np.array(mcol.to_rgba('yellow')),
     gold = np.array(mcol.to_rgba('gold')),
     purple = np.array(mcol.to_rgba('magenta')),
     orange = np.array(mcol.to_rgba('orange')),
@@ -110,7 +112,7 @@ class ColorBase():
 
     StateColor subclasses should implement the :py:meth:`calc_state`, :py:meth:`local_colors` and :py:meth:`state_string` methods to provide specific coloring logic and state descriptions.
     
-    :param shape: Particle geometry used for calculations, defaults to a sphere of radius 0.5
+    :param shape: Particle geometry used for calculations, defaults to a sphere of diameter 1.0
     :type shape: SuperEllipse
     :param dark: Whether to use a dark background theme, defaults to True
     :type dark: bool, optional
@@ -118,7 +120,7 @@ class ColorBase():
     :type ci: ndarray
     """
     
-    def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
+    def __init__(self, shape: SuperEllipse = None, dark: bool = True):
         """
         Constructor
         """
@@ -128,7 +130,7 @@ class ColorBase():
         else:
             self._c = lambda x: np.array([base_colors['grey']] * x.shape[0])
         self._f = None
-        self._shape = shape
+        self._shape = _default_sphere if shape is None else shape
 
     @property
     def snap(self) -> gsd.hoomd.Frame:
@@ -222,7 +224,7 @@ class ColorBlender(ColorBase):
 
     def __init__(self, c_func:callable, mainstyle:ColorBase, otherstyle:ColorBase):
         """Constructor"""
-        super().__init__(mainstyle._shape)
+        super().__init__(shape = mainstyle._shape)
         self.s1 = mainstyle
         self.s2 = otherstyle
         self.c_func = c_func

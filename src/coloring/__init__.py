@@ -4,7 +4,7 @@
 from .base import base_colors, color_gradient, color_blender
 from .base import ColorBase, ColorBlender
 
-from .morphcolor import ColorEta0
+from .morphcolor import ColorEta0, ColorRg, ColorCirc, ColorEpsPhase
 
 from .paticcolor import ColorS2, ColorS2G, ColorS2Phase, ColorT4, ColorT4G
 

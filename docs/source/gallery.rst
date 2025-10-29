@@ -10,7 +10,7 @@ Use :py:class:`ColorPsiG <coloring.bondcolor.ColorPsiG>`, :py:class:`ColorConn <
 
    .. container:: asset
 
-      .. video:: _static/base-qpole.webm
+      .. video:: _static/base-qpole1.webm
          :width: 300
          :autoplay:
          :loop:
@@ -19,7 +19,7 @@ Use :py:class:`ColorPsiG <coloring.bondcolor.ColorPsiG>`, :py:class:`ColorConn <
 
    .. container:: asset
 
-      .. video:: _static/c6-qpole.webm
+      .. video:: _static/c6-qpole1.webm
          :width: 300
          :autoplay:
          :loop:
@@ -30,7 +30,7 @@ Use :py:class:`ColorPsiG <coloring.bondcolor.ColorPsiG>`, :py:class:`ColorConn <
 
    .. container:: asset
 
-      .. video:: _static/psig-qpole.webm
+      .. video:: _static/psig-qpole1.webm
          :width: 300
          :autoplay:
          :loop:
@@ -39,7 +39,7 @@ Use :py:class:`ColorPsiG <coloring.bondcolor.ColorPsiG>`, :py:class:`ColorConn <
 
    .. container:: asset
 
-      .. video:: _static/psi6c6-qpole.webm
+      .. video:: _static/psi6c6-qpole1.webm
          :width: 300
          :autoplay:
          :loop:
@@ -49,7 +49,7 @@ Use :py:class:`ColorPsiG <coloring.bondcolor.ColorPsiG>`, :py:class:`ColorConn <
 
 Use :py:class:`ColorPsiPhase <coloring.bondcolor.ColorPsiPhase>` to highlight misoriented crystalline domains:
 
-.. video:: _static/phase-qpole.webm
+.. video:: _static/phase-qpole1.webm
    :width: 400
    :autoplay:
    :loop:
@@ -59,7 +59,7 @@ Use :py:class:`ColorPsiPhase <coloring.bondcolor.ColorPsiPhase>` to highlight mi
 
 Use :py:class:`ColorC6Defects <coloring.defectcolor.ColorC6Defects>` to highlight particles on the boundaries of crystalline domains:
 
-.. video:: _static/c6d-qpole.webm
+.. video:: _static/c6d-qpole1.webm
    :width: 400
    :autoplay:
    :loop:

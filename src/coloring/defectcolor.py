@@ -42,7 +42,7 @@ class ColorS2Defects(ColorS2):
     """
 
     def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True, bgColor:ColorBase=None):
-        super().__init__(shape=shape, dark=dark)
+        super().__init__(shape=shape)
         self._c = _cyan
         if bgColor is None:
             self._bg = ColorBase(dark=dark)

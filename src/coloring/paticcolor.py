@@ -34,7 +34,7 @@ class ColorS2(ColorBase):
     a local nematic order parameter (:math:`S_2`) around each particle and maps its magnitude
     through a white->red (or grey->red) gradient.
 
-    :param shape: particle geometry
+    :param shape: particle geometry, defaults to a sphere of diameter 1.0
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
     :type dark: bool, optional
@@ -50,10 +50,9 @@ class ColorS2(ColorBase):
     :type ci: ndarray
     """
 
-    def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
+    def __init__(self, shape: SuperEllipse = None, dark: bool = True):
         """Constructor"""
-        super().__init__(dark=dark)
-        self._shape = shape
+        super().__init__(shape = shape)
         self._c = _white_red if dark else _grey_red
 
     def calc_state(self):
@@ -99,7 +98,7 @@ class ColorS2Phase(ColorS2):
     This style converts the complex local nematic order into a phase in [0,1]
     (optionally shifted) and maps it to an HSV rainbow via the color mapper.
 
-    :param shape: particle geometry
+    :param shape: particle geometry, defaults to a sphere of diameter 1.0
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
     :type dark: bool
@@ -109,9 +108,9 @@ class ColorS2Phase(ColorS2):
     :type ci: ndarray
     """
 
-    def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True, shift: float = 0.0):
+    def __init__(self, shape: SuperEllipse = None, dark: bool = True, shift: float = 0.0):
         """Constructor"""
-        super().__init__(shape=shape, dark=dark)
+        super().__init__(shape=shape)
         self._shift = shift
         # use rainbow mapping
         self._c = lambda x: _rainbow(x)
@@ -162,7 +161,7 @@ class ColorS2G(ColorS2):
 class ColorT4(ColorBase):
     """Color particles by local tetratic magnitude (:math:`T_4`) using an orange gradient.
 
-    :param shape: particle geometry
+    :param shape: particle geometry, defaults to a sphere of diameter 1.0
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
     :type dark: bool, optional
@@ -178,10 +177,9 @@ class ColorT4(ColorBase):
     :type ci: ndarray
     """
 
-    def __init__(self, shape: SuperEllipse = _default_sphere, dark: bool = True):
+    def __init__(self, shape: SuperEllipse = None, dark: bool = True):
         """Constructor"""
-        super().__init__(dark=dark)
-        self._shape = shape
+        super().__init__(shape=shape)
         self._c = _white_orange if dark else _grey_orange
 
     def calc_state(self):
@@ -219,7 +217,7 @@ class ColorT4(ColorBase):
 class ColorT4G(ColorT4):
     """Color all particles uniformly by global tetratic order (:math:`T_{4,g}`).
 
-    :param shape: particle geometry
+    :param shape: particle geometry, defaults to a sphere of diameter 1.0
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`
     :param dark: use dark theme if True
     :type dark: bool, optional

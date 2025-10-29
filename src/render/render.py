@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from moviepy.video.VideoClip import VideoClip
 
 from visuals import Field
-from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches, parallax_patches
+from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches, parallax_patches, plot_principal_axes
 from coloring import ColorBase
 
 def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,

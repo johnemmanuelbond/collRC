@@ -230,24 +230,24 @@ def ellipticity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.arra
         0 & 0 & \\lambda_z^2\\simeq0
         \\end{pmatrix}
 
-    With the prinicipal moments defined :math:`\\lambda_x^2\\geq\\lambda_y^2\\geq\\lambda_z^2`. Using these principal moments and the major axis (largest eigenvector) :math:`\\mathbf{e}_x`, we can define the circularity magnitude and orientation of the cluster relative to a reference vector, :math:`\\hat{\\mathbf{\\gamma}}`, (wrapped from -π/2 to π/2):
+    With the prinicipal moments defined :math:`\\lambda_x^2\\geq\\lambda_y^2\\geq\\lambda_z^2`. Using these principal moments and the major axis (largest eigenvector) :math:`\\mathbf{e}_x`, we can define the circularity magnitude and orientation of the cluster relative to a reference vector, :math:`\\hat{\\mathbf{\\gamma}}`:
 
     .. math::
 
         1 - c = \\frac{\\lambda_x-\\lambda_y}{\\sqrt{\\lambda_x^2 + \\lambda_y^2}} \\quad \\phi = \\arccos(\\mathbf{e}_x \\cdot \\hat{\\mathbf{\\gamma}})
     
-    When the cluster is circular the two principal moments are equal and so :math:`1-c=0`, and the angle :math:`\\phi` is irrelevant. When the cluster is a linear chain, the smaller principal moment approaches zero, and so :math:`1-c\\to1` and the angle :math:`\\phi` points along the line. We can summarily express this as a complex number:
+    When the cluster is circular the two principal moments are equal and so :math:`1-c=0`, and the angle :math:`\\phi` is irrelevant. When the cluster is a linear chain, the smaller principal moment approaches zero, and so :math:`1-c\\to1` and the angle :math:`\\phi` points along the line. We can summarily express this as a complex number with 2-fold angular symmetry:
 
     .. math::
 
-        \\varepsilon = (1-c) e^{i\\phi}
+        \\varepsilon = (1-c) e^{2i\\phi}
         
 
     :param pts: :math:`[N,d]` array of particle positions in 'd' dimensions
     :type pts: ndarray
     :param gyr: :math:`[d,d]` gyration tensor of the ensemble, optional
     :type gyr: ndarray
-    :param ref: reference direction in d-dimensional space to which to measure the major axis orientation, defaults to y-axis
+    :param ref: reference direction (unit vector) in d-dimensional space to which to measure the major axis orientation, defaults to y-axis
     :type ref: ndarray , optional
     :return: the complex ellipticity of the particles
     :rtype: complex
@@ -256,15 +256,15 @@ def ellipticity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.arra
         assert pts is not None, 'must provide either pts or gyr'
         gyr = gyration_tensor(pts)
 
-    mom, evecs = np.linalg.eig(gyr)
-    lx = np.sort(mom)[-1]
-    ly = np.sort(mom)[-2]
+    mom, evecs = np.linalg.eigh(gyr) # ascending order
+    lx = mom[-1]
+    ly = mom[-2]
 
     a = lx**0.5 - ly**0.5
     rg = (lx+ly)**0.5
-    c = a/rg
+    maj_ax = evecs[:,-1]
+    real_part = maj_ax @ ref
+    im_part = np.linalg.norm(np.cross(maj_ax, ref))
+    z = (real_part + im_part*1j)**2
 
-    ax = evecs[np.sort(mom)][:, -1]
-    theta = (np.arccos(ax @ ref)+np.pi/2)%np.pi - np.pi/2
-
-    return c*np.exp(1j*theta)
+    return (a/rg)*z**2

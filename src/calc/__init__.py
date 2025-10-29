@@ -11,5 +11,7 @@ from .orient_order import global_patic, local_patic
 
 from .morphology import central_eta
 from .morphology import gyration_radius, gyration_tensor
+from .morphology import asphericity, acylindricity, shape_anisotropy
+from .morphology import circularity, ellipticity
 
 from .clusters import graph_clusters, cluster_com
