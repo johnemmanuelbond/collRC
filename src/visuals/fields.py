@@ -353,8 +353,8 @@ def PEL_arrows(ax=None, field: Field = _default_qpole, pts=None, **quiver_kwargs
     if 'color' not in quiver_kwargs:            quiver_kwargs['color'] = 'grey'
     if 'facecolors' not in quiver_kwargs:       quiver_kwargs['facecolors'] = 'grey'
     if 'edgecolors' not in quiver_kwargs:       quiver_kwargs['edgecolors'] = 'k'
-    if 'lw' not in quiver_kwargs:               quiver_kwargs['lw'] = 0.25
-    if 'width' not in quiver_kwargs:            quiver_kwargs['width'] = 0.005
+    if 'lw' not in quiver_kwargs:               quiver_kwargs['lw'] = 0.5
+    if 'width' not in quiver_kwargs:            quiver_kwargs['width'] = 0.5
     if 'headwidth' not in quiver_kwargs:        quiver_kwargs['headwidth'] = 3
     if 'headlength' not in quiver_kwargs:       quiver_kwargs['headlength'] = 2.5
     if 'headaxislength' not in quiver_kwargs:   quiver_kwargs['headaxislength'] = 2.0
