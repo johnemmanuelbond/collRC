@@ -83,7 +83,7 @@ class ColorRg(ColorBase):
     the full gyration tensor via :py:meth:`gyration_tensor <calc.morphology.gyration_tensor>`
     eigenvalues in the calculation.
 
-    Particles are colored according to the global radius of gyration, normalized by a user-defined factor :py:attr:`rg_norm`: :py_attr:`ci = 2 - rg/rg_norm`.
+    Particles are colored according to the global radius of gyration, normalized by a user-defined factor :py:attr:`rg_norm`: :py:attr:`ci = 2 - rg/rg_norm`.
 
     :param shape: particle geometry, defaults to a sphere of diameter 1.0
     :type shape: :py:class:`SuperEllipse <visuals.shapes.SuperEllipse>`

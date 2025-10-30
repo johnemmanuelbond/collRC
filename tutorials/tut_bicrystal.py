@@ -48,7 +48,6 @@ if __name__ == "__main__":
     from render import render_npole,animate
     import matplotlib.pyplot as plt
 
-    
     plt.style.use('dark_background')
     supfig, axs = plt.subplots(2,3, figsize=(7,4), dpi=500)
 
@@ -65,6 +64,7 @@ if __name__ == "__main__":
             plot_principal_axes(gyr=gyr, com=com, ax=ax, color='green', lw=2.5)
         return fig, ax
 
+    # now run the figure maker through animate for each file
     for f in ['qpole2.gsd','opole1.gsd']: 
         with gsd.hoomd.open(f, "r") as traj:
             animate(traj, figure_maker=figure_maker, outpath=f"xtal-domains-{f[:-4]}.webm", fps=10, codec='libvpx')

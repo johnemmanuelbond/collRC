@@ -44,6 +44,98 @@ Once you've made a style using one of the built-in color schemes, rendering and 
    :muted:
 
 
+Practical examples
+------------------
+
+Rectangles in a coplanar electrode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following code demonstrates how to use the defect-driven color schemes to render movies which highlight defects in systems of self-assembling rectangles. Both :py:class:`ColorS2Defects <coloring.defectcolor.ColorS2Defects>` and :py:class:`ColorC4Defects <coloring.defectcolor.ColorC4Defects>` have functionality which lets us set a background color scheme for the nondefective particles (:py:class:`ColorEta0 <coloring.morphcolor.ColorEta0>` and :py:class:`ColorConn <coloring.bondcolor.ColorConn>` respectively).
+
+.. literalinclude:: ../../tutorials/ex_rect.py
+   :language: python
+
+Below we've included the movies for ``rect2.gsd`` in the ``tutorials/`` folder on the github repository, rendered using both color schemes.
+
+.. container:: row-assets
+
+   .. container:: asset
+
+      .. video:: _static/s2d-rect2.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+
+   .. container:: asset
+
+      .. video:: _static/c4d-rect2.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+
+
+Discs on a spherical surface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We can use :py:class:`ColorC6Defects <coloring.defectcolor.ColorC6Defects>` to highlight defects in crystalline domains on curved surfaces. 
+
+.. literalinclude:: ../../tutorials/ex_sphere.py
+   :language: python
+
+Correctly comparing bond orientational order on curved surfaces requires using the gradient of the implicit function to compute local tangent planes and the rotations between them. Without providing this function (`left`), we see many artificial c6 defects whereas including this correction (`right`) reveals a more coherent defect structure:
+
+.. container:: row-assets
+
+   .. container:: asset
+      
+      .. video:: _static/c6d-sphere-incorrect.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+      
+   .. container:: asset
+
+      .. video:: _static/c6d-sphere-correct.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+
+Small clusters crystallizing in 3D
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following code demonstrates how to blend two defect-driven color schemes, using :py:class:`ColorBlender <coloring.base.ColorBlender>`, to show the emergence of local, then global, bond orientational order in small clusters which crystallize at a specific osmotic pressure of deplentants. By instantiating a :py:class:`ColorQG <coloring.bondcolor.ColorQG>` style and a :py:class:`ColorConn <coloring.bondcolor.ColorConn>` style, we can blend them together with a custom colormap to render both at once.
+
+.. literalinclude:: ../../tutorials/ex_clust.py
+   :language: python
+
+Which produces this movie (and accompanying colormap):
+
+.. container:: row-assets
+
+   .. container:: asset
+
+      .. video:: _static/Q6C6-clust.webm
+         :width: 300
+         :autoplay:
+         :loop:
+         :nocontrols:
+         :muted:
+
+   .. container:: asset
+      
+      .. image:: _static/white-purp.png
+         :height: 300
+         :alt: white-purp.png
+
+
 Custom reaction coordinate renders
 ----------------------------------
 
@@ -59,8 +151,9 @@ Below we demonstrate how to create a custom color scheme which colors particles 
 
 At the end of this example we demonstrate a little bit of what goes on in the :py:mod:`render <render.render>` module by grabbing the output image from matplotlib as an RBGA array and sticking it on one of several subplot axes:
 
-.. img:: _static/nth-nearest-neighbors.png
-   :width: 600
+.. image:: _static/nth-nearest-neighbors.png
+   :height: 500
+   :alt: nth-nearest-neighbors.png
 
 
 Inheriting ColorBase subclasses
@@ -92,96 +185,3 @@ At the end of the file we demonstrate how to write an extended figure making met
          :loop:
          :nocontrols:
          :muted:
-
-Examples
-========
-
-Rectangles in a coplanar electrode
-----------------------------------
-
-The following code demonstrates how to use the defect-driven color schemes to render movies which highlight defects in systems of self-assembling rectangles. Both :py:class:`ColorS2Defects <coloring.defectcolor.ColorS2Defects>` and :py:class:`ColorC4Defects <coloring.defectcolor.ColorC4Defects>` have functionality which lets us set a background color scheme for the nondefective particles (:py:class:`ColorEta0 <coloring.morphcolor.ColorEta0>` and :py:class:`ColorConn <coloring.bondcolor.ColorConn>` respectively).
-
-.. literalinclude:: ../../tutorials/ex_rect.py
-   :language: python
-
-Below we've included the movies for ``rect2.gsd`` in the ``tutorials/`` folder on the github repository, rendered using both color schemes.
-
-.. container:: row-assets
-
-   .. container:: asset
-
-      .. video:: _static/s2d-rect2.webm
-         :width: 300
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
-
-   .. container:: asset
-
-      .. video:: _static/c4d-rect2.webm
-         :width: 300
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
-
-
-Discs on a spherical surface
-----------------------------
-
-
-We can use :py:class:`ColorC6Defects <coloring.defectcolor.ColorC6Defects>` to highlight defects in crystalline domains on curved surfaces. 
-
-.. literalinclude:: ../../tutorials/ex_sphere.py
-   :language: python
-
-Correctly comparing bond orientational order on curved surfaces requires using the gradient of the implicit function to compute local tangent planes and the rotations between them. Without providing this function (`left`), we see many artificial c6 defects whereas including this correction (`right`) reveals a more coherent defect structure:
-
-.. container:: row-assets
-
-   .. container:: asset
-      
-      .. video:: _static/c6d-sphere-incorrect.webm
-         :width: 300
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
-      
-   .. container:: asset
-
-      .. video:: _static/c6d-sphere-correct.webm
-         :width: 300
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
-
-Small clusters crystallizing in 3D
-----------------------------------
-
-The following code demonstrates how to blend two defect-driven color schemes, using :py:class:`ColorBlender <coloring.base.ColorBlender>`, to show the emergence of local, then global, bond orientational order in small clusters which crystallize at a specific osmotic pressure of deplentants. By instantiating a :py:class:`ColorQG <coloring.bondcolor.ColorQG>` style and a :py:class:`ColorConn <coloring.bondcolor.ColorConn>` style, we can blend them together with a custom colormap to render both at once.
-
-.. literalinclude:: ../../tutorials/ex_clust.py
-   :language: python
-
-Which produces this movie (and accompanying colormap):
-
-.. container:: row-assets
-
-   .. container:: asset
-
-      .. video:: _static/Q6C6-clust.webm
-         :width: 300
-         :autoplay:
-         :loop:
-         :nocontrols:
-         :muted:
-
-   .. container:: asset
-      
-      .. image:: _static/white-purp.png
-         :height: 300
-         :alt: white-purp.png
-
