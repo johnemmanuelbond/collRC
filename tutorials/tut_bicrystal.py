@@ -4,7 +4,7 @@ from matplotlib.cm import hsv as hsv_map
 
 from visuals import SuperEllipse, plot_principal_axes
 from calc.locality import DEFAULT_CUTOFF
-from calc import gyration_tensor
+from calc import gyration_tensor, ellipticity
 from coloring import ColorBondOrder, ColorConn, base_colors, color_gradient
 
 # we define a color function which blends blue to white to red on a -1 to 1 scale
@@ -43,6 +43,22 @@ class ColorDomains(ColorConn):
         # assign the color so that particles in the domain are positive (red), out of domain negative (blue)
         # we could just use in_domain directly, but this makes the color mapping more obvious to the eye
         self.ci = 1.0*(self.in_domain>0.5) -1.0*(self.in_domain<0)
+
+        if np.sum(self.in_domain>0.5) < 2:
+            self.eps = 0 + 0.0J
+        else:
+            pts = self.snap.particles.position[self.in_domain>0.5]
+            self.eps = ellipticity(pts=pts)
+
+    def state_string(self, snap=None):
+        """Return a string summarizing the current state."""
+        if snap is not None: self.snap=snap
+
+        s1 = f"$|\\langle\\psi_6\\rangle| = {np.abs(self.psi.mean()):.2f}$"
+        s2 = f"$\\langle C_6\\rangle = {self.con.mean():.2f}$"
+        s3 = f"$\\varepsilon_X = {np.abs(self.eps):.2f}\\exp[{np.angle(self.eps)/np.pi:.2f}i\\pi]$"
+
+        return f"{s1}, {s2}\n{s3}"
     
 if __name__ == "__main__":
     from render import render_npole,animate
@@ -60,7 +76,7 @@ if __name__ == "__main__":
         if np.sum(style.in_domain>0.5) > 1:
             pts = snap.particles.position[style.in_domain>0.5]
             com = pts.mean(axis=0)
-            gyr = gyration_tensor(pts)
+            gyr = gyration_tensor(pts=pts)
             plot_principal_axes(gyr=gyr, com=com, ax=ax, color='green', lw=2.5)
         return fig, ax
 

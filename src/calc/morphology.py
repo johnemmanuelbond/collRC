@@ -218,7 +218,7 @@ def circularity(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
     return c
 
 
-def ellipticity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.array([0,1,0])) -> np.complexfloating:
+def ellipticity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.array([1,0,0])) -> np.complexfloating:
     """
     Here we expand on the 'circularity' of a colloidal cluster as used in `Zhang, Sci. Adv. 2020 <https://doi.org/10.1126/sciadv.abd6716>`_. This metric is calcuated using the principal moments of the :py:meth:`gyration_tensor`. For 2D ensembles, after diagonalization:
 
@@ -247,7 +247,7 @@ def ellipticity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.arra
     :type pts: ndarray
     :param gyr: :math:`[d,d]` gyration tensor of the ensemble, optional
     :type gyr: ndarray
-    :param ref: reference direction (unit vector) in d-dimensional space to which to measure the major axis orientation, defaults to y-axis
+    :param ref: reference direction (unit vector) in d-dimensional space to which to measure the major axis orientation, defaults to x-axis
     :type ref: ndarray , optional
     :return: the complex ellipticity of the particles
     :rtype: complex
@@ -257,14 +257,16 @@ def ellipticity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.arra
         gyr = gyration_tensor(pts)
 
     mom, evecs = np.linalg.eigh(gyr) # ascending order
-    lx = mom[-1]
-    ly = mom[-2]
 
+    lz, ly, lx = mom
     a = lx**0.5 - ly**0.5
     rg = (lx+ly)**0.5
-    maj_ax = evecs[:,-1]
-    real_part = maj_ax @ ref
-    im_part = np.linalg.norm(np.cross(maj_ax, ref))
-    z = (real_part + im_part*1j)**2
 
-    return (a/rg)*z**2
+    vz, vy, vx = evecs.T
+    ref_proj = ref - (ref @ vz)*vz
+    ref_proj /= np.linalg.norm(ref_proj)
+    real_part = vx @ ref_proj
+    im_part = vy @ ref_proj
+    z = (real_part + np.sign(im_part)*np.sign(real_part)*im_part*1j)**2
+
+    return (a/rg)*z
