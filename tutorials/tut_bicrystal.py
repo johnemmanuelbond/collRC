@@ -28,8 +28,8 @@ class ColorDomains(ColorConn):
     def calc_state(self):
         """find the neighbor matrix of each particle stretched by the shape parameters."""
         super().calc_state()
-        # we can rely on the superclass to calculate basic bond order parameters and thus avoid
-        # repeating sensitive code.
+        # we can rely on the superclass to calculate basic bond order parameters and
+        # thus avoid repeating sensitive code.
         psi6 = self.psi
         c6 = self.con
 
@@ -40,8 +40,7 @@ class ColorDomains(ColorConn):
         # find the particle whose environment aligns best with the most other particles
         best_ptcl = np.argmax(np.sum(np.real(cross_psi)>0.5, axis=-1))
         self.in_domain = np.real(cross_psi[:, best_ptcl])*c6 # weight by crystallinity
-        # assign the color so that particles in the domain are positive (red), out of domain negative (blue)
-        # we could just use in_domain directly, but this makes the color mapping more obvious to the eye
+        # assign the color so that particles in the domain are (red), out of domain (blue)
         self.ci = 1.0*(self.in_domain>0.5) -1.0*(self.in_domain<0)
 
         if np.sum(self.in_domain>0.5) < 2:
@@ -51,7 +50,10 @@ class ColorDomains(ColorConn):
             self.eps = ellipticity(pts=pts)
 
     def state_string(self, snap=None):
-        """Return a string summarizing the current state."""
+        """
+        Customizing the state string by printing the ellipticity of the biggest
+        crystal cluster in addition to the local (C6) and global (ψ6) order.
+        """
         if snap is not None: self.snap=snap
 
         s1 = f"$|\\langle\\psi_6\\rangle| = {np.abs(self.psi.mean()):.2f}$"
@@ -67,12 +69,14 @@ if __name__ == "__main__":
     plt.style.use('dark_background')
     supfig, axs = plt.subplots(2,3, figsize=(7,4), dpi=500)
 
-    # define an extended figure making function which places the principal moments of the biggest
-    # crystal cluster overtop the render image.
+    # define an extended figure making function which places the
+    # principal moments of the biggest crystal cluster overtop
+    # the rendered image.
     def figure_maker(snap):
         style = ColorDomains(dark=True)
         style.snap = snap
-        fig,ax = render_npole(snap, style=style, PEL='contour', dark=True, figsize=5, dpi=500)
+        fig,ax = render_npole(snap, style=style, PEL='contour',
+                              dark=True, figsize=5, dpi=500)
         if np.sum(style.in_domain>0.5) > 1:
             pts = snap.particles.position[style.in_domain>0.5]
             com = pts.mean(axis=0)
@@ -83,4 +87,5 @@ if __name__ == "__main__":
     # now run the figure maker through animate for each file
     for f in ['qpole2.gsd','opole1.gsd']: 
         with gsd.hoomd.open(f, "r") as traj:
-            animate(traj, figure_maker=figure_maker, outpath=f"xtal-domains-{f[:-4]}.webm", fps=10, codec='libvpx')
+            animate(traj, figure_maker=figure_maker,
+                    outpath=f"xtal-domains-{f[:-4]}.webm", fps=10, codec='libvpx')

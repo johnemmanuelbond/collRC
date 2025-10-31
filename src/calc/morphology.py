@@ -263,10 +263,11 @@ def ellipticity(pts:np.ndarray=None, gyr:np.ndarray=None, ref:np.ndarray=np.arra
     rg = (lx+ly)**0.5
 
     vz, vy, vx = evecs.T
+    vy = np.cross(vz, vx)  # ensure right-handed system
     ref_proj = ref - (ref @ vz)*vz
     ref_proj /= np.linalg.norm(ref_proj)
     real_part = vx @ ref_proj
     im_part = vy @ ref_proj
-    z = (real_part + np.sign(im_part)*np.sign(real_part)*im_part*1j)**2
+    z = (real_part + im_part*1j)**-2
 
     return (a/rg)*z
