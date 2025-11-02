@@ -26,7 +26,7 @@ class ColorDomains(ColorConn):
         self._c = rwb # defining the color mapper happens in the constructor
 
     def calc_state(self):
-        """find the neighbor matrix of each particle stretched by the shape parameters."""
+        """Use ψi*conj(ψj) to identify particles in the same domain, then find ellipticity of largest domain."""
         super().calc_state()
         # we can rely on the superclass to calculate basic bond order parameters and
         # thus avoid repeating sensitive code.

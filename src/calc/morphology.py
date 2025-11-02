@@ -5,7 +5,7 @@ Contains methods to calculate morphological properties of particle ensembles and
 """
 
 import numpy as np
-from scipy.spatial.distance import pdist,squareform
+from scipy.spatial.distance import pdist
 
 
 def central_eta(pts:np.ndarray, box:list, ptcl_area:float = np.pi/4, nbins:int=3, bin_width:float=4.0, jac:str='x'):
@@ -88,30 +88,40 @@ def gyration_radius(pts:np.ndarray) -> float:
     return np.sqrt(Rg2)
 
 
-def gyration_tensor(pts:np.ndarray, ref:np.ndarray = None) -> np.ndarray:
+def gyration_tensor(pts:np.ndarray, ref:np.ndarray = None, weights:np.ndarray = None) -> np.ndarray:
     """
     Returns the gyration tensor (for principal moments analysis) of an ensemble of particles according to the formula
 
     .. math::
 
-        S_{mn} = \\frac{1}{N}\\sum_{j}r^{(j)}_m r^{(j)}_n
+        S_{mn} = \\frac{1}{N}\\sum_j r^{(j)}_m r^{(j)}_n
 
-    where the positions, :math:`\\mathbf{r}^{(j)} = (r^{(j)}_1, r^{(j)}_2, \\ldots, r^{(j)}_d)`, are defined in their center of mass reference frame.
+    where the positions, :math:`\\mathbf{r}^{(j)} = (r^{(j)}_1, r^{(j)}_2, \\ldots, r^{(j)}_d)`, are defined in their center of mass reference frame. Alternatively users can pass in a weights array to compute a weighted gyration tensor:
+
+    .. math::
+
+        S_{mn} = \\frac{1}{\\sum_j w^{(j)}}\\sum_j w^{(j)}r^{(j)}_m r^{(j)}_n
 
     :param pts: :math:`[N,d]` array of particle positions in 'd' dimensions,
     :type pts: ndarray
     :param ref: point in d-dimensional space from which to reference particle positions, defaults to the mean position of the points. Use this for constraining the center of mass to the surface of a manifold, for instance.
     :type ref: ndarray , optional
+    :param weights: :math:`[N,]` array of weights for each particle, defaults to None (equal weighting)
+    :type weights: ndarray , optional
     :return: the :math:`[d,d]` gyration tensor of the ensemble
     :rtype: ndarray
     """    
 
+    if weights is None: weights = np.ones(len(pts))
+    W = np.sum(weights)
+    w = weights[:,np.newaxis] / W  # normalize weights to sum to 1
     if ref is None:
-        ref = pts.mean(axis=0)
+        ref = np.sum(pts * w, axis=0)
     assert (pts.shape[-1],) == ref.shape, 'reference must have same dimesionality as the points'
+
     centered = pts - ref
-    gyrate = centered.T @ centered
-    return gyrate/len(pts)
+    gyrate = centered.T @ (centered * w)  # normalized, weighted outer product sum
+    return gyrate
 
 
 def acylindricity(pts:np.ndarray=None, gyr:np.ndarray=None) -> float:
