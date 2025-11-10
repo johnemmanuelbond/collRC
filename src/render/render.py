@@ -69,23 +69,29 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
     ptcls.set_lw(0.5)          # Edge line width
 
     # Extract electrode/field parameters from simulation log
-    field = Field.create_from_gsd(snap)
+    try:
+        field = Field.create_from_gsd(snap)
+    except KeyError:
+        field = None
+        PEL = None
+        
     match PEL:
         case 'spectral':
-            cmap = spectral_PEL(ax=ax, field=field, dark=dark)
+            spec = spectral_PEL(ax=ax, field=field, dark=dark)
         case 'contour':
             colors = 'white' if dark else 'black'
             cont = contour_PEL(ax=ax, field=field, colors=colors)
 
-    # Generate text annotation for field strength
-    dg = field.electrode_gap
-    kt = field.k_trans
     if 'act_string' in kwargs:
-        act_string = kwargs['act_string'](snap)
-    elif len(np.unique(kt))==1:
-        act_string = f"$k/d_g^2 = {kt[0]/dg**2:.2f}$"
+            act_string = kwargs['act_string'](snap)
     else:
-        act_string = "".join([f"$k_{{{i+1}}}/d_g^2$ = {k/dg**2:.2f}, " for i, k in enumerate(kt)])
+        try:
+            # Generate text annotation for field strength
+            dg = field.electrode_gap
+            kt = field.k_trans
+            act_string = "".join([f"$k_{{{i+1}}}/d_g^2$ = {k/dg**2:.2f}, " for i, k in enumerate(kt)])
+        except AttributeError:
+            act_string = ""
 
     # Add text annotations in top-left corner
     state_string = style.state_string()
