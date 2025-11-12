@@ -38,7 +38,7 @@ After installing prerequesites, clone the git repository:
 
 .. code-block:: bash
 
-   $ git clone https://github.com/johnemmanuelbond/color-scheming path_to_repo
+   $ git clone https://github.com/johnemmanuelbond/collRC path_to_repo
 
 Users may install the repository into a conda environment using :code:`conda develop`
 
