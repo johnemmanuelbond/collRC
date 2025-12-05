@@ -35,11 +35,14 @@ def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_glob
     """
 
     pnum = pts.shape[0]
+    # double-check for degenerate neighborless states
+    if not np.any(nei_bool):
+        if ret_global: return np.zeros(pnum),0
+        else: return np.zeros(pnum)
+
     i,j = np.mgrid[0:pnum,0:pnum]
     dr_vec = pts[i]-pts[j]
-
-    # double-check for degenerate neighborless states
-    if not np.any(nei_bool): return np.zeros(pnum),0
+    
     # get neighbor count per particle, and cumulative
     sizes = np.sum(nei_bool,axis=-1)
     csizes = np.cumsum(sizes)
@@ -107,11 +110,14 @@ def stretched_bond_order(pts:np.ndarray, angles:np.ndarray, nei_bool:np.ndarray,
     :rtype: ndarray[complex] `(, complex)`
     """    
     pnum = pts.shape[0]
+    # double-check for degenerate neighborless states
+    if not np.any(nei_bool):
+        if ret_global: return np.zeros(pnum),0
+        else: return np.zeros(pnum)
+
     i,j = np.mgrid[0:pnum,0:pnum]
     dr_vec = pts[i]-pts[j]
 
-    # double-check for degenerate neighborless states
-    if not np.any(nei_bool): return np.zeros(pnum),0
     # get neighbor count per particle, and cumulative
     sizes = np.sum(nei_bool,axis=-1)
     csizes = np.cumsum(sizes)
@@ -175,12 +181,11 @@ def projected_bond_order(pts:np.ndarray, gradient:callable, nei_bool:np.ndarray,
     """    
 
     pnum = pts.shape[0]
+    # double-check for degenerate neighborless states
+    if not np.any(nei_bool): return np.zeros(pnum)
+
     ii,jj = np.mgrid[0:pnum,0:pnum]
     dr_vec = pts[jj]-pts[ii]
-    if nei_bool is None:
-        nei_bool = squareform(pdist(pts))<=DEFAULT_CUTOFF
-        nei_bool[ii==jj]=False
-    
     lvec = local_vectors(pts,gradient,ref=ref)
 
     psi = np.zeros_like(nei_bool)
@@ -246,13 +251,15 @@ def steinhardt_bond_order(pts:np.ndarray, nei_bool:np.ndarray, l:int = 6, ret_gl
     :return: :math:`[N,2l+1]` array of complex bond orientational order parameters, and (if ret_global) the global bond orientational order.
     :rtype: ndarray[complex] `(, complex)`
     """
-    
     pnum = pts.shape[0]
+    # double-check for degenerate neighborless states
+    if not np.any(nei_bool):
+        if ret_global: return np.zeros(pnum),0
+        else: return np.zeros(pnum)
+
     i,j = np.mgrid[0:pnum,0:pnum]
     dr_vec = pts[i]-pts[j]
 
-    # double-check for degenerate neighborless states
-    if not np.any(nei_bool): return np.zeros(pnum),0
     # get neighbor count per particle, and cumulative
     sizes = np.sum(nei_bool,axis=-1)
     csizes = np.cumsum(sizes)
