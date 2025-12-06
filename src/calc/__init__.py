@@ -14,4 +14,5 @@ from .morphology import gyration_radius, gyration_tensor
 from .morphology import asphericity, acylindricity, shape_anisotropy
 from .morphology import circularity, ellipticity
 
-from .clusters import graph_clusters, cluster_com
+from .clusters import c6_clusters, cluster_averager, cluster_com
+from .clusters import cluster_gyrate, cluster_rg, cluster_shape

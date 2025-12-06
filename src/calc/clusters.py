@@ -7,10 +7,23 @@ import numpy as np
 from scipy.sparse import lil_matrix
 from graph_tool.all import Graph
 from graph_tool import topology as gtop
-# from .locality import gyration_tensor
+
+from .morphology import gyration_tensor
+from .morphology import gyration_radius
+from .morphology import shape_anisotropy
 
 
-def graph_clusters(c6, nei):
+def c6_clusters(c6:np.ndarray, nei:np.ndarray[bool]) -> np.ndarray[int]:
+    """
+    Uses graph theory to identify clusters of particles based on their defect status (as defined by c6) and neighbor connectivity (as defined by nei).
+    
+    :param: c6: an :math:`[N,]` array of complex bond order parameters for each particle
+    :type c6: ndarray
+    :param: nei: a :math:`[N,N]` boolean array defining particle neighbors
+    :type nei: ndarray
+    :return: an :math:`[N,]` array of cluster indices for each particle
+    :rtype: ndarray[int]
+    """
 
     pnum = len(c6)
     is_defect = (np.abs(1-c6)>0.05)
@@ -24,54 +37,92 @@ def graph_clusters(c6, nei):
     cidx = gtop.label_components(g)[0]
     return cidx.a
 
-def cluster_c6(pts,c6,cidx):
+
+def cluster_averager(cidx:np.ndarray[int]) -> tuple[np.ndarray[bool], np.ndarray[int]]:
+    """
+    Computes cluster membership map and cluster sizes from cluster indices. These arrays can be used to compute cluster-averaged properties. :code:`cluster_averager` is used internally by other cluster analysis functions to compute cluster-averaged quantities efficiently, any cluster-averaged quantity can be computed array-qise ysing :code:`c_map @ quantity / c_sizes`.
+
+    :param: cidx: an :math:`[N,]` array of cluster indices for each particle
+    :type cidx: ndarray[int]
+    :return: a tuple containing:
+        - **c_map**: a :math:`[N,C]` boolean array mapping particles to clusters
+        - **c_sizes**: a :math:`[C,]` array of cluster sizes
+    :rtype: tuple[np.ndarray[bool], np.ndarray[int]]
+    """
 
     p_iden, c_iden = np.meshgrid(cidx,np.unique(cidx))
     c_map = (p_iden==c_iden)
-    clust_sizes = c_map.sum(axis=-1)
+    c_sizes = c_map.sum(axis=-1)
 
-    c6_clust = (c_map @ c6) / clust_sizes
+    return c_map, c_sizes
 
-    return c6_clust
 
-def cluster_com(pts,c6,cidx):
+def cluster_com(pts:np.ndarray,cidx:np.ndarray[int]) -> np.ndarray:
+    """
+    Computes the center of mass for each cluster based on particle positions and their cluster indices.
 
-    p_iden, c_iden = np.meshgrid(cidx,np.unique(cidx))
-    c_map = (p_iden==c_iden)
-    clust_sizes = c_map.sum(axis=-1)
+    :param: pts: an :math:`[N,d]` array of particle positions in :math:`d` dimensions
+    :type pts: ndarray
+    :param: cidx: an :math:`[N,]` array of cluster indices for each particle
+    :type cidx: ndarray[int]
+    :return: an :math:`[C,d]` array of cluster centers of mass
+    :rtype: ndarray
+    """
 
-    x_clust = (c_map @ pts[:,0]) / clust_sizes
-    y_clust = (c_map @ pts[:,1]) / clust_sizes
-    z_clust = (c_map @ pts[:,2]) / clust_sizes
+    c_map, c_sizes = cluster_averager(cidx)
+    return np.array([(c_map @ dim)/c_sizes for dim in pts.T ]).T
 
-    cluster_com = np.array([x_clust,y_clust,z_clust]).T
 
-    return cluster_com
+def cluster_rg(pts:np.ndarray,cidx:np.ndarray[int]) -> np.ndarray:
+    """
+    Computes the radius of gyration using the :py:meth:`gyration_radius() <calc.morphology.gyration_radius>` method for each cluster based on particle positions and their cluster indices.
 
-# def cluster_gyrate(pts, c6, cidx):   
+    :param: pts: an :math:`[N,d]` array of particle positions in :math:`d` dimensions
+    :type pts: ndarray
+    :param: cidx: an :math:`[N,]` array of cluster indices for each particle
+    :type cidx: ndarray[int]
+    :return: an :math:`[C,]` array of cluster radii of gyration
+    :rtype: ndarray
+    """
 
-#     p_iden, c_iden = np.meshgrid(cidx,np.unique(cidx))
-#     c_map = (p_iden==c_iden)
-#     clust_gyr = np.array([gyration_tensor(pts[c_map[i]]) for i in range(c_map.shape[0])])
+    c_map, _ = cluster_averager(cidx)
+    clust_rg = np.array([gyration_radius(pts[c_map[i]]) for i in range(c_map.shape[0])])
+    return clust_rg
 
-#     return clust_gyr
 
-# def cluster_rg(pts,c6,cidx):
-#     p_iden, c_iden = np.meshgrid(cidx,np.unique(cidx))
-#     c_map = (p_iden==c_iden)
-#     clust_rg = np.array([gyration_radius(pts[c_map[i]]) for i in range(c_map.shape[0])])
-#     return clust_rg
+def cluster_gyrate(pts:np.ndarray, cidx:np.ndarray[int]) -> np.ndarray:   
+    """
+    Computes the gyration tensor, using the :py:meth:`gyration_tensor() <calc.morphology.gyration_tensor>` method, for each cluster based on particle positions and their cluster indices.
 
-# def cluster_ani(pts,c6,cidx):
-#     p_iden, c_iden = np.meshgrid(cidx,np.unique(cidx))
-#     c_map = (p_iden==c_iden)
-#     clust_gyr = np.array([gyration_tensor(pts[c_map[i]]) for i in range(c_map.shape[0])])
-#     clust_evals = np.array([np.sort(np.linalg.eig(g)[0]) for g in clust_gyr])
-#     clust_rg = np.sqrt(clust_evals.sum(axis=-1))
-#     clust_acyl = clust_evals[:,1] - clust_evals[:,0]
-#     clust_asph = 1.5*clust_evals[:,2] - 0.5*clust_rg**2
-#     clust_ani = (clust_asph**2 + 0.75*clust_acyl**2)/(clust_rg**4)
-#     return clust_ani
+    :param: pts: an :math:`[N,d]` array of particle positions in :math:`d` dimensions
+    :type pts: ndarray
+    :param: cidx: an :math:`[N,]` array of cluster indices for each particle
+    :type cidx: ndarray[int]
+    :return: an :math:`[C,d,d]` array of cluster gyration tensors
+    :rtype: ndarray
+    """
+
+    c_map, _ = cluster_averager(cidx)
+    clust_gyr = np.array([gyration_tensor(pts[c_map[i]]) for i in range(c_map.shape[0])])
+
+    return clust_gyr
+
+
+def cluster_shape(pts:np.ndarray, cidx:np.ndarray[int]) -> np.ndarray:
+    """
+    Computes the shape anisotropy (:math:`\\kappa^2`) using the :py:meth:`shape_anisotropy() <calc.morphology.shape_anisotropy>` method for each cluster based on particle positions and their cluster indices.
+
+    :param: pts: an :math:`[N,d]` array of particle positions in :math:`d` dimensions
+    :type pts: ndarray
+    :param: cidx: an :math:`[N,]` array of cluster indices for each particle
+    :type cidx: ndarray[int]
+    :return: an :math:`[C,]` array of cluster shape anisotropies :math:`\\kappa^2`
+    :rtype: ndarray
+    """
+
+    clust_gyr = cluster_gyrate(pts,cidx)
+    kaps = np.array([shape_anisotropy(pts=None, gyr = g) for g in clust_gyr])
+    return kaps
 
 # def defect_ani(pts,c6,cidx):
 #     clust_c6 = cluster_c6(pts,c6,cidx)

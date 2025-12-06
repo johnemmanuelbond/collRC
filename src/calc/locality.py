@@ -152,80 +152,82 @@ def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8, 
     pnum = coords.shape[0]
     e1,e2,e3 = np.eye(3)
     is_2d = basis[2,2]==0
-    if is_2d: basis[2,2]=1
-    frame_basis = (np.linalg.inv(basis) @ coords.T).T
+    b = basis.copy()
+    if is_2d: b[2,2]=1
+
+    f = (np.linalg.inv(b) @ coords.T).T
 
     if max_dist is None:
         if is_2d:
             expanded = np.array([
-                *(frame_basis+e1),*(frame_basis+e2),
-                *(frame_basis-e1),*(frame_basis-e2),
-                *(frame_basis+e1+e2),*(frame_basis+e1-e2),
-                *(frame_basis-e1+e2),*(frame_basis-e1-e2)
+                *(f+e1),*(f+e2),
+                *(f-e1),*(f-e2),
+                *(f+e1+e2),*(f+e1-e2),
+                *(f-e1+e2),*(f-e1-e2)
                 ])
+            pad_idx = np.argsort(np.abs(expanded[:,:2]).max(axis=-1))[:(int(padfrac*pnum))]
         else:
             expanded = np.array([
-                *(frame_basis+e1),*(frame_basis+e2),*(frame_basis+e3),
-                *(frame_basis-e1),*(frame_basis-e2),*(frame_basis-e3),
-                *(frame_basis+e1+e2),*(frame_basis+e1-e2),*(frame_basis-e1+e2),*(frame_basis-e1-e2),
-                *(frame_basis+e1+e3),*(frame_basis+e1-e3),*(frame_basis-e1+e3),*(frame_basis-e1-e3),
-                *(frame_basis+e2+e3),*(frame_basis+e2-e3),*(frame_basis-e2+e3),*(frame_basis-e2-e3),
-                *(frame_basis+e1+e2+e3),*(frame_basis+e1+e2-e3),*(frame_basis+e1-e2+e3),*(frame_basis+e1-e2-e3),
-                *(frame_basis-e1+e2+e3),*(frame_basis-e1+e2-e3),*(frame_basis-e1-e2+e3),*(frame_basis-e1-e2-e3)
+                *(f+e1),*(f+e2),*(f+e3),
+                *(f-e1),*(f-e2),*(f-e3),
+                *(f+e1+e2),*(f+e1-e2),*(f-e1+e2),*(f-e1-e2),
+                *(f+e1+e3),*(f+e1-e3),*(f-e1+e3),*(f-e1-e3),
+                *(f+e2+e3),*(f+e2-e3),*(f-e2+e3),*(f-e2-e3),
+                *(f+e1+e2+e3),*(f+e1+e2-e3),*(f+e1-e2+e3),*(f+e1-e2-e3),
+                *(f-e1+e2+e3),*(f-e1+e2-e3),*(f-e1-e2+e3),*(f-e1-e2-e3)
                 ])
+            pad_idx = np.argsort(np.abs(expanded).max(axis=-1))[:(int(padfrac*pnum))]
         
-        np.argsort(np.max(np.abs(expanded),axis=-1))
-        pad_idx = np.argsort(np.abs(expanded).max(axis=-1))[:(int(padfrac*pnum))]
-        pad = (basis @ expanded[pad_idx].T).T
+        pad = (b @ expanded[pad_idx].T).T
 
     else:
         assert padfrac is not None, "Either max_dist or padfrac must be specified"
         Lx,Ly,Lz = np.linalg.norm(basis,axis=1)
-        max_x,max_y,max_z = np.max(frame_basis,axis=0)
-        min_x,min_y,min_z = np.min(frame_basis,axis=0)
-        pad_xp = (max_x >= (Lx/2 - max_dist)/Lx)
-        pad_xm = (min_x <= -(Lx/2 + max_dist)/Lx)
-        pad_yp = (max_y >= (Ly/2 - max_dist)/Ly)
-        pad_ym = (min_y <= -(Ly/2 + max_dist)/Ly)
-        pad_zp = (max_z >= (Lz/2 - max_dist)/Lz) and (not is_2d)
-        pad_zm = (min_z <= -(Lz/2 + max_dist)/Lz) and (not is_2d)
+        max_x,max_y,max_z = np.max(f,axis=0)
+        min_x,min_y,min_z = np.min(f,axis=0)
+        pad_xp = (max_x >=  (Lx/2 - max_dist)/Lx)
+        pad_xm = (min_x <= -(Lx/2 - max_dist)/Lx)
+        pad_yp = (max_y >=  (Ly/2 - max_dist)/Ly)
+        pad_ym = (min_y <= -(Ly/2 - max_dist)/Ly)
+        pad_zp = (not is_2d) and (max_z >=  (Lz/2 - max_dist)/Lz)
+        pad_zm = (not is_2d) and (min_z <= -(Lz/2 - max_dist)/Lz)
 
         if not np.any([pad_xp,pad_xm,pad_yp,pad_ym,pad_zp,pad_zm]):
             return coords, np.arange(pnum)
 
         expanded = []
-        if pad_xp: expanded = [*expanded, *(frame_basis+e1)]
-        if pad_xm: expanded = [*expanded, *(frame_basis - e1)]
-        if pad_yp: expanded = [*expanded, *(frame_basis + e2)]
-        if pad_ym: expanded = [*expanded, *(frame_basis - e2)]
-        if pad_xp and pad_yp: expanded = [*expanded, *(frame_basis + e1 + e2)]
-        if pad_xp and pad_ym: expanded = [*expanded, *(frame_basis + e1 - e2)]
-        if pad_xm and pad_yp: expanded = [*expanded, *(frame_basis - e1 + e2)]
-        if pad_xm and pad_ym: expanded = [*expanded, *(frame_basis - e1 - e2)]
+        if pad_xp: expanded = [*expanded, *(f + e1)]
+        if pad_xm: expanded = [*expanded, *(f - e1)]
+        if pad_yp: expanded = [*expanded, *(f + e2)]
+        if pad_ym: expanded = [*expanded, *(f - e2)]
+        if pad_xp and pad_yp: expanded = [*expanded, *(f + e1 + e2)]
+        if pad_xp and pad_ym: expanded = [*expanded, *(f + e1 - e2)]
+        if pad_xm and pad_yp: expanded = [*expanded, *(f - e1 + e2)]
+        if pad_xm and pad_ym: expanded = [*expanded, *(f - e1 - e2)]
         if not is_2d:
-            if pad_zp: expanded = [*expanded, *(frame_basis + e3)]
-            if pad_zm: expanded = [*expanded, *(frame_basis - e3)]
-            if pad_xp and pad_zp: expanded = [*expanded, *(frame_basis + e1 + e3)]
-            if pad_xp and pad_zm: expanded = [*expanded, *(frame_basis + e1 - e3)]
-            if pad_xm and pad_zp: expanded = [*expanded, *(frame_basis - e1 + e3)]
-            if pad_xm and pad_zm: expanded = [*expanded, *(frame_basis - e1 - e3)]
-            if pad_yp and pad_zp: expanded = [*expanded, *(frame_basis + e2 + e3)]
-            if pad_yp and pad_zm: expanded = [*expanded, *(frame_basis + e2 - e3)]
-            if pad_ym and pad_zp: expanded = [*expanded, *(frame_basis - e2 + e3)]
-            if pad_ym and pad_zm: expanded = [*expanded, *(frame_basis - e2 - e3)]
-            if pad_xp and pad_yp and pad_zp: expanded = [*expanded, *(frame_basis + e1 + e2 + e3)]
-            if pad_xp and pad_yp and pad_zm: expanded = [*expanded, *(frame_basis + e1 + e2 - e3)]
-            if pad_xp and pad_ym and pad_zp: expanded = [*expanded, *(frame_basis + e1 - e2 + e3)]
-            if pad_xp and pad_ym and pad_zm: expanded = [*expanded, *(frame_basis + e1 - e2 - e3)]
-            if pad_xm and pad_yp and pad_zp: expanded = [*expanded, *(frame_basis - e1 + e2 + e3)]
-            if pad_xm and pad_yp and pad_zm: expanded = [*expanded, *(frame_basis - e1 + e2 - e3)]
-            if pad_xm and pad_ym and pad_zp: expanded = [*expanded, *(frame_basis - e1 - e2 + e3)]
-            if pad_xm and pad_ym and pad_zm: expanded = [*expanded, *(frame_basis - e1 - e2 - e3)]
+            if pad_zp: expanded = [*expanded, *(f + e3)]
+            if pad_zm: expanded = [*expanded, *(f - e3)]
+            if pad_xp and pad_zp: expanded = [*expanded, *(f + e1 + e3)]
+            if pad_xp and pad_zm: expanded = [*expanded, *(f + e1 - e3)]
+            if pad_xm and pad_zp: expanded = [*expanded, *(f - e1 + e3)]
+            if pad_xm and pad_zm: expanded = [*expanded, *(f - e1 - e3)]
+            if pad_yp and pad_zp: expanded = [*expanded, *(f + e2 + e3)]
+            if pad_yp and pad_zm: expanded = [*expanded, *(f + e2 - e3)]
+            if pad_ym and pad_zp: expanded = [*expanded, *(f - e2 + e3)]
+            if pad_ym and pad_zm: expanded = [*expanded, *(f - e2 - e3)]
+            if pad_xp and pad_yp and pad_zp: expanded = [*expanded, *(f + e1 + e2 + e3)]
+            if pad_xp and pad_yp and pad_zm: expanded = [*expanded, *(f + e1 + e2 - e3)]
+            if pad_xp and pad_ym and pad_zp: expanded = [*expanded, *(f + e1 - e2 + e3)]
+            if pad_xp and pad_ym and pad_zm: expanded = [*expanded, *(f + e1 - e2 - e3)]
+            if pad_xm and pad_yp and pad_zp: expanded = [*expanded, *(f - e1 + e2 + e3)]
+            if pad_xm and pad_yp and pad_zm: expanded = [*expanded, *(f - e1 + e2 - e3)]
+            if pad_xm and pad_ym and pad_zp: expanded = [*expanded, *(f - e1 - e2 + e3)]
+            if pad_xm and pad_ym and pad_zm: expanded = [*expanded, *(f - e1 - e2 - e3)]
 
-        expanded = np.array(expanded)
-        dist_to_coords = cdist(expanded,frame_basis).min(axis=1)
-        pad_idx = np.where(dist_to_coords <= max_dist)[0]
-        pad = (basis @ expanded[pad_idx].T).T
+        expanded = (b @ np.array(expanded).T).T
+        dist_to_coords = cdist(expanded,coords)
+        pad_idx = np.where(dist_to_coords.min(axis=-1) <= max_dist)[0]
+        pad = expanded[pad_idx]
 
     return np.array([*coords,*pad]), np.array([*np.arange(pnum),*(pad_idx%pnum)])
 
