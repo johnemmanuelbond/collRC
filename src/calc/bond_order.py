@@ -5,6 +5,9 @@ Contains methods to calculate bond orientational order. First in 2D cartesian sp
 
 import numpy as np
 from scipy.special import sph_harm_y
+from scipy.sparse import lil_matrix
+from graph_tool.all import Graph
+from graph_tool.search import dijkstra_search
 
 
 def flat_bond_order(pts:np.ndarray, nei_bool:np.ndarray, order:int = 6, ret_global=False) -> tuple[np.ndarray,np.complexfloating]:
@@ -376,3 +379,92 @@ def crystal_connectivity(psis:np.ndarray, nei_bool:np.ndarray, crystallinity_thr
     chi_ij = chi_top/chi_bot
 
     return np.sum(chi_ij>crystallinity_threshold,axis=-1)/norm
+
+
+
+def weighted_chi_graph(psis:np.ndarray, nei_bool:np.ndarray, phase_correct:np.ndarray, normalize_weights:bool = True) -> Graph:
+    """
+    *WIP represent colloidal systems as a graph*
+
+    :param psis: :math:`[N,]` array of complex bond orientational order parameters.
+    :type psis: ndarray
+    :param nei_bool: a :math:`[N,N]` boolean array indicating neighboring particles.
+    :type nei_bool: ndarray
+    :param phase_correct: array of complex phase factors (:math:`(R_{jk})^n`) to include a rotation between neighboring particles' :math:`\\psi_{n,j}`.
+    :type phase_correct: ndarray
+    :param normalize_weights: whether to normalize edge weights by the norm of the inner product, defaults to True
+    :type normalize_weights: bool, optional
+    :return: a :py:class:`graph-tool Graph <graph_tool.Graph>` with weighted edges according to bond orientational similarity.
+    :rtype: Graph
+    """
+    
+    g = Graph(lil_matrix(nei_bool),directed=False)
+    edges = np.array(g.get_edges())
+    i,j = edges.T
+
+    inner_prod = psis[i] * np.conjugate(phase_correct[j,i] * psis[j])
+    g.ep['dot'] = g.new_ep("double", vals = np.abs(np.real(inner_prod)))
+    g.ep['norm'] = g.new_ep("double", vals = np.abs(inner_prod))
+
+    if normalize_weights:
+        g.ep['weight'] = g.new_ep("double", vals = 1 - (g.ep['dot'].a / (g.ep['norm'].a + 1e-16)))
+    else:
+        g.ep['weight'] = g.new_ep("double", vals = 1 - g.ep['dot'].a)
+    
+    return g
+
+
+def global_bond_order(psis:np.ndarray, nei_bool:np.ndarray, phase_correct:np.ndarray, g:Graph|None = None, root:int|None=None, ret_graph:bool = False, normalize_weights:bool = True) -> tuple[np.ndarray,np.ndarray,Graph|None,int|None]:
+    """
+    *WIP compute globally phase-corrected bond orientational order parameters using a graph representation of the system*
+
+    :param psis: :math:`[N,]` array of complex bond orientational order parameters.
+    :type psis: ndarray
+    :param nei_bool: a :math:`[N,N]` boolean array indicating neighboring particles.
+    :type nei_bool: ndarray
+    :param phase_correct: array of complex phase factors (:math:`(R_{jk})^n`) to include a rotation between neighboring particles' :math:`\\psi_{n,j}`.
+    :type phase_correct: ndarray
+    :param g: an optional pre-computed :py:class:`graph-tool Graph <graph_tool.Graph>` with weighted edges according to bond orientational similarity, defaults to None
+    :type g: Graph | None, optional
+    :param root: an optional root particle index from which to compute the Dijkstra search, defaults to None
+    :type root: int | None, optional
+    :param ret_graph: whether to return the graph used in the calculation, defaults to False
+    :type ret_graph: bool, optional
+    :param normalize_weights: whether to normalize edge weights by the norm of the inner product, defaults to True
+    :type normalize_weights: bool, optional
+    :return: :math:`[N,]` array of globally phase-corrected complex bond orientational order parameters, :math:`[N,]` array of graph distances from the root particle, optionally the graph used in the calculation, and the root particle index.
+    :rtype: ndarray[complex], ndarray `(, Graph, int)`
+    """
+
+    pnum = len(psis)
+
+    if g is None:
+        g = weighted_chi_graph(psis, nei_bool, phase_correct, normalize_weights = normalize_weights)
+
+    if root is None:
+        vb = g.get_total_degrees(g.get_vertices(), eweight=g.ep['dot'])
+        root = np.argmax(vb)
+    
+    weighted_dist, predecessors = dijkstra_search(g, g.ep['weight'], source=root)
+    sidx = np.argsort(weighted_dist.a)
+    sources =  predecessors.a[sidx]
+    targets = np.arange(pnum)[sidx]
+    dijkstra_edges = np.array([sources, targets]).T[1:]
+
+    g_dist = np.ones(pnum)*np.inf
+    g_dist[root] = 0
+    psi_rot = np.ones(pnum, dtype=complex)
+
+    for s, t in zip(sources, targets):
+        g_dist[t] = g_dist[s] + 1
+        psi_rot[t] = phase_correct[t, s] * psi_rot[s]
+
+    phase_ref = np.conjugate(psis[root]) / np.abs(psis[root])
+    psi_corrected = psi_rot * psis * phase_ref
+
+    if ret_graph:
+        g2 = Graph(pnum, directed=True)
+        g2.add_edge_list(dijkstra_edges)
+        return psi_corrected, g_dist, g2, root
+    
+    return psi_corrected, g_dist

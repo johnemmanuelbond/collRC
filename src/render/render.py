@@ -6,11 +6,12 @@ Contains methods for rendering particle configurations on matplotlib figures. Co
 import numpy as np
 import gsd.hoomd
 import matplotlib.pyplot as plt
+from matplotlib.collections import PatchCollection
 
 from moviepy.video.VideoClip import VideoClip
 
 from visuals import Field
-from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches, parallax_patches, plot_principal_axes
+from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches
 from coloring import ColorBase
 
 def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
@@ -48,7 +49,7 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
 
     # Update reaction coordinates inside coloring style
     style.snap = snap
-    style.calc_state()
+    # style.calc_state()
 
     # Setup figure with aspect ratio matching simulation box
     Lx, Ly, _, _, _, _ = snap.configuration.box
@@ -60,7 +61,7 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
     # Apply coloring and styling
     local_colors = style.local_colors()
     patches = flat_patches(pts, qts, shape = style.shape)
-    ptcls = ax.add_collection(patches, autolim=True)
+    ptcls = ax.add_collection(PatchCollection(patches), autolim=True)
     ptcls.set_fc(local_colors)  # Face colors from coloring scheme
     if dark:
         ptcls.set_ec('grey')    # Edge color for dark background
@@ -115,6 +116,96 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
     return fig, ax
 
 
+def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
+              view_dir = np.array([0,0,1]), view_dist=50, show_text=True,
+              dpi=600, figsize=3.5, dark=True, **kwargs):
+    """
+    Create a visualization of a single GSD frame with particles in a 3d space.
+
+    :param snap: GSD frame object containing particle data and simulation state
+    :type snap: gsd.hoomd.Frame
+    :param style: :py:class:`ColorBase` object for coloring scheme
+    :type style: ColorBase
+    :param view_dir: Direction vector for viewing the sphere (default: [0,0,1])
+    :type view_dir: ndarray, optional
+    :param view_dist: Distance from the sphere center to the viewpoint (default: 100)
+    :type view_dist: float, optional
+    :param show_text: Whether to display text annotations (default: True)
+    :type show_text: bool, optional
+    :param dpi: Resolution for output image (default: 600)
+    :type dpi: int, optional
+    :param figsize: Base figure size in inches (default: 3.5)
+    :type figsize: float, optional
+    :param dark: Whether to use dark background theme (default: True)
+    :type dark: bool, optional
+    :param kwargs: Additional options for customizating action strings and other overlays. Can include 'Lx', 'Ly' or 'L' to specify static box dimensions. Defaults to box dimensions from GSD frame, but since these may change over the course of a trajectory, specifying fixed values can help maintain consistent aspect ratios across frames. 
+    :type kwargs: dict
+    :return: Matplotlib figure and axis objects
+    :rtype: Tuple[plt.Figure, plt.Axes]
+    """
+    
+    # Set matplotlib style based on background preference
+    if dark: plt.style.use('dark_background')
+    
+    pts = snap.particles.position
+    # qts = snap.particles.orientation
+    qts = np.array([view_dir]*pts.shape[0])
+
+    # Update reaction coordinates inside coloring style
+    style.snap = snap
+    # style.calc_state()
+    
+    # Setup figure with aspect ratio matching simulation box
+    if 'Lx' in kwargs and 'Ly' in kwargs:
+        Lx = kwargs['Lx']
+        Ly = kwargs['Ly']
+    elif 'L' in kwargs:
+        Lx = kwargs['L']
+        Ly = kwargs['L']
+    else:
+        Lx, Ly, _, _, _, _ = snap.configuration.box
+    
+    if 'view_ref' in kwargs:
+        view_ref = kwargs['view_ref']
+    else:
+        view_ref = 'z'
+
+    if 'parallax' in kwargs:
+        parallax = kwargs['parallax']
+    else:
+        parallax = True
+
+    fig, ax = plt.subplots(figsize=(figsize, figsize*Ly/Lx), dpi=dpi)
+    ax.set_xlim([-Lx/2, Lx/2])
+    ax.set_ylim([-Ly/2, Ly/2])
+    ax.set_aspect('equal')
+
+    # Apply coloring and styling
+    local_colors = style.local_colors()
+    patches, to_render = projected_patches(pts, qts, shape = style.shape,
+                                           view_dir=view_dir, view_dist=view_dist, view_ref=view_ref,
+                                           parallax = parallax)
+    ptcls = ax.add_collection(PatchCollection(patches[to_render].tolist()), autolim=True)
+    ptcls.set_fc(local_colors[to_render])  # Face colors from coloring scheme
+    if dark:
+        ptcls.set_ec('grey')    # Edge color for dark background
+    else:
+        ptcls.set_ec('black')   # Edge color for light background
+    ptcls.set_lw(0.5)          # Edge line width
+
+    # Add text annotations in top-left corner
+    state_string = style.state_string()
+    if show_text:
+        ax.text(-1.0*Lx/2, 0.9*Ly/2, state_string,
+                backgroundcolor='white', fontsize='large', zorder=2, color='k')
+
+    # Clean up plot appearance
+    ax.axis('off')
+    fig.tight_layout()
+
+    return fig, ax
+
+
 def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
                   view_dir = np.array([0,0,1]), view_dist=100, show_text=True,
                   dpi=600, figsize=3.5, dark=True, **kwargs):
@@ -148,11 +239,11 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
     
     pts = snap.particles.position
     R = np.linalg.norm(pts, axis=-1).mean()
-    qts = snap.particles.orientation
+    qts = pts/R
 
     # Update reaction coordinates inside coloring style
     style.snap = snap
-    style.calc_state()
+    # style.calc_state()
     
     # Setup figure with aspect ratio matching simulation box
     if 'Lx' in kwargs and 'Ly' in kwargs:
@@ -163,6 +254,11 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
         Ly = kwargs['L']
     else:
         Lx, Ly, _, _, _, _ = snap.configuration.box
+    
+    if 'view_ref' in kwargs:
+        view_ref = kwargs['view_ref']
+    else:
+        view_ref = 'z'
 
     fig, ax = plt.subplots(figsize=(figsize, figsize*Ly/Lx), dpi=dpi)
     ax.set_xlim([-Lx/2, Lx/2])
@@ -178,8 +274,10 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
 
     # Apply coloring and styling
     local_colors = style.local_colors()
-    patches, to_render = projected_patches(pts, qts, shape = style.shape, view_dir=view_dir, view_dist=view_dist)
-    ptcls = ax.add_collection(patches, autolim=True)
+    patches, to_render = projected_patches(pts, qts, shape = style.shape,
+                                           view_dir=view_dir, view_dist=view_dist, view_ref=view_ref,
+                                           parallax = False, centered=False)
+    ptcls = ax.add_collection(PatchCollection(patches[to_render].tolist()), autolim=True)
     ptcls.set_fc(local_colors[to_render])  # Face colors from coloring scheme
     if dark:
         ptcls.set_ec('grey')    # Edge color for dark background
@@ -205,16 +303,18 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
     return fig, ax
 
 
-def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
-              view_dir = np.array([0,0,1]), view_dist=50, show_text=True,
-              dpi=600, figsize=3.5, dark=True, **kwargs):
+def render_surf(snap:gsd.hoomd.Frame, style:ColorBase, gradient:callable,
+                  view_dir = np.array([0,0,1]), view_dist=100, show_text=True,
+                  dpi=600, figsize=3.5, dark=True, **kwargs):
     """
-    Create a visualization of a single GSD frame with particles in a 3d space.
+    Create a visualization of a single GSD frame with particles on an arbitrary surface defined by a gradient function which computes the surface normal at each point.
 
     :param snap: GSD frame object containing particle data and simulation state
     :type snap: gsd.hoomd.Frame
     :param style: :py:class:`ColorBase` object for coloring scheme
     :type style: ColorBase
+    :param gradient: Function that computes surface normal vectors at given positions
+    :type gradient: callable
     :param view_dir: Direction vector for viewing the sphere (default: [0,0,1])
     :type view_dir: ndarray, optional
     :param view_dist: Distance from the sphere center to the viewpoint (default: 100)
@@ -237,11 +337,13 @@ def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
     if dark: plt.style.use('dark_background')
     
     pts = snap.particles.position
-    qts = snap.particles.orientation
+    grads = gradient(pts.T)
+    grads = grads/np.linalg.norm(grads, axis=-1, keepdims=True)
+    qts = np.array([np.zeros(pts.shape[0]), *grads.T]).T
 
     # Update reaction coordinates inside coloring style
     style.snap = snap
-    style.calc_state()
+    # style.calc_state()
     
     # Setup figure with aspect ratio matching simulation box
     if 'Lx' in kwargs and 'Ly' in kwargs:
@@ -252,17 +354,31 @@ def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
         Ly = kwargs['L']
     else:
         Lx, Ly, _, _, _, _ = snap.configuration.box
+    
+    if 'view_ref' in kwargs:
+        view_ref = kwargs['view_ref']
+    else:
+        view_ref = 'z'
 
     fig, ax = plt.subplots(figsize=(figsize, figsize*Ly/Lx), dpi=dpi)
     ax.set_xlim([-Lx/2, Lx/2])
     ax.set_ylim([-Ly/2, Ly/2])
     ax.set_aspect('equal')
 
+    # dr = np.linspace(-R,R,1000)
+    # xx,yy = np.meshgrid(dr, dr)
+    # rads = np.sqrt(xx**2+yy**2)
+    # rads[rads>R]=np.nan
+    # C = (rads/R)**2/2
+    # ax.pcolormesh(dr,dr,C,cmap='binary',vmin=0,vmax=1)
+
     # Apply coloring and styling
     local_colors = style.local_colors()
-    patches = parallax_patches(pts, qts, shape = style.shape, view_dir=view_dir, view_dist=view_dist)
-    ptcls = ax.add_collection(patches, autolim=True)
-    ptcls.set_fc(local_colors)  # Face colors from coloring scheme
+    patches, to_render = projected_patches(pts, qts[:,1:], shape = style.shape,
+                                           view_dir=view_dir, view_dist=view_dist, view_ref=view_ref,
+                                           parallax = False, centered=True)
+    ptcls = ax.add_collection(PatchCollection(patches[to_render].tolist()), autolim=True)
+    ptcls.set_fc(local_colors[to_render])  # Face colors from coloring scheme
     if dark:
         ptcls.set_ec('grey')    # Edge color for dark background
     else:

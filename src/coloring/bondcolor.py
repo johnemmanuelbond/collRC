@@ -92,6 +92,7 @@ class ColorBondOrder(ColorBase):
         self._is_disc = (np.round(self._shape.aspect, 2) == 1 and np.round(self._shape.n, 2) == 2)
         self._is_proj = surface_normal is not None and not calc_3d
         self._per = periodic
+        self._padfrac = None
         self._3d = calc_3d
         self._stretched = (not self._is_disc) and (not self._3d)
 
@@ -193,11 +194,12 @@ class ColorBondOrder(ColorBase):
             angles = quat_to_angle(self.snap.particles.orientation)
         else: angles = np.zeros(self.num_pts)
 
-        cut = self._cut * self.shape.ax * 2
-
         if self._per:
             basis = box_to_matrix(self.snap.configuration.box)
-            pts, pad_idx = expand_around_pbc(pts, basis, max_dist=cut)
+            if not self._3d: basis[2,2]=0 # ensure 2d periodicity
+            cut = self._cut * self.shape.ax * 4 if self._padfrac is None else None
+            pts, pad_idx = expand_around_pbc(pts, basis, max_dist=cut, padfrac=self._padfrac)
+            if self._padfrac is None: self._padfrac = np.round(len(pts)/self.num_pts - 1.0,3)
         else:
             pad_idx = np.arange(self.num_pts)
         

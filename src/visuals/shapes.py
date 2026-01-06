@@ -6,7 +6,7 @@ Contains a few helper methods representing colloidal shapes in matplotlib. Inclu
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from matplotlib import collections, transforms, patches
+from matplotlib import transforms, patches
 from calc import quat_to_angle
 
 
@@ -83,7 +83,7 @@ class SuperEllipse():
 
 _default_sphere = SuperEllipse(ax=0.5,ay=0.5,n=2.0)
 def flat_patches(pts, orient, shape=_default_sphere,n_resolve=101):
-    """Generates a PatchCollection of SuperEllipse shapes in 2D at specified positions and orientations.
+    """Generates a list of matplotlib Patches which render SuperEllipse shapes in 2D at specified positions and orientations.
 
     :param pts: an :math:`[N, 2+]` array of points where each shape should be centered. Only the x- and y-coordinates are used.
     :type pts: ndarray
@@ -93,8 +93,8 @@ def flat_patches(pts, orient, shape=_default_sphere,n_resolve=101):
     :type shape: SuperEllipse, optional
     :param n_resolve: the number of points to use to resolve the perimeter of each shape, defaults to 101
     :type n_resolve: int, optional
-    :return: a PatchCollection of the specified shapes at the specified points and orientations
-    :rtype: PatchCollection
+    :return: a list of the specified shapes at the specified points and orientations
+    :rtype: list[Patch]
     """
 
     angles = quat_to_angle(orient)
@@ -103,18 +103,18 @@ def flat_patches(pts, orient, shape=_default_sphere,n_resolve=101):
     all_patches = [patches.Polygon(peri, transform=transforms.Affine2D().rotate(a).translate(r[0], r[1]), zorder=1) 
                    for a, r in zip(angles, pts)]
     
-    return collections.PatchCollection(all_patches)
+    return all_patches
     
 
 
-def projected_patches(pts, orient, shape=_default_sphere, n_resolve=101, view_dir = np.array([0,0,1]), view_dist=100.0):
-    """Generates a PatchCollection of SuperEllipse shapes in 3D projected onto an embedded 2D surface at specified positions and orientations.
+def projected_patches(pts, grads, shape=_default_sphere, n_resolve=101, view_dir = np.array([0,0,1]), view_dist=100.0, view_ref = 'z', parallax = False, centered=False):
+    """Generates a list of matplotlib Patches which render SuperEllipse shapes in 3D projected onto an embedded 2D surface at specified positions and orientations.
 
-    *WIP: only works for spherical particles on spherical surfaces right now.*
+    *WIP: still needs testing for acircular shapes on surfaces*
 
     :param pts: an :math:`[N, 3]` array of points of each shape in real space
     :type pts: ndarray
-    :param orient: an :math:`[N, 4]` array of quaternions specifying the orientation of each shape
+    :param grads: an :math:`[N, 3]` array of vectors specifying the surface gradient (normal vector) at each point
     :type orient: ndarray
     :param shape: the shape to be drawn at each point, defaults to a sphere of radius 0.5
     :type shape: SuperEllipse, optional
@@ -124,80 +124,63 @@ def projected_patches(pts, orient, shape=_default_sphere, n_resolve=101, view_di
     :type view_dir: ndarray, optional
     :param view_dist: the distance from the viewer to the origin, defaults to 100.0
     :type view_dist: float, optional
-    :return: a PatchCollection of the specified shapes at the specified points and orientations, projected onto 2D, as well as a boolean array indicating which particles are in front of the viewer
-    :rtype: Tuple[PatchCollection, ndarray]
+    :param view_ref: a string specifying which axis should be treated as 'up' in the viewing frame, defaults to 'z'
+    :type view_ref: str, optional
+    :param parallax: if True, particles further away appear smaller. If False, particles closer are scaled to take up a smaller portion of the proected surface, defaults to False
+    :type parallax: bool, optional
+    :param centered: if True, recenters all particles to have median position (0,0) in the projected plane, defaults to False
+    :type centered: bool, optional
+    :return: a list of matplotlib patches correctly rotated into place.
+    :rtype: list[Patch]
     """
 
+    # set up reference direction
+    ref = np.array([0,-1,0])
+    if view_ref == 'z':
+        pass
+    elif 'x' in view_ref:
+        ref = np.array([0,0,-1])
+    elif 'y' in view_ref:
+        ref = np.array([-1,0,0])
+    else:
+        raise Exception(f"unrecognized reference view: {view_ref}");
+    # optional negation to flip axes
+    if '-' in view_ref: ref*=-1
+
+    # set up projected coorinate system, xp,yp,zp are positions, ip,jp,kp are normal vectors to a constraing surface
     e3 = view_dir/np.linalg.norm(view_dir)
-    e1 = np.cross(e3,np.array([0,-1,0]))
+    e1 = np.cross(e3,ref)
     e1 = e1/np.linalg.norm(e1,axis=-1)
     e2 = np.cross(e3,e1)
     e2 = e2/np.linalg.norm(e2,axis=-1)
-    proj_pts = np.array([pts @ e1, pts @ e2, pts @ e3]).T
+    xp, yp, zp = np.array([pts @ e1, pts @ e2, pts @ e3])
+    if centered:
+        xp = xp - np.median(xp)
+        yp = yp - np.median(yp)
+    ip, jp, kp = np.array([grads @ e1, grads @ e2, grads @ e3])
 
-    # Create a collection of particle patches with proper orientation and position
-    # Each particle is a polygon rotated and translated to match simulation state
+    # calculate the factors needed to scale and rotate each particle to look as if it's sitting on the projected surface
+    if parallax:
+        parallax_factor = 1.0 + zp/view_dist
+    else:
+        parallax_factor = 1.0 - zp/view_dist
+    rotate_angle = np.atan2(ip,-jp)
+    zorder = np.array(10*(zp-zp.min()) + 1, dtype=int)
+
+    # keep track of which particles are actually visible
+    to_render = (kp > 0.1) & (zp > np.median(zp)-zp.std())
+
+    # Each particle is a polygon rotated and translated to match simulation state, first we set up the matplotlib transforms:
+    trans_list = [transforms.Affine2D() for _ in pts]
+    trans_list = [t.scale(sx = p, sy = p*s) for t, p, s in zip(trans_list, parallax_factor, kp)]
+    trans_list = [t.rotate(a) for t, a in zip(trans_list, rotate_angle)]
+    trans_list = [t.translate(x, y) for t, x, y in zip(trans_list, xp, yp)]
+
+    # Then we create a collection of particle patches using those transforms
     peri = shape.surface(np.linspace(0,2*np.pi,n_resolve,endpoint=False))
-    to_render = proj_pts[:, 2] >= 0
-    
-    # # CODE TO CALCULATE PROJECTED QUATERNION ORIENTATIONS
-    # angles = quat_to_angle(orient)
-    # proj_orients = np.array([orient @ np.array([0,0,1,0]) for orient in orient])
-    # proj_orients = np.array([o/np.linalg.norm(o) for o in proj_orients])
-    # proj_angles = np.arctan2(proj_orients[:,1], proj_orients[:,0])
-    # proj_angles = proj_angles + np.pi/2.0 
+    all_patches = np.array([patches.Polygon(peri, transform = t, zorder = int(zo)) for t, zo in zip(trans_list, zorder)])
 
-    all_patches = [patches.Polygon(peri,
-                                   transform=transforms.Affine2D().scale(sx=(1.0-r[2]/view_dist),sy=r[2]/np.linalg.norm(r)*(1.0-r[2]/view_dist)).rotate(np.atan2(r[0],-r[1])).translate(r[0],r[1]),
-                                   zorder=int(r[2])+1) 
-                   for r in proj_pts[to_render]]
-
-    return collections.PatchCollection(all_patches), to_render
-
-
-def parallax_patches(pts, orient, shape=_default_sphere, n_resolve=101, view_dir = np.array([0,0,1]), view_dist=100.0):
-    """Generates a PatchCollection of SuperEllipse shapes in 3D projected along the view direction at specified positions and orientations.
-
-    :param pts: an :math:`[N, 3]` array of points of each shape in real space
-    :type pts: ndarray
-    :param orient: an :math:`[N, 4]` array of quaternions specifying the orientation of each shape
-    :type orient: ndarray
-    :param shape: the shape to be drawn at each point, defaults to a sphere of radius 0.5
-    :type shape: SuperEllipse, optional
-    :param n_resolve: the number of points to use to resolve the perimeter of each shape, defaults to 251
-    :type n_resolve: int, optional
-    :param view_dir: a :math:`[3,]` vector specifying the viewing direction, defaults to looking down the z-axis
-    :type view_dir: ndarray, optional
-    :param view_dist: the distance from the viewer to the origin, defaults to 100.0
-    :type view_dist: float, optional
-    :return: a PatchCollection of the specified shapes at the specified points and orientations, projected onto 2D, as well as a boolean array indicating which particles are in front of the viewer
-    :rtype: Tuple[PatchCollection, ndarray]
-    """
-
-    e3 = view_dir/np.linalg.norm(view_dir)
-    e1 = np.cross(e3,np.array([0,-1,0]))
-    e1 = e1/np.linalg.norm(e1,axis=-1)
-    e2 = np.cross(e3,e1)
-    e2 = e2/np.linalg.norm(e2,axis=-1)
-    proj_pts = np.array([pts @ e1, pts @ e2, pts @ e3]).T
-
-    # Create a collection of particle patches with proper orientation and position
-    # Each particle is a polygon rotated and translated to match simulation state
-    peri = shape.surface(np.linspace(0,2*np.pi,n_resolve,endpoint=False))
-    
-    # # CODE TO CALCULATE PROJECTED QUATERNION ORIENTATIONS
-    # angles = quat_to_angle(orient)
-    # proj_orients = np.array([orient @ np.array([0,0,1,0]) for orient in orient])
-    # proj_orients = np.array([o/np.linalg.norm(o) for o in proj_orients])
-    # proj_angles = np.arctan2(proj_orients[:,1], proj_orients[:,0])
-    # proj_angles = proj_angles + np.pi/2.0 
-
-    all_patches = [patches.Polygon(peri,
-                                   transform=transforms.Affine2D().scale(sx=(1.0+r[2]/view_dist),sy=(1.0+r[2]/view_dist)).rotate(0).translate(r[0],r[1]),
-                                   zorder=int(r[2])+1) 
-                   for r in proj_pts]
-
-    return collections.PatchCollection(all_patches)
+    return all_patches, to_render
 
 
 def plot_principal_axes(com:np.ndarray, gyr:np.ndarray, ax=None, view_dir = np.array([0,0,1]), **plt_kwargs):

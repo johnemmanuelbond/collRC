@@ -5,11 +5,13 @@ color definitions, color mixing functions, and a base class for defining colorin
 schemes based on particle state.
 """
 
+import warnings
 import numpy as np
 import gsd.hoomd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcol
 from visuals import SuperEllipse
+from calc import box_to_matrix
 
 ############################################################################################################
 # BASE COLOR DEFINITIONS AND MIXING FUNCTIONS
@@ -143,7 +145,9 @@ class ColorBase():
         if not _gsd_match(self._f, snap):
             self._f = snap
             try: self.calc_state()
-            except AttributeError: pass
+            except AttributeError:
+                warnings.warn("WARNING: attempted to calculate system state without all snapshot attributes.")
+                pass
     
     @property
     def num_pts(self) -> int:
@@ -198,6 +202,46 @@ class ColorBase():
         """
         if snap is not None: self.snap = snap
         return ""
+    
+    def extxyz(self, snap: gsd.hoomd.Frame = None) -> str:
+        """
+        Generate an string representation of the current frame to be written to an
+        Ovito-compatible `extended xtz <https://www.ovito.org/manual/reference/file_formats/input/xyz.html#file-formats-input-xyz-extended-format>`_ (:code:`.extxyz`) file. Each consists of a standardized header and a list of particle properties per line:
+
+        :code-block:: none
+            N
+            Lattice="a1 a2 a3 b1 b2 b3 c1 c2 c3" Origin="ox oy oz" pbc="F F F" Time=step Properties=type:I:1:pos:R:3:orientation:R:4:shape_asphericity:R:3:color:R:3 Comment="state description"
+            type x y z ox oy oz ow ax ay az r g b
+            ...
+        
+        :param snap: GSD frame containing particle data
+        :type snap: gsd.hoomd.Frame
+        :return: string representation of the frame in :code:`.extxyz` format
+        :rtype: string
+        """
+        if snap is not None: self.snap = snap
+        colors = self.local_colors().clip(0,1).astype(np.float32)
+
+        # fetch snapshot properties
+        pnum = self.num_pts
+        pts = self._f.particles.position
+        typeid = self._f.particles.typeid
+        ori = self._f.particles.orientation
+        step = self._f.configuration.step
+        box = box_to_matrix(self._f.configuration.box).T.astype(np.float32)
+        origin = -0.5 * (box[0] + box[1] + box[2])
+        shape = np.array([self.shape.ax, self.shape.ay, 0.5], dtype=np.float32)
+
+        # write as a string in the extxyz format
+        box_str = f"Lattice=\"{box[0,0]} {box[1,0]} {box[2,0]} {box[0,1]} {box[1,1]} {box[2,1]} {box[0,2]} {box[1,2]} {box[2,2]}\" Origin=\"{origin[0]} {origin[1]} {origin[2]}\" pbc=\"F F F\""
+        time_str = f" Time={step}"
+        prop_str = " Properties=type:I:1:pos:R:3:orientation:R:4:shape_asphericity:R:3:color:R:3"
+        state_str = " Comment=\""+"".join(self.state_string().splitlines())+"\""
+        frame_str = ""
+        for i in range(pnum):
+            frame_str += f"{typeid[i]} {pts[i,0]} {pts[i,1]} {pts[i,2]} {ori[i,0]} {ori[i,1]} {ori[i,2]} {ori[i,3]} {shape[0]} {shape[1]} {shape[2]} {colors[i,0]} {colors[i,1]} {colors[i,2]}\n"
+
+        return f"{pnum}\n{box_str}{time_str}{prop_str}{state_str}\n{frame_str}"
 
 class ColorBlender(ColorBase):
     """Blend two coloring styles using a two-argument color blending function.

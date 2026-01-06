@@ -158,6 +158,7 @@ def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8, 
     f = (np.linalg.inv(b) @ coords.T).T
 
     if max_dist is None:
+        assert padfrac is not None, "Either max_dist or padfrac must be specified"
         if is_2d:
             expanded = np.array([
                 *(f+e1),*(f+e2),
@@ -181,7 +182,6 @@ def expand_around_pbc(coords:np.ndarray, basis:np.ndarray, padfrac:float = 0.8, 
         pad = (b @ expanded[pad_idx].T).T
 
     else:
-        assert padfrac is not None, "Either max_dist or padfrac must be specified"
         Lx,Ly,Lz = np.linalg.norm(basis,axis=1)
         max_x,max_y,max_z = np.max(f,axis=0)
         min_x,min_y,min_z = np.min(f,axis=0)
