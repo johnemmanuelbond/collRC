@@ -6,12 +6,12 @@ Contains methods for rendering particle configurations on matplotlib figures. Co
 import numpy as np
 import gsd.hoomd
 import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
+from matplotlib.collections import PatchCollection, LineCollection
 
 from moviepy.video.VideoClip import VideoClip
 
 from visuals import Field
-from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches
+from visuals import contour_PEL, spectral_PEL, flat_patches, projected_patches, chain_patches
 from coloring import ColorBase
 
 def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
@@ -182,16 +182,58 @@ def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
 
     # Apply coloring and styling
     local_colors = style.local_colors()
-    patches, to_render = projected_patches(pts, qts, shape = style.shape,
+    patches, _ = projected_patches(pts, qts, shape = style.shape,
                                            view_dir=view_dir, view_dist=view_dist, view_ref=view_ref,
                                            parallax = parallax)
-    ptcls = ax.add_collection(PatchCollection(patches[to_render].tolist()), autolim=True)
-    ptcls.set_fc(local_colors[to_render])  # Face colors from coloring scheme
-    if dark:
-        ptcls.set_ec('grey')    # Edge color for dark background
+    
+    # Add and layer bonds if specified in kwargs
+    if 'chain' in kwargs and kwargs['chain']:       # start with boolean, assume subsequent particles are connected
+        centers = np.array([patch.get_transform().transform(patch.get_xy())[:-1].mean(axis=0)
+                    for patch in patches]) #[to_render].tolist()
+        zos = np.array([patch.get_zorder() for patch in patches]) #[to_render].tolist()
+        bonded_ptcls = np.stack([centers[:-1], centers[1:]], axis=1)
+        bonded_zs = np.stack([zos[:-1], zos[1:]], axis=1)
+        lines, outlines = chain_patches(pts=bonded_ptcls, zs=bonded_zs)
+        if dark:
+            for i in range(len(patches)):
+                ptcl = ax.add_collection(PatchCollection([patches[i]]), autolim=True) # patches[to_render].tolist()
+                ptcl.set_fc(local_colors[i])  # Face colors from coloring scheme, local_colors[to_render]
+                ptcl.set_ec('grey')    # Edge color for dark background
+                ptcl.set_lw(0.5)       # Edge line width
+                ptcl.set_zorder(zos[i])
+            for i in range(len(lines)):
+                bond_outline = ax.add_line(outlines[i])
+                bond = ax.add_line(lines[i])
+                bond_outline.set_color('grey')
+                bond_outline.set_linewidth(6)
+                bond.set_color('white')
+                bond.set_linewidth(5)
+        else:
+            for i in range(len(patches)):
+                ptcl = ax.add_collection(PatchCollection([patches[i]]), autolim=True) # patches[to_render].tolist()
+                ptcl.set_fc(local_colors[i])  # Face colors from coloring scheme, local_colors[to_render]
+                ptcl.set_ec('black')    # Edge color for dark background
+                ptcl.set_lw(0.5)        # Edge line width
+                ptcl.set_zorder(zos[i])
+            for i in range(len(lines)):
+                bond_outline = ax.add_line(outlines[i])
+                bond_outline.set_color('black')
+                bond_outline.set_linewidth(6)
+                bond = ax.add_line(lines[i])
+                bond.set_color('lightgray')
+                bond.set_linewidth(5)
     else:
-        ptcls.set_ec('black')   # Edge color for light background
-    ptcls.set_lw(0.5)          # Edge line width
+        zos = np.array([patch.get_zorder() for patch in patches])
+        order = np.argsort(zos)
+        patches_sorted = patches[order]
+        colors_sorted = local_colors[order]
+        ptcls = ax.add_collection(PatchCollection(patches_sorted.tolist()), autolim=True) # patches[to_render].tolist()
+        ptcls.set_fc(colors_sorted) # Face colors from coloring scheme, local_colors[to_render]
+        if dark:
+            ptcls.set_ec('grey')    # Edge color for dark background
+        else:
+            ptcls.set_ec('black')   # Edge color for light background
+        ptcls.set_lw(0.5)           # Edge line width
 
     # Add text annotations in top-left corner
     state_string = style.state_string()
