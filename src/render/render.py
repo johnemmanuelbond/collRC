@@ -186,6 +186,8 @@ def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
                                            view_dir=view_dir, view_dist=view_dist, view_ref=view_ref,
                                            parallax = parallax)
     
+    # we can make collecions of both patches AND line, so we should shorten this code!
+
     # Add and layer bonds if specified in kwargs
     if 'chain' in kwargs and kwargs['chain']:       # start with boolean, assume subsequent particles are connected
         centers = np.array([patch.get_transform().transform(patch.get_xy())[:-1].mean(axis=0)
