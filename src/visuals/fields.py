@@ -197,7 +197,7 @@ class Field:
 _default_qpole = Field(n=2,dg=30)
 _default_qpole.k_trans[:] = 150.0
 
-def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, **contour_kwargs):
+def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, width=None, height=None, **contour_kwargs):
     """Places a contour plot of the translational potential energy landscape contained in a :py:class:`Field` instance on the provided ``Axis``.
 
     :param ax: Axis to draw the contours on. If None, a new figure and axis will be created.
@@ -206,6 +206,10 @@ def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, **contour
     :type field: Field, optional
     :param levels: Contour levels to draw. If None, levels are automatically determined from the potential.
     :type levels: array-like, optional
+    :param width: The width of each frame, so as to correcly draw contour lines over the whole simulation box. defaults to dg
+    :type width: float, optional
+    :param height: The height of each frame, so as to correcly draw contour lines over the whole simulation box. defaults to dg
+    :type height: float, optional
     :param contour_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.contour` (colors, linewidths, etc)
     :type contour_kwargs: dict
     :return: The ContourSet object created by :meth:`Axes.contour`.
@@ -214,8 +218,12 @@ def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, **contour
     dg = field.electrode_gap
 
     # Create a grid for evaluating the potential
-    xx = np.linspace(-dg/2, dg/2, 1000)
-    yy = np.linspace(-dg/2, dg/2, 1000)
+    if width is None:
+        width = dg
+    if height is None:
+        height = dg
+    xx = np.linspace(-width/2, width/2, 1000)
+    yy = np.linspace(-height/2, height/2, 1000)
     XX,YY = np.meshgrid(0.5*(xx[1:]+xx[:-1]), 0.5*(yy[1:]+yy[:-1]))
     U = field.U_trans(XX,YY)
 
@@ -248,15 +256,17 @@ def contour_PEL(ax=None, field: Field = _default_qpole, levels = None, **contour
     return cs
 
 
-def spectral_PEL(ax=None, field: Field = _default_qpole, levels = None, **pcolormesh_kwargs):
+def spectral_PEL(ax=None, field: Field = _default_qpole, width=None, height=None, **pcolormesh_kwargs):
     """"Places a colorm-mapped plot of the translational potential energy landscape contained in an :py:class:`Field` instance on the provided ``Axis``.  Regions outside the virtual electrode gap or outside the normalization range are mapped to none. coloring defaults to the Spectral colormap on a 200kT scale, but these are configurable via ``pcolormesh_kwargs``.
 
     :param ax: Axis to draw the contours on. If None, a new figure and axis will be created.
     :type ax: matplotlib.axes.Axes, optional
     :param field: A :py:class:`Field` instance which contains the current field conditions (strength, shape). Defaults to a quadrupolar field set to ~2.5 volts (~k=150kT).
     :type field: Field, optional
-    :param levels: Contour levels to draw. If None, levels are automatically determined from the potential.
-    :type levels: array-like, optional
+    :param width: The width of each frame, so as to correcly draw contour lines over the whole simulation box. defaults to dg
+    :type width: float, optional
+    :param height: The height of each frame, so as to correcly draw contour lines over the whole simulation box. defaults to dg
+    :type height: float, optional
     :param pcolormesh_kwargs: Additional keyword arguments forwarded to :meth:`matplotlib.axes.Axes.pcolormesh` (cmap, norm, etc)
     :type pcolormesh_kwargs: dict
     :return: The QuadMesh returned by :meth:`Axes.pcolormesh`.
@@ -265,8 +275,13 @@ def spectral_PEL(ax=None, field: Field = _default_qpole, levels = None, **pcolor
     dg = field.electrode_gap
 
     # Create evaluation grid
-    xx = np.linspace(-dg/2, dg/2, 1000)
-    yy = np.linspace(-dg/2, dg/2, 1000)
+    
+    if width is None:
+        width = dg
+    if height is None:
+        height = dg
+    xx = np.linspace(-width/2, width/2, 1000)
+    yy = np.linspace(-height/2, height/2, 1000)
     XY = np.meshgrid(0.5*(xx[1:]+xx[:-1]), 0.5*(yy[1:]+yy[:-1]))
     U = field.U_trans(*XY)
 

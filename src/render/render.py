@@ -78,10 +78,10 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
         
     match PEL:
         case 'spectral':
-            spec = spectral_PEL(ax=ax, field=field, dark=dark)
+            spec = spectral_PEL(ax=ax, field=field, width=Lx, height=Ly, dark=dark)
         case 'contour':
             colors = 'white' if dark else 'black'
-            cont = contour_PEL(ax=ax, field=field, colors=colors)
+            cont = contour_PEL(ax=ax, field=field, width=Lx, height=Ly, colors=colors)
 
     if 'act_string' in kwargs:
             act_string = kwargs['act_string'](snap)
