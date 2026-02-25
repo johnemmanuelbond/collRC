@@ -94,6 +94,11 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
         except AttributeError:
             act_string = ""
 
+    if 'fontsize' in kwargs:
+        fontsize = kwargs['fontsize']
+    else:
+        fontsize = 'medium'
+
     # Add text annotations in top-left corner
     state_string = style.state_string()
     if (state_string == "") and (act_string == ""):
@@ -106,7 +111,7 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
         else:
             textbox = f"{act_string}\n{state_string}"
         ax.text(-Lx/2, Ly/2, textbox,
-                backgroundcolor='white', zorder=2, color='k',
+                backgroundcolor='white', zorder=2, color='k', fontsize=fontsize,
                 horizontalalignment='left', verticalalignment='top')
 
     # Clean up plot appearance
@@ -237,11 +242,28 @@ def render_3d(snap:gsd.hoomd.Frame, style:ColorBase,
             ptcls.set_ec('black')   # Edge color for light background
         ptcls.set_lw(0.5)           # Edge line width
 
+    if 'act_string' in kwargs: act_string = kwargs['act_string'](snap)
+    else: act_string = ""
+
+    if 'fontsize' in kwargs:
+        fontsize = kwargs['fontsize']
+    else:
+        fontsize = 'medium'
+
     # Add text annotations in top-left corner
     state_string = style.state_string()
+    if (state_string == "") and (act_string == ""):
+        show_text = False
     if show_text:
-        ax.text(-1.0*Lx/2, 0.9*Ly/2, state_string,
-                backgroundcolor='white', fontsize='large', zorder=2, color='k')
+        if state_string == "":
+            textbox = act_string
+        elif act_string == "":
+            textbox = state_string
+        else:
+            textbox = f"{act_string}\n{state_string}"
+        ax.text(-Lx/2, Ly/2, textbox,
+                backgroundcolor='white', zorder=2, color='k', fontsize=fontsize,
+                horizontalalignment='left', verticalalignment='top')
 
     # Clean up plot appearance
     ax.axis('off')
@@ -329,16 +351,26 @@ def render_sphere(snap:gsd.hoomd.Frame, style:ColorBase,
         ptcls.set_ec('black')   # Edge color for light background
     ptcls.set_lw(0.5)          # Edge line width
 
+    if 'act_string' in kwargs: act_string = kwargs['act_string'](snap)
+    else: act_string = ""
+
+    if 'fontsize' in kwargs:
+        fontsize = kwargs['fontsize']
+    else:
+        fontsize = 'medium'
+
     # Add text annotations in top-left corner
     state_string = style.state_string()
     r_string = f"$R/2a = {R/style.shape.ay/2:.2f}$"
     if show_text:
-        if state_string == "":
+        if state_string == "" and act_string == "":
             textbox = r_string
-        else:
+        elif act_string == "":
             textbox = f"{r_string}\n{state_string}"
+        else:
+            textbox = f"{act_string}\n{state_string}\n{r_string}"
         ax.text(-1.0*Lx/2, 0.9*Ly/2, textbox,
-                backgroundcolor='white', fontsize='large', zorder=2, color='k')
+                backgroundcolor='white', fontsize=fontsize, zorder=2, color='k')
 
     # Clean up plot appearance
     ax.axis('off')
@@ -429,11 +461,28 @@ def render_surf(snap:gsd.hoomd.Frame, style:ColorBase, gradient:callable,
         ptcls.set_ec('black')   # Edge color for light background
     ptcls.set_lw(0.5)          # Edge line width
 
+    if 'act_string' in kwargs: act_string = kwargs['act_string'](snap)
+    else: act_string = ""
+
+    if 'fontsize' in kwargs:
+        fontsize = kwargs['fontsize']
+    else:
+        fontsize = 'medium'
+
     # Add text annotations in top-left corner
     state_string = style.state_string()
+    if (state_string == "") and (act_string == ""):
+        show_text = False
     if show_text:
-        ax.text(-1.0*Lx/2, 0.9*Ly/2, state_string,
-                backgroundcolor='white', fontsize='large', zorder=2, color='k')
+        if state_string == "":
+            textbox = act_string
+        elif act_string == "":
+            textbox = state_string
+        else:
+            textbox = f"{act_string}\n{state_string}"
+        ax.text(-Lx/2, Ly/2, textbox,
+                backgroundcolor='white', zorder=2, color='k', fontsize=fontsize,
+                horizontalalignment='left', verticalalignment='top')
 
     # Clean up plot appearance
     ax.axis('off')
