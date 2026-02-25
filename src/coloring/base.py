@@ -229,6 +229,7 @@ class ColorBase():
         ori = self._f.particles.orientation
         step = self._f.configuration.step
         box = box_to_matrix(self._f.configuration.box).T.astype(np.float32)
+        if box[2,2] == 0: box[2,2] = 1.0 # avoid zero height for 2D systems
         origin = -0.5 * (box[0] + box[1] + box[2])
         shape = np.array([self.shape.ax, self.shape.ay, 0.5], dtype=np.float32)
 
