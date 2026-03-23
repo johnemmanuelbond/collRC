@@ -81,7 +81,9 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
             spec = spectral_PEL(ax=ax, field=field, width=Lx, height=Ly, dark=dark)
         case 'contour':
             colors = 'white' if dark else 'black'
-            cont = contour_PEL(ax=ax, field=field, width=Lx, height=Ly, colors=colors)
+            if 'linewidths' in kwargs: lw=kwargs['linewidths']
+            else: lw = 1.2
+            cont = contour_PEL(ax=ax, field=field, width=Lx, height=Ly, colors=colors, linewidths=lw)
 
     if 'act_string' in kwargs:
             act_string = kwargs['act_string'](snap)

@@ -20,6 +20,7 @@ from calc import box_to_matrix
 base_colors = dict(
     white = np.array(mcol.to_rgba('white')),
     grey = np.array(mcol.to_rgba('darkgrey')),
+    black = np.array(mcol.to_rgba('black')),
     red = np.array(mcol.to_rgba('red')),
     blue = np.array(mcol.to_rgba('blue')),
     green = np.array(mcol.to_rgba('green')),
@@ -27,9 +28,12 @@ base_colors = dict(
     yellow = np.array(mcol.to_rgba('yellow')),
     gold = np.array(mcol.to_rgba('gold')),
     purple = np.array(mcol.to_rgba('magenta')),
-    orange = np.array(mcol.to_rgba('orange')),
+    orange = np.array(mcol.to_rgba('darkorange')),
     cyan = np.array(mcol.to_rgba('cyan')),
+    brown = np.array(mcol.to_rgba('saddlebrown')),
 )
+
+mcolor = lambda col: np.array(mcol.to_rgba(col))
 
 
 # Helper function for broadcasting color mixing operations
@@ -71,8 +75,8 @@ def color_blender(c00=base_colors['white'], c01=base_colors['red'], c10=base_col
     e3 = c01-c11 # i.e. purple to red
     e4 = c10-c11 # i.e. purple to blue
 
-    c_func = lambda x, y: (_cprod((x+y)<1, c00)  + _cprod(x*(x+y<1), e1)      + _cprod(y*(x+y<1), e2) + 
-                           _cprod((x+y)>=1, c11) + _cprod((1-y)*(x+y>=1), e3) + _cprod((1-x)*(x+y>=1), e4)).clip(0, 1)
+    c_func = lambda x, y: (_cprod(x>y, c01)  - _cprod((1-x)*(x>y) , e1) - _cprod(y*(x>y) , e3) + 
+                           _cprod(x<=y, c10) - _cprod((1-y)*(x<=y), e2) - _cprod(x*(x<=y), e4)).clip(0, 1)
 
     return c_func
 
@@ -340,20 +344,27 @@ if __name__ == "__main__":
     img2 = color_blender(base_colors['white'], base_colors['red'], base_colors['blue'], base_colors['purple'])(X,Y)
 
     # Create a 2D blend using two scalar fields
-    img3 = color_blender(base_colors['white'], base_colors['blue'], base_colors['gold'], base_colors['green'])(X,Y)
+    img3 = color_blender(base_colors['yellow'], base_colors['green'], base_colors['orange'], base_colors['black'],)(X,Y)
+
+    # img4 = np.array([img3[np.eye(X.shape[0],dtype=bool),:]]*X.shape[1])
+    img4 = color_gradient(base_colors['yellow'], base_colors['black'])(X)
 
     # Display the results
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4))
-    axes[0].imshow(img1.reshape(1, -1, 4), aspect='auto')
-    axes[0].set_title('white->red')
+    fig, axes = plt.subplots(1, 4, figsize=(12, 4))
+    axes[0].imshow(img2, origin='lower')
+    axes[0].set_title('sensor')
     axes[0].axis('off')
 
-    axes[1].imshow(img2, origin='lower')
-    axes[1].set_title('white->purple')
+    axes[1].imshow(img1, origin='lower')
+    axes[1].set_title('sensor (ψ)')
     axes[1].axis('off')
 
     axes[2].imshow(img3, origin='lower')
-    axes[2].set_title('white->green')
+    axes[2].set_title("actuator")
     axes[2].axis('off')
+
+    axes[3].imshow(img4, origin='lower')
+    axes[3].set_title("actuator (isotropic)")
+    axes[3].axis('off')
 
     fig.savefig("color_demo.png", dpi=600, bbox_inches='tight')
