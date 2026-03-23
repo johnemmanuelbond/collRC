@@ -1,0 +1,16 @@
+name: collRC
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - graph-tool
+  - gsd
+  - matplotlib
+  - moviepy
+  - numpy
+  - scipy
+  - sphinx
+  - sphinx-rtd-theme
+  - pip
+  - sphinx-book-theme
+  - sphinxcontrib-video
