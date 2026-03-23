@@ -76,6 +76,12 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
         field = None
         PEL = None
         
+    try:
+        field = Field.create_from_gsd(snap)
+    except KeyError:
+        field = None
+        PEL = None
+        
     match PEL:
         case 'spectral':
             spec = spectral_PEL(ax=ax, field=field, width=Lx, height=Ly, dark=dark)
@@ -86,6 +92,7 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
             cont = contour_PEL(ax=ax, field=field, width=Lx, height=Ly, colors=colors, linewidths=lw)
 
     if 'act_string' in kwargs:
+            act_string = kwargs['act_string'](snap)
             act_string = kwargs['act_string'](snap)
     else:
         try:
