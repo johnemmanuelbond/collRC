@@ -459,7 +459,11 @@ def global_bond_order(psis:np.ndarray, nei_bool:np.ndarray, phase_correct:np.nda
         g_dist[t] = g_dist[s] + 1
         psi_rot[t] = phase_correct[t, s] * psi_rot[s]
 
-    phase_ref = np.conjugate(psis[root]) / np.abs(psis[root])
+    if np.abs(psis[root]) == 0:
+        phase_ref = 1.0 + 0.0j
+    else: 
+        phase_ref = np.conjugate(psis[root]) / np.abs(psis[root])
+
     psi_corrected = psi_rot * psis * phase_ref
 
     if ret_graph:
