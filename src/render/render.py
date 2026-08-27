@@ -87,9 +87,9 @@ def render_npole(snap:gsd.hoomd.Frame, style:ColorBase,
             spec = spectral_PEL(ax=ax, field=field, width=Lx, height=Ly, dark=dark)
         case 'contour':
             colors = 'white' if dark else 'black'
-            if 'linewidths' in kwargs: lw=kwargs['linewidths']
-            else: lw = 1.2
-            cont = contour_PEL(ax=ax, field=field, width=Lx, height=Ly, colors=colors, linewidths=lw)
+            lw = kwargs['linewidths'] if 'linewidths' in kwargs else 1.2
+            levels = kwargs['levels'] if 'levels' in kwargs else None
+            cont = contour_PEL(ax=ax, field=field, width=Lx, height=Ly, colors=colors, linewidths=lw, levels=levels)
 
     if 'act_string' in kwargs:
             act_string = kwargs['act_string'](snap)
@@ -500,7 +500,7 @@ def render_surf(snap:gsd.hoomd.Frame, style:ColorBase, gradient:callable,
     return fig, ax
 
 
-def animate(render_frames:gsd.hoomd.HOOMDTrajectory, outpath:str, figure_maker:callable, fps:int=20, codec='mpeg4'):
+def animate(render_frames:gsd.hoomd.HOOMDTrajectory, outpath:str, figure_maker:callable, fps:int=20, codec='libx264', pixel_format='yuv420p'):
     """
     Render a movie from the given frames using the specified figure maker function.
     
@@ -514,8 +514,10 @@ def animate(render_frames:gsd.hoomd.HOOMDTrajectory, outpath:str, figure_maker:c
     :type figure_maker: callable
     :param fps: Frames per second for the output movie, defaults to 20
     :type fps: int, optional
-    :param codec: Codec to use for movie encoding, defaults to 'mpeg4'
+    :param codec: Codec to use for movie encoding, defaults to 'libx264' for modern H.264
     :type codec: str, optional
+    :param pixel_format: Pixel format for the output movie, defaults to 'yuv420p' for broad compatibility
+    :type pixel_format: str, optional
     """
 
     def _render(t):
@@ -524,15 +526,17 @@ def animate(render_frames:gsd.hoomd.HOOMDTrajectory, outpath:str, figure_maker:c
         fig.canvas.draw()
 
         # Extract RGB data from matplotlib figure
+        rgba = fig.canvas.buffer_rgba()
         w, h = fig.canvas.get_width_height()
-        buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
-        buf.shape = (h, w, 4)  # Height, width, RGBA channels
-
-        plt.close(fig)  # Clean up memory
-        return buf[:, :, :-1]  # Return RGB only (drop alpha channel)
+        img = np.frombuffer(rgba, dtype=np.uint8).reshape((h, w, 4))
+        
+        # Strip alpha channel (MoviePy prefers RGB) and fix odd dimensions
+        img_rgb = img[:h - (h % 2), :w - (w % 2), :3]
+        plt.close(fig) # Clean up memory
+        return img_rgb
 
     clip = VideoClip(_render, duration=len(render_frames)/fps)
-    clip.write_videofile(outpath, fps=fps, codec=codec)
+    clip.write_videofile(outpath, fps=fps, codec=codec, ffmpeg_params=["-pix_fmt", pixel_format])
     clip.close()
 
 if __name__ == "__main__":

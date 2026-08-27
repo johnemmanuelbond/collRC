@@ -88,7 +88,7 @@ class ColorS2(ColorBase):
         :rtype: str
         """
         if snap is not None: self.snap = snap
-        nem_l = np.abs(np.mean(self.nem_l))
+        nem_l = np.mean(np.abs(self.nem_l))
         return f'$\\langle S_2\\rangle = {nem_l:.2f}$'
 
 

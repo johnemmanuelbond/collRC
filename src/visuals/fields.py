@@ -165,10 +165,10 @@ class Field:
 
         log = frame.log
         try:
-            dg = log['dg'][0]
-            k_trans = log['k_trans']
-            k_rot = log['k_rot']
-            direct = log['direct']
+            dg = log['electrode/dg'][0]
+            k_trans = log['electrode/k_trans']
+            k_rot = log['electrode/k_rot']
+            direct = log['electrode/direct']
         except KeyError as e:
             raise KeyError("The provided GSD frame does not contain field parameters in its log.") from e
 
@@ -188,7 +188,7 @@ class Field:
         :return: A ``Field`` instance initialized with parameters from the frame log.
         :rtype: :py:class:`Field`
         """
-        n = len(frame.log['direct'])
+        n = len(frame.log['electrode/direct'])
         field = cls(n=n)
         field.update_from_gsd(frame)
         return field
